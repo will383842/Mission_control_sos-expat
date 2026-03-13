@@ -1,0 +1,18 @@
+# Laravel
+laravel-api/.env
+laravel-api/.env.testing
+laravel-api/vendor/
+laravel-api/storage/logs/
+laravel-api/storage/framework/cache/
+
+# React
+react-dashboard/node_modules/
+react-dashboard/dist/
+react-dashboard/.env
+
+# Scripts
+scripts/localstorage-export.json
+
+# OS
+.DS_Store
+Thumbs.db
