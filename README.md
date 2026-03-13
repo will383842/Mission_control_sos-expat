@@ -41,7 +41,7 @@ php artisan migrate --seed
 php artisan serve --port=8002
 ```
 
-Compte admin créé par le seeder : `williams@sos-expat.com` / `Admin2025!`
+Compte admin créé par le seeder : `williamsjullin@gmail.com` / `MJMJsblanc19522008/*%$`
 
 ### 3. Frontend React
 
@@ -135,6 +135,6 @@ npm test
 
 | Email | Mot de passe | Rôle |
 |-------|-------------|------|
-| williams@sos-expat.com | Admin2025! | admin |
+| williamsjullin@gmail.com | MJMJsblanc19522008/*%$ | admin |
 
 **Changer le mot de passe en production** depuis la page Équipe.
