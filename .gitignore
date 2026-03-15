@@ -29,3 +29,6 @@ laravel-api/bootstrap/cache/*
 
 # Scripts
 scripts/localstorage-export.json
+
+# Production env (secrets managed on server, not in git)
+.env.production
