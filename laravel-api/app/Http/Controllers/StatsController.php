@@ -7,51 +7,73 @@ use App\Models\Contact;
 use App\Models\Influenceur;
 use App\Models\Objective;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class StatsController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $isResearcher = $request->user()->role === 'researcher';
+        $userId       = $request->user()->id;
+
+        // Base query scoped for researchers
+        $baseInfluenceurQuery = Influenceur::query();
+        if ($isResearcher) {
+            $baseInfluenceurQuery->where('created_by', $userId);
+        }
+
         // Totaux par statut
-        $total    = Influenceur::count();
-        $byStatus = Influenceur::select('status', DB::raw('count(*) as count'))
+        $total    = (clone $baseInfluenceurQuery)->count();
+        $byStatus = (clone $baseInfluenceurQuery)->select('status', DB::raw('count(*) as count'))
             ->groupBy('status')
             ->pluck('count', 'status');
 
         // Taux de réponse
-        $contacted    = Influenceur::whereIn('status', ['contacted', 'negotiating', 'active', 'refused', 'inactive'])->count();
-        $replied      = Contact::where('result', 'replied')->distinct('influenceur_id')->count('influenceur_id');
+        $contacted    = (clone $baseInfluenceurQuery)->whereIn('status', ['contacted', 'negotiating', 'active', 'refused', 'inactive'])->count();
+        $repliedQuery = Contact::where('result', 'replied');
+        if ($isResearcher) {
+            $repliedQuery->whereHas('influenceur', fn($q) => $q->where('created_by', $userId));
+        }
+        $replied      = $repliedQuery->distinct('influenceur_id')->count('influenceur_id');
         $responseRate = $contacted > 0 ? round($replied / $contacted * 100, 1) : 0;
 
         // Taux de conversion
-        $active         = Influenceur::where('status', 'active')->count();
-        $prospects      = Influenceur::where('status', 'prospect')->count();
+        $active         = (clone $baseInfluenceurQuery)->where('status', 'active')->count();
+        $prospects      = (clone $baseInfluenceurQuery)->where('status', 'prospect')->count();
         $conversionRate = ($prospects + $active) > 0
             ? round($active / ($prospects + $active) * 100, 1)
             : 0;
 
-        $newThisMonth = Influenceur::where('created_at', '>=', now()->startOfMonth())->count();
+        $newThisMonth = (clone $baseInfluenceurQuery)->where('created_at', '>=', now()->startOfMonth())->count();
 
         // Évolution contacts (12 semaines)
-        $contactsEvolution = Contact::select(
+        $contactsEvolutionQuery = Contact::select(
             DB::raw("TO_CHAR(date, 'IYYY-IW') as week"),
             DB::raw('count(*) as count')
         )
-            ->where('date', '>=', now()->subWeeks(12))
+            ->where('date', '>=', now()->subWeeks(12));
+        if ($isResearcher) {
+            $contactsEvolutionQuery->whereHas('influenceur', fn($q) => $q->where('created_by', $userId));
+        }
+        $contactsEvolution = $contactsEvolutionQuery
             ->groupBy('week')
             ->orderBy('week')
             ->get();
 
         // Répartition plateformes
-        $byPlatform = Influenceur::select('primary_platform', DB::raw('count(*) as count'))
+        $byPlatform = (clone $baseInfluenceurQuery)->select('primary_platform', DB::raw('count(*) as count'))
             ->groupBy('primary_platform')
             ->orderByDesc('count')
             ->get();
 
         // Taux de réponse par plateforme
-        $responseByPlatform = DB::table('contacts')
-            ->join('influenceurs', 'contacts.influenceur_id', '=', 'influenceurs.id')
+        $responseByPlatformQuery = DB::table('contacts')
+            ->join('influenceurs', 'contacts.influenceur_id', '=', 'influenceurs.id');
+        if ($isResearcher) {
+            $responseByPlatformQuery->where('influenceurs.created_by', $userId);
+        }
+        $responseByPlatform = $responseByPlatformQuery
             ->select(
                 'influenceurs.primary_platform',
                 DB::raw('count(*) as total'),
@@ -66,9 +88,13 @@ class StatsController extends Controller
             ]);
 
         // Activité équipe ce mois
-        $teamActivity = ActivityLog::select('user_id', DB::raw('count(*) as count'))
+        $teamActivityQuery = ActivityLog::select('user_id', DB::raw('count(*) as count'))
             ->where('action', 'contact_added')
-            ->where('created_at', '>=', now()->startOfMonth())
+            ->where('created_at', '>=', now()->startOfMonth());
+        if ($isResearcher) {
+            $teamActivityQuery->where('user_id', $userId);
+        }
+        $teamActivity = $teamActivityQuery
             ->groupBy('user_id')
             ->with('user:id,name')
             ->get();
@@ -82,10 +108,13 @@ class StatsController extends Controller
         ];
 
         // 10 dernières activités
-        $recentActivity = ActivityLog::with(['user:id,name', 'influenceur:id,name'])
+        $recentActivityQuery = ActivityLog::with(['user:id,name', 'influenceur:id,name'])
             ->orderByDesc('created_at')
-            ->limit(10)
-            ->get();
+            ->limit(10);
+        if ($isResearcher) {
+            $recentActivityQuery->where('user_id', $userId);
+        }
+        $recentActivity = $recentActivityQuery->get();
 
         return response()->json(compact(
             'total', 'byStatus', 'responseRate', 'conversionRate',

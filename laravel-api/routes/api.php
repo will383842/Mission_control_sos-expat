@@ -53,8 +53,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/influenceurs', [InfluenceurController::class, 'store']);
     Route::get('/influenceurs/{influenceur}', [InfluenceurController::class, 'show']);
     Route::put('/influenceurs/{influenceur}', [InfluenceurController::class, 'update']);
-    Route::delete('/influenceurs/{influenceur}', [InfluenceurController::class, 'destroy'])
-        ->middleware('role:admin');
+    Route::delete('/influenceurs/{influenceur}', [InfluenceurController::class, 'destroy']);
 
     // Contacts / Timeline
     Route::get('/influenceurs/{influenceur}/contacts', [ContactController::class, 'index']);

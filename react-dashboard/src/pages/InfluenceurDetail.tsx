@@ -107,7 +107,7 @@ export default function InfluenceurDetail() {
               <button onClick={() => setEditing(true)} className="px-4 py-2 bg-surface2 text-muted hover:text-white text-sm rounded-lg border border-border transition-colors">
                 Modifier
               </button>
-              {user?.role === 'admin' && (
+              {(user?.role === 'admin' || user?.role === 'researcher') && (
                 <button onClick={handleDelete} className="px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500/20 text-sm rounded-lg border border-red-500/30 transition-colors">
                   Supprimer
                 </button>

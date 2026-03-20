@@ -37,6 +37,14 @@ class ReminderController extends Controller
 
     public function dismiss(Request $request, Reminder $reminder)
     {
+        // Ownership check for researchers
+        if ($request->user()->isResearcher()) {
+            $reminder->load('influenceur');
+            if ($reminder->influenceur && $reminder->influenceur->created_by !== $request->user()->id) {
+                return response()->json(['message' => 'Accès refusé.'], 403);
+            }
+        }
+
         $request->validate([
             'notes' => 'nullable|string|max:500',
         ]);
@@ -60,6 +68,14 @@ class ReminderController extends Controller
 
     public function done(Request $request, Reminder $reminder)
     {
+        // Ownership check for researchers
+        if ($request->user()->isResearcher()) {
+            $reminder->load('influenceur');
+            if ($reminder->influenceur && $reminder->influenceur->created_by !== $request->user()->id) {
+                return response()->json(['message' => 'Accès refusé.'], 403);
+            }
+        }
+
         // Reuses dismissed_by/dismissed_at fields to record who completed the reminder and when,
         // avoiding a separate migration for completed_by/completed_at columns.
         $reminder->update([

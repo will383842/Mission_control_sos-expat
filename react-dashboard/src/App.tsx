@@ -27,6 +27,11 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return user?.role === 'admin' ? <>{children}</> : <Navigate to="/" replace />;
 }
 
+function NonResearcherRoute({ children }: { children: React.ReactNode }) {
+  const { user } = React.useContext(AuthContext);
+  return user?.role === 'researcher' ? <Navigate to="/mon-tableau" replace /> : <>{children}</>;
+}
+
 function IndexRoute() {
   const { user } = React.useContext(AuthContext);
   if (user?.role === 'researcher') {
@@ -50,7 +55,7 @@ export default function App() {
             <Route path="influenceurs" element={<Influenceurs />} />
             <Route path="influenceurs/:id" element={<InfluenceurDetail />} />
             <Route path="a-relancer" element={<ARelancer />} />
-            <Route path="statistiques" element={<Statistiques />} />
+            <Route path="statistiques" element={<NonResearcherRoute><Statistiques /></NonResearcherRoute>} />
             <Route path="equipe" element={<AdminRoute><Equipe /></AdminRoute>} />
           </Route>
         </Routes>

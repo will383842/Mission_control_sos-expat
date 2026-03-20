@@ -32,11 +32,12 @@ class ObjectiveController extends Controller
             'user_id'      => 'required|exists:users,id',
             'target_count' => 'required|integer|min:1',
             'period'       => 'required|in:daily,weekly,monthly',
-            'start_date'   => 'required|date',
+            'start_date'   => 'sometimes|date',
             'end_date'     => 'nullable|date|after_or_equal:start_date',
             'is_active'    => 'sometimes|boolean',
         ]);
 
+        $data['start_date']  = $data['start_date'] ?? now()->toDateString();
         $data['created_by'] = $request->user()->id;
 
         $objective = Objective::create($data);

@@ -62,6 +62,7 @@ export default function AdminConsole() {
         user_id: editingUserId,
         target_count: form.target_count,
         period: form.period,
+        start_date: new Date().toISOString().split('T')[0],
       });
       setSuccess('Objectif mis a jour avec succes.');
       setEditingUserId(null);

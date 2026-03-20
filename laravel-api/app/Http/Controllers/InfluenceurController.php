@@ -200,6 +200,15 @@ class InfluenceurController extends Controller
 
     public function destroy(Request $request, Influenceur $influenceur)
     {
+        // Admin can delete any, researcher can only delete own, member denied
+        $role = $request->user()->role;
+        if ($role === 'member') {
+            return response()->json(['message' => 'Accès refusé.'], 403);
+        }
+        if ($role === 'researcher' && $influenceur->created_by !== $request->user()->id) {
+            return response()->json(['message' => 'Accès refusé.'], 403);
+        }
+
         ActivityLog::create([
             'user_id'        => $request->user()->id,
             'influenceur_id' => null,
