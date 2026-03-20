@@ -12,6 +12,11 @@ class InfluenceurController extends Controller
     {
         $query = Influenceur::with(['assignedToUser:id,name', 'pendingReminder']);
 
+        // Researcher scoping: only see own influenceurs
+        if ($request->user()->isResearcher()) {
+            $query->where('created_by', $request->user()->id);
+        }
+
         if ($request->status) {
             $query->where('status', $request->status);
         }
@@ -65,9 +70,36 @@ class InfluenceurController extends Controller
             'reminder_days'        => 'sometimes|integer|min:1|max:365',
             'notes'                => 'nullable|string',
             'tags'                 => 'nullable|array',
+            'force_duplicate'      => 'sometimes|boolean',
         ]);
 
+        $forceDuplicate = $data['force_duplicate'] ?? false;
+        unset($data['force_duplicate']);
+
         $data['created_by'] = $request->user()->id;
+
+        // Extract and store normalized domain from profile_url
+        if (!empty($data['profile_url'])) {
+            $data['profile_url_domain'] = self::normalizeUrlDomain($data['profile_url']);
+        }
+
+        // Duplicate check on profile_url_domain
+        $duplicateWarning = null;
+        if (!empty($data['profile_url_domain'])) {
+            $existing = Influenceur::where('profile_url_domain', $data['profile_url_domain'])->first();
+            if ($existing && !$forceDuplicate) {
+                return response()->json([
+                    'warning'             => 'duplicate_detected',
+                    'message'             => "Un influenceur avec un profil similaire existe déjà : {$existing->name} (ID {$existing->id}).",
+                    'existing_id'         => $existing->id,
+                    'existing_name'       => $existing->name,
+                    'profile_url_domain'  => $data['profile_url_domain'],
+                ], 409);
+            }
+            if ($existing && $forceDuplicate) {
+                $duplicateWarning = "Doublon créé malgré l'existant : {$existing->name} (ID {$existing->id}).";
+            }
+        }
 
         if (($data['status'] ?? 'prospect') === 'active') {
             $data['partnership_date'] = $data['partnership_date'] ?? now()->toDateString();
@@ -82,11 +114,21 @@ class InfluenceurController extends Controller
             'details'         => ['name' => $influenceur->name],
         ]);
 
-        return response()->json($influenceur->load('assignedToUser:id,name'), 201);
+        $response = $influenceur->load('assignedToUser:id,name')->toArray();
+        if ($duplicateWarning) {
+            $response['duplicate_warning'] = $duplicateWarning;
+        }
+
+        return response()->json($response, 201);
     }
 
-    public function show(Influenceur $influenceur)
+    public function show(Request $request, Influenceur $influenceur)
     {
+        // Researcher can only see own influenceurs
+        if ($request->user()->isResearcher() && $influenceur->created_by !== $request->user()->id) {
+            return response()->json(['message' => 'Accès refusé.'], 403);
+        }
+
         return response()->json($influenceur->load([
             'assignedToUser:id,name',
             'createdBy:id,name',
@@ -97,6 +139,11 @@ class InfluenceurController extends Controller
 
     public function update(Request $request, Influenceur $influenceur)
     {
+        // Researcher can only update own influenceurs
+        if ($request->user()->isResearcher() && $influenceur->created_by !== $request->user()->id) {
+            return response()->json(['message' => 'Accès refusé.'], 403);
+        }
+
         $data = $request->validate([
             'name'                => 'sometimes|string|max:255',
             'handle'              => 'nullable|string|max:255',
@@ -119,6 +166,13 @@ class InfluenceurController extends Controller
             'notes'               => 'nullable|string',
             'tags'                => 'nullable|array',
         ]);
+
+        // Re-extract domain if profile_url changed
+        if (isset($data['profile_url'])) {
+            $data['profile_url_domain'] = !empty($data['profile_url'])
+                ? self::normalizeUrlDomain($data['profile_url'])
+                : null;
+        }
 
         $oldStatus = $influenceur->status;
 
@@ -158,11 +212,17 @@ class InfluenceurController extends Controller
         return response()->json(null, 204);
     }
 
-    public function remindersPending()
+    public function remindersPending(Request $request)
     {
-        $influenceurs = Influenceur::with(['pendingReminder', 'assignedToUser:id,name'])
-            ->whereHas('pendingReminder')
-            ->get()
+        $query = Influenceur::with(['pendingReminder', 'assignedToUser:id,name'])
+            ->whereHas('pendingReminder');
+
+        // Researcher scoping
+        if ($request->user()->isResearcher()) {
+            $query->where('created_by', $request->user()->id);
+        }
+
+        $influenceurs = $query->get()
             ->map(function ($inf) {
                 $daysElapsed = $inf->last_contact_at
                     ? (int) now()->diffInDays($inf->last_contact_at)
@@ -174,5 +234,38 @@ class InfluenceurController extends Controller
             ->values();
 
         return response()->json($influenceurs);
+    }
+
+    /**
+     * Normalize a URL to its root domain + path for duplicate detection.
+     * Removes protocol, www, trailing slash, query params, fragments.
+     */
+    public static function normalizeUrlDomain(?string $url): ?string
+    {
+        if (empty($url)) {
+            return null;
+        }
+
+        // Ensure URL has a scheme for parse_url to work
+        if (!preg_match('#^https?://#i', $url)) {
+            $url = 'https://' . $url;
+        }
+
+        $parsed = parse_url($url);
+        if (!$parsed || empty($parsed['host'])) {
+            return null;
+        }
+
+        $host = strtolower($parsed['host']);
+
+        // Remove www.
+        $host = preg_replace('/^www\./i', '', $host);
+
+        // Include path, remove trailing slash
+        $path = isset($parsed['path']) ? rtrim($parsed['path'], '/') : '';
+
+        $normalized = $host . $path;
+
+        return $normalized ?: null;
     }
 }

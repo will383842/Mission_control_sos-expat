@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\ActivityLog;
 use App\Models\Contact;
 use App\Models\Influenceur;
+use App\Models\Objective;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 class StatsController extends Controller
@@ -91,5 +93,79 @@ class StatsController extends Controller
             'byPlatform', 'responseByPlatform', 'teamActivity',
             'funnel', 'recentActivity'
         ));
+    }
+
+    /**
+     * Admin-only: stats for all researchers.
+     */
+    public function researcherStats()
+    {
+        $researchers = User::where('role', 'researcher')
+            ->where('is_active', true)
+            ->select('id', 'name', 'email', 'created_at')
+            ->get();
+
+        $stats = $researchers->map(function ($researcher) {
+            $totalCreated = Influenceur::where('created_by', $researcher->id)->count();
+            $createdToday = Influenceur::where('created_by', $researcher->id)
+                ->where('created_at', '>=', now()->startOfDay())
+                ->count();
+            $createdThisWeek = Influenceur::where('created_by', $researcher->id)
+                ->where('created_at', '>=', now()->startOfWeek())
+                ->count();
+            $createdThisMonth = Influenceur::where('created_by', $researcher->id)
+                ->where('created_at', '>=', now()->startOfMonth())
+                ->count();
+
+            // Active objective
+            $objective = Objective::where('user_id', $researcher->id)
+                ->where('is_active', true)
+                ->latest()
+                ->first();
+
+            $objectiveData = null;
+            if ($objective) {
+                $now = now();
+                switch ($objective->period) {
+                    case 'daily':
+                        $periodStart = $now->copy()->startOfDay();
+                        $periodEnd   = $now->copy()->endOfDay();
+                        break;
+                    case 'weekly':
+                        $periodStart = $now->copy()->startOfWeek();
+                        $periodEnd   = $now->copy()->endOfWeek();
+                        break;
+                    case 'monthly':
+                        $periodStart = $now->copy()->startOfMonth();
+                        $periodEnd   = $now->copy()->endOfMonth();
+                        break;
+                }
+                $periodCount = Influenceur::where('created_by', $researcher->id)
+                    ->whereBetween('created_at', [$periodStart, $periodEnd])
+                    ->count();
+
+                $objectiveData = [
+                    'target_count'  => $objective->target_count,
+                    'period'        => $objective->period,
+                    'current_count' => $periodCount,
+                    'percentage'    => $objective->target_count > 0
+                        ? round($periodCount / $objective->target_count * 100, 1)
+                        : 0,
+                ];
+            }
+
+            return [
+                'id'                 => $researcher->id,
+                'name'               => $researcher->name,
+                'email'              => $researcher->email,
+                'total_created'      => $totalCreated,
+                'created_today'      => $createdToday,
+                'created_this_week'  => $createdThisWeek,
+                'created_this_month' => $createdThisMonth,
+                'objective'          => $objectiveData,
+            ];
+        });
+
+        return response()->json($stats);
     }
 }

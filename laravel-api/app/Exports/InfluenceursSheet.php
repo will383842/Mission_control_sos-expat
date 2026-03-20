@@ -24,7 +24,7 @@ class InfluenceursSheet implements FromQuery, WithHeadings, WithTitle, WithMappi
     {
         return [
             'ID', 'Nom', 'Handle', 'Plateforme', 'Followers',
-            'Statut', 'Pays', 'Email', 'Niche',
+            'Statut', 'Pays', 'Email', 'Téléphone', 'Niche',
             'Assigné à', 'Dernier contact', 'Date partenariat', 'Notes',
         ];
     }
@@ -40,6 +40,7 @@ class InfluenceursSheet implements FromQuery, WithHeadings, WithTitle, WithMappi
             $inf->status,
             $inf->country,
             $inf->email,
+            $inf->phone,
             $inf->niche,
             $inf->assignedToUser?->name,
             $inf->last_contact_at?->toDateString(),

@@ -22,9 +22,15 @@ export default function InfluenceurTable({ influenceurs }: Props) {
   const sorted = [...influenceurs].sort((a, b) => {
     const av = a[sortKey] ?? '';
     const bv = b[sortKey] ?? '';
-    return sortDir === 'asc'
-      ? String(av).localeCompare(String(bv))
-      : String(bv).localeCompare(String(av));
+    let cmp: number;
+    if (sortKey === 'followers') {
+      cmp = (Number(av) || 0) - (Number(bv) || 0);
+    } else if (sortKey === 'last_contact_at') {
+      cmp = new Date(av as string).getTime() - new Date(bv as string).getTime();
+    } else {
+      cmp = String(av).localeCompare(String(bv));
+    }
+    return sortDir === 'asc' ? cmp : -cmp;
   });
 
   const Th = ({ label, field }: { label: string; field?: SortKey }) => (

@@ -12,7 +12,7 @@ class Influenceur extends Model
     protected $fillable = [
         'name', 'handle', 'avatar_url', 'platforms', 'primary_platform',
         'followers', 'followers_secondary', 'niche', 'country', 'language',
-        'email', 'phone', 'profile_url', 'status', 'assigned_to',
+        'email', 'phone', 'profile_url', 'profile_url_domain', 'status', 'assigned_to',
         'reminder_days', 'reminder_active', 'last_contact_at',
         'partnership_date', 'notes', 'tags', 'created_by',
     ];

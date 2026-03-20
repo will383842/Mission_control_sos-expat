@@ -23,7 +23,7 @@ class TeamController extends Controller
             'name'     => 'required|string|max:255',
             'email'    => 'required|email|unique:users',
             'password' => 'required|string|min:8',
-            'role'     => 'in:admin,member',
+            'role'     => 'in:admin,member,researcher',
         ]);
 
         $data['password'] = Hash::make($data['password']);
@@ -48,7 +48,7 @@ class TeamController extends Controller
             'name'      => 'sometimes|string|max:255',
             'email'     => 'sometimes|email|unique:users,email,' . $user->id,
             'password'  => 'sometimes|string|min:8',
-            'role'      => 'sometimes|in:admin,member',
+            'role'      => 'sometimes|in:admin,member,researcher',
             'is_active' => 'sometimes|boolean',
         ]);
 

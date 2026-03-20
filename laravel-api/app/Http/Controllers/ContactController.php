@@ -9,8 +9,13 @@ use Illuminate\Http\Request;
 
 class ContactController extends Controller
 {
-    public function index(Influenceur $influenceur)
+    public function index(Request $request, Influenceur $influenceur)
     {
+        // Researcher scoping
+        if ($request->user()->isResearcher() && $influenceur->created_by !== $request->user()->id) {
+            return response()->json(['message' => 'Accès refusé.'], 403);
+        }
+
         $contacts = $influenceur->contacts()
             ->with('user:id,name')
             ->get()
@@ -23,6 +28,11 @@ class ContactController extends Controller
 
     public function store(Request $request, Influenceur $influenceur)
     {
+        // Researcher scoping
+        if ($request->user()->isResearcher() && $influenceur->created_by !== $request->user()->id) {
+            return response()->json(['message' => 'Accès refusé.'], 403);
+        }
+
         $data = $request->validate([
             'date'    => 'required|date|before_or_equal:today',
             'channel' => 'required|string|in:email,instagram,linkedin,whatsapp,phone,other',
@@ -53,6 +63,11 @@ class ContactController extends Controller
 
     public function update(Request $request, Influenceur $influenceur, Contact $contact)
     {
+        // Researcher scoping
+        if ($request->user()->isResearcher() && $influenceur->created_by !== $request->user()->id) {
+            return response()->json(['message' => 'Accès refusé.'], 403);
+        }
+
         abort_if($contact->influenceur_id !== $influenceur->id, 404);
 
         $data = $request->validate([
@@ -80,6 +95,11 @@ class ContactController extends Controller
 
     public function destroy(Request $request, Influenceur $influenceur, Contact $contact)
     {
+        // Researcher scoping
+        if ($request->user()->isResearcher() && $influenceur->created_by !== $request->user()->id) {
+            return response()->json(['message' => 'Accès refusé.'], 403);
+        }
+
         abort_if($contact->influenceur_id !== $influenceur->id, 404);
 
         ActivityLog::create([

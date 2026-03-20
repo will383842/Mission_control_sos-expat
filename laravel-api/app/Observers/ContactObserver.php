@@ -21,6 +21,13 @@ class ContactObserver
             ]);
     }
 
+    public function updated(Contact $contact): void
+    {
+        if ($contact->isDirty('date')) {
+            $this->recalcLastContact($contact->influenceur_id);
+        }
+    }
+
     public function deleted(Contact $contact): void
     {
         $this->recalcLastContact($contact->influenceur_id);
@@ -28,7 +35,9 @@ class ContactObserver
 
     private function recalcLastContact(int $influenceurId): void
     {
-        $maxDate = Contact::where('influenceur_id', $influenceurId)->max('date');
+        $maxDate = Contact::where('influenceur_id', $influenceurId)
+            ->whereNull('deleted_at')
+            ->max('date');
 
         Influenceur::where('id', $influenceurId)
             ->update(['last_contact_at' => $maxDate]);

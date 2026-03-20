@@ -8,9 +8,13 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CheckRole
 {
-    public function handle(Request $request, Closure $next, string $role): Response
+    /**
+     * Handle an incoming request.
+     * Supports multiple roles: role:admin,researcher
+     */
+    public function handle(Request $request, Closure $next, string ...$roles): Response
     {
-        if (!$request->user() || $request->user()->role !== $role) {
+        if (!$request->user() || !in_array($request->user()->role, $roles, true)) {
             return response()->json(['message' => 'Accès refusé.'], 403);
         }
 

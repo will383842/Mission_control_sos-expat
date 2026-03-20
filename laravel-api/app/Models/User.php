@@ -37,8 +37,18 @@ class User extends Authenticatable
         return $this->hasMany(ActivityLog::class);
     }
 
+    public function objectives()
+    {
+        return $this->hasMany(Objective::class);
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
+    }
+
+    public function isResearcher(): bool
+    {
+        return $this->role === 'researcher';
     }
 }

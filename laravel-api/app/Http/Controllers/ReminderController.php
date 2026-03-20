@@ -8,15 +8,23 @@ use Illuminate\Http\Request;
 
 class ReminderController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $reminders = Reminder::with([
-            'influenceur:id,name,status,last_contact_at,primary_platform',
+        $query = Reminder::with([
+            'influenceur:id,name,status,last_contact_at,primary_platform,created_by',
             'influenceur.assignedToUser:id,name',
         ])
             ->where('status', 'pending')
-            ->orderBy('due_date')
-            ->get()
+            ->orderBy('due_date');
+
+        // Researcher scoping: only reminders for own influenceurs
+        if ($request->user()->isResearcher()) {
+            $query->whereHas('influenceur', function ($q) use ($request) {
+                $q->where('created_by', $request->user()->id);
+            });
+        }
+
+        $reminders = $query->get()
             ->map(function ($reminder) {
                 $daysElapsed = $reminder->influenceur?->last_contact_at
                     ? (int) now()->diffInDays($reminder->influenceur->last_contact_at)

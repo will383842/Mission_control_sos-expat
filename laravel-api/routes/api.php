@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\InfluenceurController;
+use App\Http\Controllers\ObjectiveController;
 use App\Http\Controllers\ReminderController;
 use App\Http\Controllers\StatsController;
 use App\Http\Controllers\TeamController;
@@ -47,7 +48,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/influenceurs/exports/csv', [ExportController::class, 'csv'])->middleware(['role:admin', 'throttle:10,1']);
     Route::get('/influenceurs/exports/excel', [ExportController::class, 'excel'])->middleware(['role:admin', 'throttle:10,1']);
 
-    // CRUD influenceurs
+    // CRUD influenceurs (researchers can create/read/update via controller scoping)
     Route::get('/influenceurs', [InfluenceurController::class, 'index']);
     Route::post('/influenceurs', [InfluenceurController::class, 'store']);
     Route::get('/influenceurs/{influenceur}', [InfluenceurController::class, 'show']);
@@ -68,6 +69,19 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Statistiques
     Route::get('/stats', [StatsController::class, 'index']);
+
+    // Objectifs (lecture pour tous, écriture admin uniquement)
+    Route::get('/objectives', [ObjectiveController::class, 'index']);
+    Route::get('/objectives/progress', [ObjectiveController::class, 'progress']);
+    Route::middleware('role:admin')->group(function () {
+        Route::post('/objectives', [ObjectiveController::class, 'store']);
+        Route::put('/objectives/{objective}', [ObjectiveController::class, 'update']);
+        Route::delete('/objectives/{objective}', [ObjectiveController::class, 'destroy']);
+    });
+
+    // Stats chercheurs (admin uniquement)
+    Route::get('/researchers/stats', [StatsController::class, 'researcherStats'])
+        ->middleware('role:admin');
 
     // Équipe (admin uniquement)
     Route::middleware('role:admin')->group(function () {

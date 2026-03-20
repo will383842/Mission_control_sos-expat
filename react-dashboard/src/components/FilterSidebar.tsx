@@ -22,6 +22,7 @@ const PLATFORMS: { value: Platform; label: string }[] = [
   { value: 'linkedin', label: 'LinkedIn' },
   { value: 'x', label: 'X' },
   { value: 'facebook', label: 'Facebook' },
+  { value: 'pinterest', label: 'Pinterest' },
   { value: 'podcast', label: 'Podcast' },
   { value: 'blog', label: 'Blog' },
   { value: 'newsletter', label: 'Newsletter' },
@@ -45,8 +46,16 @@ export default function FilterSidebar({ onFilterChange }: Props) {
 
   const handleSearch = (value: string) => {
     setSearch(value);
-    onFilterChange({ ...filters, search: value || undefined });
   };
+
+  // Debounce search input by 400ms
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onFilterChange({ ...filters, search: search || undefined });
+    }, 400);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
 
   const reset = () => {
     setFilters({});
@@ -138,7 +147,7 @@ export default function FilterSidebar({ onFilterChange }: Props) {
       <div>
         <p className="text-xs text-muted mb-2 font-medium uppercase tracking-wide">Rappels</p>
         <button
-          onClick={() => update({ ...filters, has_reminder: !filters.has_reminder })}
+          onClick={() => update({ ...filters, has_reminder: filters.has_reminder ? undefined : true })}
           className={`w-full text-left text-sm px-3 py-1.5 rounded-lg transition-colors ${
             filters.has_reminder ? 'bg-amber/20 text-amber' : 'text-muted hover:bg-surface2 hover:text-white'
           }`}
