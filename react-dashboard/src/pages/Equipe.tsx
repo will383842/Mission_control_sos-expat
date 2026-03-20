@@ -6,7 +6,7 @@ type MemberForm = {
   name: string;
   email: string;
   password: string;
-  role: 'admin' | 'member';
+  role: 'admin' | 'member' | 'researcher';
 };
 
 export default function Equipe() {
@@ -122,10 +122,11 @@ export default function Equipe() {
               <label className="block text-sm text-gray-400 mb-1.5">Rôle</label>
               <select
                 value={form.role}
-                onChange={e => setForm(p => ({ ...p, role: e.target.value as 'admin' | 'member' }))}
+                onChange={e => setForm(p => ({ ...p, role: e.target.value as MemberForm['role'] }))}
                 className="w-full bg-surface2 border border-border rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-violet"
               >
                 <option value="member">Membre</option>
+                <option value="researcher">Chercheur</option>
                 <option value="admin">Admin</option>
               </select>
             </div>

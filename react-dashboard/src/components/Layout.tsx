@@ -20,6 +20,9 @@ export default function Layout() {
         : 'text-gray-400 hover:bg-surface2 hover:text-white'
     }`;
 
+  const isAdmin = user?.role === 'admin';
+  const isResearcher = user?.role === 'researcher';
+
   return (
     <div className="flex min-h-screen bg-bg">
       {/* Sidebar */}
@@ -30,27 +33,53 @@ export default function Layout() {
         </div>
 
         <nav className="flex-1 p-3 space-y-1">
-          <NavLink to="/" end className={navClass}>
-            <span>📊</span> Dashboard
-          </NavLink>
-          <NavLink to="/influenceurs" className={navClass}>
-            <span>👥</span> Influenceurs
-          </NavLink>
-          <NavLink to="/a-relancer" className={navClass}>
-            <span>🔔</span> À relancer
-            {reminders.length > 0 && (
-              <span className="ml-auto bg-amber text-black text-xs font-bold px-1.5 py-0.5 rounded-full">
-                {reminders.length}
-              </span>
-            )}
-          </NavLink>
-          <NavLink to="/statistiques" className={navClass}>
-            <span>📈</span> Statistiques
-          </NavLink>
-          {user?.role === 'admin' && (
-            <NavLink to="/equipe" className={navClass}>
-              <span>⚙️</span> Équipe
-            </NavLink>
+          {isResearcher ? (
+            <>
+              <NavLink to="/" end className={navClass}>
+                <span>📊</span> Mon Tableau
+              </NavLink>
+              <NavLink to="/influenceurs" className={navClass}>
+                <span>👥</span> Influenceurs
+              </NavLink>
+              <NavLink to="/a-relancer" className={navClass}>
+                <span>🔔</span> A relancer
+                {reminders.length > 0 && (
+                  <span className="ml-auto bg-amber text-black text-xs font-bold px-1.5 py-0.5 rounded-full">
+                    {reminders.length}
+                  </span>
+                )}
+              </NavLink>
+            </>
+          ) : (
+            <>
+              <NavLink to="/" end className={navClass}>
+                <span>📊</span> Dashboard
+              </NavLink>
+              <NavLink to="/influenceurs" className={navClass}>
+                <span>👥</span> Influenceurs
+              </NavLink>
+              <NavLink to="/a-relancer" className={navClass}>
+                <span>🔔</span> A relancer
+                {reminders.length > 0 && (
+                  <span className="ml-auto bg-amber text-black text-xs font-bold px-1.5 py-0.5 rounded-full">
+                    {reminders.length}
+                  </span>
+                )}
+              </NavLink>
+              <NavLink to="/statistiques" className={navClass}>
+                <span>📈</span> Statistiques
+              </NavLink>
+              {isAdmin && (
+                <>
+                  <NavLink to="/admin" className={navClass}>
+                    <span>⚡</span> Console Admin
+                  </NavLink>
+                  <NavLink to="/equipe" className={navClass}>
+                    <span>⚙️</span> Equipe
+                  </NavLink>
+                </>
+              )}
+            </>
           )}
         </nav>
 
@@ -68,7 +97,7 @@ export default function Layout() {
             onClick={handleLogout}
             className="w-full text-sm text-muted hover:text-white py-1.5 transition-colors text-left"
           >
-            Déconnexion →
+            Deconnexion &rarr;
           </button>
         </div>
       </aside>

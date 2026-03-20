@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useStats } from '../hooks/useStats';
 import { useReminders } from '../hooks/useReminders';
 import { AuthContext } from '../hooks/useAuth';
@@ -22,6 +22,10 @@ export default function Dashboard() {
   const { stats, loading } = useStats();
   const { reminders, dismiss } = useReminders();
   const { user } = useContext(AuthContext);
+
+  if (user?.role === 'researcher') {
+    return <Navigate to="/mon-tableau" replace />;
+  }
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">

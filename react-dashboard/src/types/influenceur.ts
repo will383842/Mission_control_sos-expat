@@ -18,7 +18,7 @@ export interface TeamMember {
   id: number;
   name: string;
   email: string;
-  role: 'admin' | 'member';
+  role: 'admin' | 'member' | 'researcher';
   is_active: boolean;
   last_login_at: string | null;
   created_at: string;
@@ -127,4 +127,40 @@ export interface ReminderWithInfluenceur extends Reminder {
   influenceur: Pick<Influenceur, 'id' | 'name' | 'status' | 'last_contact_at' | 'primary_platform'> & {
     assigned_to_user?: Pick<TeamMember, 'id' | 'name'> | null;
   };
+}
+
+export interface Objective {
+  id: number;
+  user_id: number;
+  target_count: number;
+  period: 'daily' | 'weekly' | 'monthly';
+  start_date: string;
+  end_date: string | null;
+  is_active: boolean;
+  created_by: number;
+  created_at: string;
+}
+
+export interface ObjectiveProgress {
+  target_count: number;
+  period: string;
+  current_count: number;
+  percentage: number;
+  start_date: string;
+}
+
+export interface ResearcherStat {
+  id: number;
+  name: string;
+  email: string;
+  total_created: number;
+  created_today: number;
+  created_this_week: number;
+  created_this_month: number;
+  objective: {
+    target_count: number;
+    period: string;
+    current_count: number;
+    percentage: number;
+  } | null;
 }

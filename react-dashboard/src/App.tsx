@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthContext, useAuthProvider } from './hooks/useAuth';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import ResearcherDashboard from './pages/ResearcherDashboard';
+import AdminConsole from './pages/AdminConsole';
 import Influenceurs from './pages/Influenceurs';
 import InfluenceurDetail from './pages/InfluenceurDetail';
 import ARelancer from './pages/ARelancer';
@@ -25,6 +27,14 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return user?.role === 'admin' ? <>{children}</> : <Navigate to="/" replace />;
 }
 
+function IndexRoute() {
+  const { user } = React.useContext(AuthContext);
+  if (user?.role === 'researcher') {
+    return <ResearcherDashboard />;
+  }
+  return <Dashboard />;
+}
+
 export default function App() {
   const auth = useAuthProvider();
 
@@ -34,7 +44,9 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
-            <Route index element={<Dashboard />} />
+            <Route index element={<IndexRoute />} />
+            <Route path="mon-tableau" element={<ResearcherDashboard />} />
+            <Route path="admin" element={<AdminRoute><AdminConsole /></AdminRoute>} />
             <Route path="influenceurs" element={<Influenceurs />} />
             <Route path="influenceurs/:id" element={<InfluenceurDetail />} />
             <Route path="a-relancer" element={<ARelancer />} />
