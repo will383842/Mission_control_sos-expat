@@ -105,7 +105,11 @@ class ObjectiveController extends Controller
                 'has_objectives'  => false,
                 'message'         => 'Aucun objectif actif.',
                 'objectives'      => [],
-                'global_progress' => null,
+                'global_progress' => [
+                    'total_current' => 0,
+                    'total_target'  => 0,
+                    'percentage'    => 0,
+                ],
             ]);
         }
 
@@ -158,9 +162,9 @@ class ObjectiveController extends Controller
             'has_objectives'  => true,
             'objectives'      => $objectivesData,
             'global_progress' => [
-                'total_valid'  => $totalValid,
-                'total_target' => $totalTarget,
-                'percentage'   => $globalPercentage,
+                'total_current' => $totalValid,
+                'total_target'  => $totalTarget,
+                'percentage'    => $globalPercentage,
             ],
         ]);
     }

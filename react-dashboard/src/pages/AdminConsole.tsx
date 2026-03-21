@@ -165,7 +165,7 @@ export default function AdminConsole() {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-cyan/20 flex items-center justify-center text-cyan font-bold text-sm flex-shrink-0">
-                      {r.name[0]}
+                      {r.name?.[0] ?? '?'}
                     </div>
                     <div>
                       <p className="text-white font-medium">{r.name}</p>
