@@ -26,9 +26,9 @@ return new class extends Migration
             // Parsed results
             $table->json('parsed_contacts')->nullable();
             $table->json('excluded_domains')->nullable();
-            $table->unsignedSmallInt('contacts_found')->default(0);
-            $table->unsignedSmallInt('contacts_imported')->default(0);
-            $table->unsignedSmallInt('contacts_duplicates')->default(0);
+            $table->unsignedSmallInteger('contacts_found')->default(0);
+            $table->unsignedSmallInteger('contacts_imported')->default(0);
+            $table->unsignedSmallInteger('contacts_duplicates')->default(0);
 
             // Cost tracking
             $table->unsignedInteger('tokens_used')->default(0);
