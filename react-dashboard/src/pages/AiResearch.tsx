@@ -263,21 +263,18 @@ export default function AiResearch() {
                       ▦ Cards
                     </button>
                   </div>
-                  <button onClick={selectAll} className="text-xs text-muted hover:text-white px-2 py-1 rounded transition-colors">
-                    Tout sélectionner
-                  </button>
-                  <button onClick={() => setSelected(new Set())} className="text-xs text-muted hover:text-white px-2 py-1 rounded transition-colors">
-                    Désélectionner
-                  </button>
-                  {selected.size > 0 && (
-                    <button onClick={handleImport} disabled={importing}
-                      className="bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors">
-                      {importing ? '...' : `Importer ${selected.size} sélectionnés`}
-                    </button>
+
+                  {/* Auto-imported badge */}
+                  {session && session.contacts_imported > 0 && (
+                    <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2.5 py-1 rounded-full font-medium">
+                      ✅ {session.contacts_imported} importés automatiquement
+                    </span>
                   )}
-                  <button onClick={handleImportAll} disabled={importing}
-                    className="bg-violet hover:bg-violet/80 disabled:opacity-50 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors">
-                    {importing ? '...' : 'Importer tous'}
+
+                  {/* Green validation button (cosmetic — personal landmark) */}
+                  <button onClick={() => {/* cosmetic only */}}
+                    className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold px-4 py-1.5 rounded-lg transition-colors shadow-lg shadow-emerald-500/20">
+                    ✓ Validé
                   </button>
                 </div>
               </div>
@@ -546,10 +543,10 @@ export default function AiResearch() {
             </div>
           )}
 
-          {/* Already imported notification */}
+          {/* Auto-imported notification */}
           {session && session.contacts_imported > 0 && (
             <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4 text-emerald-400 text-sm">
-              ✅ {session.contacts_imported} contacts importés avec succès
+              ✅ {session.contacts_imported} contacts importés automatiquement dans ta base — visible dans l'onglet Contacts
             </div>
           )}
         </>

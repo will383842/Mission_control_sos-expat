@@ -162,6 +162,39 @@ class RunAiResearchJob implements ShouldQueue
             }
 
             // ============================================================
+            // STEP 4: AUTO-IMPORT all new contacts into influenceurs table
+            // ============================================================
+            $imported = 0;
+            foreach ($deduped['new'] as $contact) {
+                try {
+                    Influenceur::create([
+                        'contact_type'       => $contact['contact_type'] ?? $contactType,
+                        'name'               => $contact['name'],
+                        'email'              => $contact['email'] ?? null,
+                        'phone'              => $contact['phone'] ?? null,
+                        'profile_url'        => $contact['profile_url'] ?? null,
+                        'profile_url_domain' => $contact['profile_url_domain'] ?? null,
+                        'country'            => $contact['country'] ?? $session->country,
+                        'language'           => $session->language,
+                        'platforms'          => $contact['platforms'] ?? [],
+                        'primary_platform'   => $contact['platforms'][0] ?? 'website',
+                        'followers'          => $contact['followers'] ?? null,
+                        'notes'              => $contact['notes'] ?? null,
+                        'source'             => 'ai_research',
+                        'status'             => 'new',
+                        'score'              => ($contact['reliability_score'] ?? 1) * 20, // 1-5 → 20-100
+                        'created_by'         => $session->user_id,
+                    ]);
+                    $imported++;
+                } catch (\Throwable $e) {
+                    Log::warning('Auto-import contact failed', [
+                        'name'  => $contact['name'] ?? 'unknown',
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            // ============================================================
             // DONE — Save results
             // ============================================================
             $session->update([
@@ -169,16 +202,18 @@ class RunAiResearchJob implements ShouldQueue
                 'completed_at'        => now(),
                 'parsed_contacts'     => $deduped['new'],
                 'contacts_found'      => count($parsedContacts),
+                'contacts_imported'   => $imported,
                 'contacts_duplicates' => count($deduped['duplicates']),
                 'tokens_used'         => $totalTokens,
                 'cost_cents'          => $this->estimateCost($totalTokens, $perplexityService->isConfigured()),
             ]);
 
-            Log::info('AI Research completed', [
+            Log::info('AI Research completed + auto-imported', [
                 'session_id'   => $session->id,
                 'pipeline'     => $perplexityService->isConfigured() ? 'perplexity+claude' : 'claude-only',
                 'found'        => count($parsedContacts),
                 'new'          => count($deduped['new']),
+                'imported'     => $imported,
                 'duplicates'   => count($deduped['duplicates']),
                 'tokens'       => $totalTokens,
             ]);
