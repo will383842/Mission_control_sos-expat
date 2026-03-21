@@ -74,10 +74,14 @@ class ScrapeContactJob implements ShouldQueue
         try {
             $result = $scraper->scrape($url);
 
+            // Status = completed if we found ANY useful data, even if some extraction had errors
+            $hasData = !empty($result['emails']) || !empty($result['phones']) || !empty($result['social_links']) || !empty($result['addresses']);
+            $status = ($result['success'] || $hasData) ? 'completed' : 'failed';
+
             // Update the influenceur with scraped data
             $updateData = [
                 'scraped_at'      => now(),
-                'scraper_status'  => $result['success'] ? 'completed' : 'failed',
+                'scraper_status'  => $status,
                 'scraped_emails'  => $result['emails'] ?: null,
                 'scraped_phones'  => $result['phones'] ?: null,
                 'scraped_social'    => $result['social_links'] ?: null,

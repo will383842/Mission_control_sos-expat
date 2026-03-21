@@ -300,10 +300,14 @@ class WebScraperService
         $this->extractSocialLinks($html, $result['social_links'], $result['phones']);
         $this->extractAddresses($text, $result['addresses']);
 
-        // Extract contact person names
-        $persons = $this->extractContactPersons($text);
-        foreach ($persons as $person) {
-            $result['contact_persons'][] = $person;
+        // Extract contact person names (wrapped in try/catch — regex can fail on exotic HTML)
+        try {
+            $persons = $this->extractContactPersons($text);
+            foreach ($persons as $person) {
+                $result['contact_persons'][] = $person;
+            }
+        } catch (\Throwable $e) {
+            Log::debug('WebScraper: person extraction failed', ['error' => $e->getMessage()]);
         }
     }
 
