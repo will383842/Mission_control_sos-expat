@@ -358,11 +358,21 @@ export default function AiResearch() {
                                 )}
                               </td>
                               <td className="p-3">
-                                {contact.platforms?.map(p => (
+                                {contact.platforms?.filter(p => p !== 'website').map(p => (
                                   <span key={p} className="text-[10px] bg-violet/10 text-violet-light px-1.5 py-0.5 rounded mr-1">
                                     {p}
                                   </span>
                                 ))}
+                                {contact.platforms?.includes('website') && contact.profile_url && (
+                                  <a href={contact.profile_url} target="_blank" rel="noopener noreferrer"
+                                    onClick={e => e.stopPropagation()}
+                                    className="text-[10px] bg-cyan/10 text-cyan px-1.5 py-0.5 rounded hover:underline">
+                                    🌐 site web
+                                  </a>
+                                )}
+                                {contact.platforms?.includes('website') && !contact.profile_url && (
+                                  <span className="text-[10px] text-muted/40">🌐 website</span>
+                                )}
                               </td>
                               <td className="p-3 text-xs text-muted text-right font-mono">
                                 {contact.followers ? contact.followers.toLocaleString() : '—'}
@@ -493,11 +503,18 @@ export default function AiResearch() {
                             {contact.followers.toLocaleString()} abonnés
                           </span>
                         )}
-                        {contact.platforms?.map(p => (
+                        {contact.platforms?.filter(p => p !== 'website').map(p => (
                           <span key={p} className="text-[10px] bg-violet/10 text-violet-light px-1.5 py-0.5 rounded">
                             {p}
                           </span>
                         ))}
+                        {contact.platforms?.includes('website') && hasUrl && (
+                          <a href={contact.profile_url!} target="_blank" rel="noopener noreferrer"
+                            onClick={e => e.stopPropagation()}
+                            className="text-[10px] bg-cyan/10 text-cyan px-1.5 py-0.5 rounded hover:underline">
+                            🌐 site web
+                          </a>
+                        )}
                       </div>
 
                       {/* Missing data warning bubble */}
