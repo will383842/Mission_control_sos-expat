@@ -365,8 +365,18 @@ class WebScraperService
 
     /**
      * Extract postal addresses from plain text.
+     * Wrapped in try/catch because regex on arbitrary HTML can fail.
      */
     private function extractAddresses(string $text, array &$addresses): void
+    {
+        try {
+            $this->doExtractAddresses($text, $addresses);
+        } catch (\Throwable $e) {
+            Log::debug('WebScraper: address extraction failed', ['error' => $e->getMessage()]);
+        }
+    }
+
+    private function doExtractAddresses(string $text, array &$addresses): void
     {
         // Normalize whitespace for easier matching
         $text = preg_replace('/\s+/', ' ', $text);
@@ -426,12 +436,18 @@ class WebScraperService
             return false;
         }
 
-        // Skip common non-personal addresses
+        // Skip technical/spam/system emails
         $skipPatterns = [
             'noreply@', 'no-reply@', 'mailer-daemon@',
-            'postmaster@', 'webmaster@',
+            'postmaster@', 'webmaster@', 'hostmaster@', 'abuse@',
             '@example.', '@test.', '@localhost',
-            '.png', '.jpg', '.gif', '.svg', '.webp', // image extensions in email = false positive
+            '@sentry', '@wixpress', '@wix.com', '@squarespace',
+            '@wordpress', '@cloudflare', '@google', '@gstatic',
+            '@googleapis', '@jquery', '@bootstrap',
+            '@github', '@sentry.io', '@sentry-next',
+            '.png', '.jpg', '.gif', '.svg', '.webp', '.css', '.js',
+            'donotreply', 'do-not-reply', 'unsubscribe',
+            'tracking@', 'pixel@', 'analytics@',
         ];
 
         foreach ($skipPatterns as $pattern) {

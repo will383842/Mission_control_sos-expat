@@ -119,6 +119,7 @@ class ScrapeContactJob implements ShouldQueue
             }
 
             ActivityLog::create([
+                'user_id'        => $influenceur->created_by, // Use contact's creator as fallback
                 'influenceur_id' => $influenceur->id,
                 'action'         => 'scraper_completed',
                 'details'        => $details,
@@ -136,11 +137,12 @@ class ScrapeContactJob implements ShouldQueue
             $this->markStatus($influenceur, 'failed');
 
             ActivityLog::create([
+                'user_id'        => $influenceur->created_by,
                 'influenceur_id' => $influenceur->id,
                 'action'         => 'scraper_failed',
                 'details'        => [
                     'url'   => $url,
-                    'error' => $e->getMessage(),
+                    'error' => substr($e->getMessage(), 0, 500),
                 ],
                 'contact_type' => $contactType,
             ]);
