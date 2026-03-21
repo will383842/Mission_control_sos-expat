@@ -1,21 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/client';
-import type { ContactType, InfluenceurFilters, Platform, Status, TeamMember } from '../types/influenceur';
-import { CONTACT_TYPE_OPTIONS } from './ContactTypeBadge';
+import type { ContactType, InfluenceurFilters, Platform, PipelineStatus, TeamMember } from '../types/influenceur';
+import { CONTACT_TYPES, PIPELINE_STATUSES, COUNTRIES, LANGUAGES } from '../lib/constants';
 
 interface Props {
   onFilterChange: (filters: InfluenceurFilters) => void;
   onClose?: () => void;
 }
-
-const STATUSES: { value: Status; label: string }[] = [
-  { value: 'prospect', label: 'Prospect' },
-  { value: 'contacted', label: 'Contacté' },
-  { value: 'negotiating', label: 'Négociation' },
-  { value: 'active', label: 'Actif' },
-  { value: 'refused', label: 'Refusé' },
-  { value: 'inactive', label: 'Inactif' },
-];
 
 const PLATFORMS: { value: Platform; label: string }[] = [
   { value: 'instagram', label: 'Instagram' },
@@ -28,6 +19,7 @@ const PLATFORMS: { value: Platform; label: string }[] = [
   { value: 'podcast', label: 'Podcast' },
   { value: 'blog', label: 'Blog' },
   { value: 'newsletter', label: 'Newsletter' },
+  { value: 'website', label: 'Website' },
 ];
 
 interface CoverageCountry { country: string; total: number }
@@ -124,8 +116,8 @@ export default function FilterSidebar({ onFilterChange, onClose }: Props) {
           className="w-full bg-surface2 border border-border rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-violet"
         >
           <option value="">Tous les types</option>
-          {CONTACT_TYPE_OPTIONS.map(t => (
-            <option key={t.value} value={t.value}>{t.label}</option>
+          {CONTACT_TYPES.map(t => (
+            <option key={t.value} value={t.value}>{t.icon} {t.label}</option>
           ))}
         </select>
       </div>
@@ -135,11 +127,11 @@ export default function FilterSidebar({ onFilterChange, onClose }: Props) {
         <p className="text-xs text-muted mb-2 font-medium uppercase tracking-wide">Statut</p>
         <select
           value={filters.status ?? ''}
-          onChange={e => update({ ...filters, status: e.target.value ? e.target.value as Status : undefined })}
+          onChange={e => update({ ...filters, status: e.target.value ? e.target.value as PipelineStatus : undefined })}
           className="w-full bg-surface2 border border-border rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-violet"
         >
           <option value="">Tous les statuts</option>
-          {STATUSES.map(s => (
+          {PIPELINE_STATUSES.map(s => (
             <option key={s.value} value={s.value}>{s.label}</option>
           ))}
         </select>
@@ -161,38 +153,44 @@ export default function FilterSidebar({ onFilterChange, onClose }: Props) {
       </div>
 
       {/* Pays */}
-      {countries.length > 0 && (
-        <div className="mb-4">
-          <p className="text-xs text-muted mb-2 font-medium uppercase tracking-wide">Pays</p>
-          <select
-            value={filters.country ?? ''}
-            onChange={e => update({ ...filters, country: e.target.value || undefined })}
-            className="w-full bg-surface2 border border-border rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-violet"
-          >
-            <option value="">Tous les pays</option>
-            {countries.map(c => (
-              <option key={c.country} value={c.country}>{c.country} ({c.total})</option>
-            ))}
-          </select>
-        </div>
-      )}
+      <div className="mb-4">
+        <p className="text-xs text-muted mb-2 font-medium uppercase tracking-wide">Pays</p>
+        <select
+          value={filters.country ?? ''}
+          onChange={e => update({ ...filters, country: e.target.value || undefined })}
+          className="w-full bg-surface2 border border-border rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-violet"
+        >
+          <option value="">Tous les pays</option>
+          {COUNTRIES.map(c => {
+            const coverage = countries.find(cv => cv.country === c.name);
+            return (
+              <option key={c.code} value={c.name}>
+                {c.flag} {c.name}{coverage ? ` (${coverage.total})` : ''}
+              </option>
+            );
+          })}
+        </select>
+      </div>
 
       {/* Langue */}
-      {languages.length > 0 && (
-        <div className="mb-4">
-          <p className="text-xs text-muted mb-2 font-medium uppercase tracking-wide">Langue</p>
-          <select
-            value={filters.language ?? ''}
-            onChange={e => update({ ...filters, language: e.target.value || undefined })}
-            className="w-full bg-surface2 border border-border rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-violet"
-          >
-            <option value="">Toutes les langues</option>
-            {languages.map(l => (
-              <option key={l.language} value={l.language}>{l.language.toUpperCase()} ({l.total})</option>
-            ))}
-          </select>
-        </div>
-      )}
+      <div className="mb-4">
+        <p className="text-xs text-muted mb-2 font-medium uppercase tracking-wide">Langue</p>
+        <select
+          value={filters.language ?? ''}
+          onChange={e => update({ ...filters, language: e.target.value || undefined })}
+          className="w-full bg-surface2 border border-border rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-violet"
+        >
+          <option value="">Toutes les langues</option>
+          {LANGUAGES.map(l => {
+            const coverage = languages.find(lv => lv.language === l.code);
+            return (
+              <option key={l.code} value={l.code}>
+                {l.flag} {l.label}{coverage ? ` (${coverage.total})` : ''}
+              </option>
+            );
+          })}
+        </select>
+      </div>
 
       {/* Assigné à */}
       {team.length > 0 && (

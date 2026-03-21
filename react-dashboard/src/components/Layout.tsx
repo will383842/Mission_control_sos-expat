@@ -50,7 +50,7 @@ export default function Layout() {
         <div className="p-5 border-b border-border flex items-center justify-between">
           <div>
             <h1 className="font-title text-lg font-bold text-white">Mission Control</h1>
-            <p className="text-[10px] text-muted mt-0.5">SOS-Expat CRM</p>
+            <p className="text-[10px] text-muted mt-0.5">SOS-Expat</p>
           </div>
           <button onClick={() => setSidebarOpen(false)} className="md:hidden text-muted hover:text-white" aria-label="Fermer">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">

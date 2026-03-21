@@ -46,8 +46,8 @@ export default function Login() {
     <div className="min-h-screen bg-bg flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="font-title text-2xl font-bold text-white">Influenceurs Tracker</h1>
-          <p className="text-muted text-sm mt-1">SOS-Expat — Accès équipe</p>
+          <h1 className="font-title text-2xl font-bold text-white">Mission Control</h1>
+          <p className="text-muted text-sm mt-1">SOS-Expat</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-surface border border-border rounded-2xl p-6 space-y-4">

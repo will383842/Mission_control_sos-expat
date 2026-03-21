@@ -4,8 +4,8 @@ import InfluenceurCard from '../components/InfluenceurCard';
 import InfluenceurTable from '../components/InfluenceurTable';
 import FilterSidebar from '../components/FilterSidebar';
 import { AuthContext } from '../hooks/useAuth';
-import type { ContactType, InfluenceurFilters, Platform, Status } from '../types/influenceur';
-import { CONTACT_TYPE_OPTIONS } from '../components/ContactTypeBadge';
+import type { ContactType, InfluenceurFilters, Platform, PipelineStatus } from '../types/influenceur';
+import { CONTACT_TYPES, PIPELINE_STATUSES } from '../lib/constants';
 
 const PLATFORM_OPTIONS: { value: Platform; label: string }[] = [
   { value: 'instagram', label: 'Instagram' },
@@ -18,18 +18,10 @@ const PLATFORM_OPTIONS: { value: Platform; label: string }[] = [
   { value: 'podcast', label: 'Podcast' },
   { value: 'blog', label: 'Blog' },
   { value: 'newsletter', label: 'Newsletter' },
+  { value: 'website', label: 'Website' },
 ];
 
-const STATUS_OPTIONS: { value: Status; label: string }[] = [
-  { value: 'prospect', label: 'Prospect' },
-  { value: 'contacted', label: 'Contacté' },
-  { value: 'negotiating', label: 'Négociation' },
-  { value: 'active', label: 'Actif' },
-  { value: 'refused', label: 'Refusé' },
-  { value: 'inactive', label: 'Inactif' },
-];
-
-const TYPES_WITH_PLATFORMS: ContactType[] = ['influenceur', 'blogger', 'group_admin'];
+const TYPES_WITH_PLATFORMS: ContactType[] = ['influenceur', 'tiktoker', 'youtuber', 'instagramer', 'blogger', 'group_admin'];
 
 type CreateForm = {
   contact_type: ContactType;
@@ -44,15 +36,15 @@ type CreateForm = {
   language: string;
   niche: string;
   profile_url: string;
-  status: Status;
+  status: PipelineStatus;
   notes: string;
 };
 
 const EMPTY_FORM: CreateForm = {
-  contact_type: 'influenceur',
+  contact_type: CONTACT_TYPES[0].value,
   name: '', handle: '', platforms: ['instagram'], primary_platform: 'instagram',
   followers: '', email: '', phone: '', country: '', language: '',
-  niche: '', profile_url: '', status: 'prospect', notes: '',
+  niche: '', profile_url: '', status: 'new', notes: '',
 };
 
 export default function Influenceurs() {
@@ -242,7 +234,7 @@ export default function Influenceurs() {
                   onChange={e => setCreateForm(p => ({ ...p, contact_type: e.target.value as ContactType }))}
                   className={inputClass}
                 >
-                  {CONTACT_TYPE_OPTIONS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  {CONTACT_TYPES.map(t => <option key={t.value} value={t.value}>{t.icon} {t.label}</option>)}
                 </select>
               </div>
               <div>
@@ -270,10 +262,10 @@ export default function Influenceurs() {
                 <label className="block text-xs text-muted mb-1.5">Statut</label>
                 <select
                   value={createForm.status}
-                  onChange={e => setCreateForm(p => ({ ...p, status: e.target.value as Status }))}
+                  onChange={e => setCreateForm(p => ({ ...p, status: e.target.value as PipelineStatus }))}
                   className={inputClass}
                 >
-                  {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                  {PIPELINE_STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                 </select>
               </div>
               <div>
