@@ -20,6 +20,19 @@ class AiPromptService
                 . "\n\nNe propose QUE des contacts qui ne sont PAS dans cette liste.";
         }
 
+        // 1. Try DB prompt first (admin-editable)
+        $dbPrompt = \App\Models\AiPrompt::getFor($contactType);
+        if ($dbPrompt) {
+            // Replace {{PAYS}} and {{LANGUE}} placeholders
+            $prompt = str_replace(
+                ['{{PAYS}}', '{{LANGUE}}', '{{pays}}', '{{langue}}'],
+                [$country, $language, $country, $language],
+                $dbPrompt
+            );
+            return $prompt . $exclusionBlock;
+        }
+
+        // 2. Fallback to hardcoded prompts
         $prompt = match ($contactType) {
             'school' => $this->schoolPrompt($country, $language),
             'erasmus' => $this->erasmusPrompt($country, $language),

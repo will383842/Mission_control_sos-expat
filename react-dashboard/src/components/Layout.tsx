@@ -126,6 +126,9 @@ export default function Layout() {
                   <NavLink to="/admin/types" className={navClass} onClick={handleNavClick}>
                     <span>🏷️</span> Types de Contacts
                   </NavLink>
+                  <NavLink to="/admin/prompts" className={navClass} onClick={handleNavClick}>
+                    <span>🤖</span> Prompts IA
+                  </NavLink>
                   <NavLink to="/equipe" className={navClass} onClick={handleNavClick}>
                     <span>⚙️</span> Équipe
                   </NavLink>

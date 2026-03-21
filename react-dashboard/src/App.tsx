@@ -10,6 +10,7 @@ import InfluenceurDetail from './pages/InfluenceurDetail';
 import ARelancer from './pages/ARelancer';
 import Statistiques from './pages/Statistiques';
 import Equipe from './pages/Equipe';
+import AdminAiPrompts from './pages/AdminAiPrompts';
 import AdminContactTypes from './pages/AdminContactTypes';
 import AiResearch from './pages/AiResearch';
 import Outreach from './pages/Outreach';
@@ -79,6 +80,7 @@ export default function App() {
             {/* Admin */}
             <Route path="admin" element={<AdminRoute><AdminConsole /></AdminRoute>} />
             <Route path="admin/types" element={<AdminRoute><AdminContactTypes /></AdminRoute>} />
+            <Route path="admin/prompts" element={<AdminRoute><AdminAiPrompts /></AdminRoute>} />
             <Route path="equipe" element={<AdminRoute><Equipe /></AdminRoute>} />
           </Route>
         </Routes>

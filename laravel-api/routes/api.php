@@ -3,6 +3,7 @@
 use App\Http\Controllers\AiResearchController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\AiPromptController;
 use App\Http\Controllers\ContactTypeController;
 use App\Http\Controllers\ContentMetricController;
 use App\Http\Controllers\EmailTemplateController;
@@ -157,6 +158,16 @@ Route::middleware('auth:sanctum')->group(function () {
     // Couverture mondiale (admin uniquement)
     Route::get('/stats/coverage', [StatsController::class, 'coverage'])
         ->middleware('role:admin');
+
+    // ============================================================
+    // AI PROMPTS (admin-editable)
+    // ============================================================
+    Route::middleware('role:admin')->prefix('ai-prompts')->group(function () {
+        Route::get('/', [AiPromptController::class, 'index']);
+        Route::get('/{contactType}', [AiPromptController::class, 'show']);
+        Route::put('/', [AiPromptController::class, 'upsert']);
+        Route::delete('/{contactType}', [AiPromptController::class, 'destroy']);
+    });
 
     // ============================================================
     // CONTACT TYPES (dynamic — managed from admin console)
