@@ -159,8 +159,8 @@ class StatsController extends Controller
                 $query = Influenceur::where('created_by', $researcher->id)
                     ->validForObjective();
 
-                if ($objective->country) {
-                    $query->where('country', $objective->country);
+                if (!empty($objective->countries)) {
+                    $query->whereIn('country', $objective->countries);
                 }
                 if ($objective->language) {
                     $query->where('language', $objective->language);
@@ -174,7 +174,8 @@ class StatsController extends Controller
 
                 return [
                     'id'             => $objective->id,
-                    'country'        => $objective->country,
+                    'continent'      => $objective->continent,
+                    'countries'      => $objective->countries,
                     'language'       => $objective->language,
                     'niche'          => $objective->niche,
                     'target_count'   => $objective->target_count,
@@ -202,5 +203,218 @@ class StatsController extends Controller
         });
 
         return response()->json($stats);
+    }
+
+    /**
+     * Admin-only: coverage stats — influenceurs by country, by language, world progress.
+     */
+    public function coverage()
+    {
+        // By country (all influenceurs, not just valid)
+        $byCountry = Influenceur::select('country', DB::raw('count(*) as total'))
+            ->whereNotNull('country')
+            ->where('country', '!=', '')
+            ->groupBy('country')
+            ->orderByDesc('total')
+            ->get()
+            ->map(fn($row) => [
+                'country' => $row->country,
+                'total'   => $row->total,
+            ]);
+
+        // By language
+        $byLanguage = Influenceur::select('language', DB::raw('count(*) as total'))
+            ->whereNotNull('language')
+            ->where('language', '!=', '')
+            ->groupBy('language')
+            ->orderByDesc('total')
+            ->get()
+            ->map(fn($row) => [
+                'language' => $row->language,
+                'total'    => $row->total,
+            ]);
+
+        // Distinct countries covered
+        $countriesCovered = Influenceur::whereNotNull('country')
+            ->where('country', '!=', '')
+            ->distinct('country')
+            ->count('country');
+
+        // Distinct languages covered
+        $languagesCovered = Influenceur::whereNotNull('language')
+            ->where('language', '!=', '')
+            ->distinct('language')
+            ->count('language');
+
+        // Total influenceurs
+        $totalInfluenceurs = Influenceur::count();
+
+        // By continent mapping (server-side grouping of countries into continents)
+        $continentMap = $this->getContinentMap();
+        $byContinent = [];
+        foreach ($byCountry as $row) {
+            $countryLower = mb_strtolower($row['country']);
+            $continent = $continentMap[$countryLower] ?? 'Autre';
+            if (!isset($byContinent[$continent])) {
+                $byContinent[$continent] = ['continent' => $continent, 'total' => 0, 'countries_count' => 0, 'countries' => []];
+            }
+            $byContinent[$continent]['total'] += $row['total'];
+            $byContinent[$continent]['countries_count']++;
+            $byContinent[$continent]['countries'][] = $row;
+        }
+        $byContinent = array_values($byContinent);
+        usort($byContinent, fn($a, $b) => $b['total'] - $a['total']);
+
+        return response()->json([
+            'by_country'        => $byCountry,
+            'by_language'       => $byLanguage,
+            'by_continent'      => $byContinent,
+            'countries_covered'  => $countriesCovered,
+            'languages_covered'  => $languagesCovered,
+            'total_influenceurs' => $totalInfluenceurs,
+        ]);
+    }
+
+    /**
+     * Map lowercase country names to continents.
+     */
+    private function getContinentMap(): array
+    {
+        return [
+            // Europe
+            'france' => 'Europe', 'germany' => 'Europe', 'allemagne' => 'Europe',
+            'uk' => 'Europe', 'united kingdom' => 'Europe', 'england' => 'Europe',
+            'spain' => 'Europe', 'espagne' => 'Europe', 'italy' => 'Europe', 'italie' => 'Europe',
+            'portugal' => 'Europe', 'belgium' => 'Europe', 'belgique' => 'Europe',
+            'netherlands' => 'Europe', 'pays-bas' => 'Europe', 'holland' => 'Europe',
+            'switzerland' => 'Europe', 'suisse' => 'Europe', 'austria' => 'Europe', 'autriche' => 'Europe',
+            'sweden' => 'Europe', 'suède' => 'Europe', 'norway' => 'Europe', 'norvège' => 'Europe',
+            'denmark' => 'Europe', 'danemark' => 'Europe', 'finland' => 'Europe', 'finlande' => 'Europe',
+            'ireland' => 'Europe', 'irlande' => 'Europe', 'poland' => 'Europe', 'pologne' => 'Europe',
+            'czech republic' => 'Europe', 'czechia' => 'Europe', 'république tchèque' => 'Europe',
+            'romania' => 'Europe', 'roumanie' => 'Europe', 'hungary' => 'Europe', 'hongrie' => 'Europe',
+            'greece' => 'Europe', 'grèce' => 'Europe', 'croatia' => 'Europe', 'croatie' => 'Europe',
+            'bulgaria' => 'Europe', 'bulgarie' => 'Europe', 'serbia' => 'Europe', 'serbie' => 'Europe',
+            'slovakia' => 'Europe', 'slovaquie' => 'Europe', 'slovenia' => 'Europe', 'slovénie' => 'Europe',
+            'luxembourg' => 'Europe', 'malta' => 'Europe', 'malte' => 'Europe',
+            'iceland' => 'Europe', 'islande' => 'Europe', 'cyprus' => 'Europe', 'chypre' => 'Europe',
+            'estonia' => 'Europe', 'estonie' => 'Europe', 'latvia' => 'Europe', 'lettonie' => 'Europe',
+            'lithuania' => 'Europe', 'lituanie' => 'Europe', 'ukraine' => 'Europe',
+            'albania' => 'Europe', 'albanie' => 'Europe', 'montenegro' => 'Europe', 'monténégro' => 'Europe',
+            'north macedonia' => 'Europe', 'macédoine du nord' => 'Europe',
+            'bosnia' => 'Europe', 'bosnia and herzegovina' => 'Europe', 'bosnie' => 'Europe',
+            'moldova' => 'Europe', 'moldavie' => 'Europe', 'belarus' => 'Europe', 'biélorussie' => 'Europe',
+            'kosovo' => 'Europe', 'andorra' => 'Europe', 'andorre' => 'Europe',
+            'monaco' => 'Europe', 'liechtenstein' => 'Europe', 'san marino' => 'Europe',
+
+            // Africa
+            'morocco' => 'Afrique', 'maroc' => 'Afrique', 'tunisia' => 'Afrique', 'tunisie' => 'Afrique',
+            'algeria' => 'Afrique', 'algérie' => 'Afrique', 'egypt' => 'Afrique', 'égypte' => 'Afrique',
+            'senegal' => 'Afrique', 'sénégal' => 'Afrique',
+            'ivory coast' => 'Afrique', "cote d'ivoire" => 'Afrique', "côte d'ivoire" => 'Afrique',
+            'cameroon' => 'Afrique', 'cameroun' => 'Afrique',
+            'south africa' => 'Afrique', 'afrique du sud' => 'Afrique',
+            'nigeria' => 'Afrique', 'ghana' => 'Afrique', 'kenya' => 'Afrique',
+            'ethiopia' => 'Afrique', 'éthiopie' => 'Afrique', 'tanzania' => 'Afrique', 'tanzanie' => 'Afrique',
+            'uganda' => 'Afrique', 'ouganda' => 'Afrique', 'mozambique' => 'Afrique',
+            'madagascar' => 'Afrique', 'congo' => 'Afrique', 'rdc' => 'Afrique',
+            'mali' => 'Afrique', 'burkina faso' => 'Afrique', 'niger' => 'Afrique',
+            'guinea' => 'Afrique', 'guinée' => 'Afrique', 'benin' => 'Afrique', 'bénin' => 'Afrique',
+            'togo' => 'Afrique', 'gabon' => 'Afrique', 'rwanda' => 'Afrique',
+            'mauritius' => 'Afrique', 'maurice' => 'Afrique', 'reunion' => 'Afrique', 'réunion' => 'Afrique',
+            'libya' => 'Afrique', 'libye' => 'Afrique', 'sudan' => 'Afrique', 'soudan' => 'Afrique',
+            'zambia' => 'Afrique', 'zambie' => 'Afrique', 'zimbabwe' => 'Afrique',
+            'botswana' => 'Afrique', 'namibia' => 'Afrique', 'namibie' => 'Afrique',
+            'angola' => 'Afrique', 'chad' => 'Afrique', 'tchad' => 'Afrique',
+            'somalia' => 'Afrique', 'somalie' => 'Afrique', 'eritrea' => 'Afrique', 'érythrée' => 'Afrique',
+            'djibouti' => 'Afrique', 'comoros' => 'Afrique', 'comores' => 'Afrique',
+            'mauritania' => 'Afrique', 'mauritanie' => 'Afrique',
+            'sierra leone' => 'Afrique', 'liberia' => 'Afrique',
+            'central african republic' => 'Afrique', 'centrafrique' => 'Afrique',
+            'equatorial guinea' => 'Afrique', 'guinée équatoriale' => 'Afrique',
+            'guinea-bissau' => 'Afrique', 'guinée-bissau' => 'Afrique',
+            'cape verde' => 'Afrique', 'cap-vert' => 'Afrique',
+            'sao tome and principe' => 'Afrique', 'são tomé-et-príncipe' => 'Afrique',
+            'seychelles' => 'Afrique', 'malawi' => 'Afrique', 'lesotho' => 'Afrique',
+            'eswatini' => 'Afrique', 'swaziland' => 'Afrique', 'gambia' => 'Afrique', 'gambie' => 'Afrique',
+            'south sudan' => 'Afrique', 'soudan du sud' => 'Afrique',
+            'democratic republic of the congo' => 'Afrique', 'republic of the congo' => 'Afrique',
+            'burundi' => 'Afrique',
+
+            // Americas
+            'usa' => 'Amériques', 'united states' => 'Amériques', 'états-unis' => 'Amériques',
+            'canada' => 'Amériques', 'mexico' => 'Amériques', 'mexique' => 'Amériques',
+            'brazil' => 'Amériques', 'brésil' => 'Amériques',
+            'argentina' => 'Amériques', 'argentine' => 'Amériques',
+            'colombia' => 'Amériques', 'colombie' => 'Amériques',
+            'chile' => 'Amériques', 'chili' => 'Amériques',
+            'peru' => 'Amériques', 'pérou' => 'Amériques',
+            'venezuela' => 'Amériques', 'ecuador' => 'Amériques', 'équateur' => 'Amériques',
+            'bolivia' => 'Amériques', 'bolivie' => 'Amériques',
+            'paraguay' => 'Amériques', 'uruguay' => 'Amériques',
+            'costa rica' => 'Amériques', 'panama' => 'Amériques',
+            'guatemala' => 'Amériques', 'honduras' => 'Amériques',
+            'el salvador' => 'Amériques', 'nicaragua' => 'Amériques',
+            'cuba' => 'Amériques', 'dominican republic' => 'Amériques', 'république dominicaine' => 'Amériques',
+            'haiti' => 'Amériques', 'haïti' => 'Amériques',
+            'jamaica' => 'Amériques', 'jamaïque' => 'Amériques',
+            'trinidad and tobago' => 'Amériques', 'trinité-et-tobago' => 'Amériques',
+            'puerto rico' => 'Amériques', 'porto rico' => 'Amériques',
+            'guadeloupe' => 'Amériques', 'martinique' => 'Amériques', 'guyane' => 'Amériques',
+            'french guiana' => 'Amériques', 'guyana' => 'Amériques', 'suriname' => 'Amériques',
+            'belize' => 'Amériques', 'bahamas' => 'Amériques', 'barbados' => 'Amériques', 'barbade' => 'Amériques',
+
+            // Asia
+            'japan' => 'Asie', 'japon' => 'Asie', 'china' => 'Asie', 'chine' => 'Asie',
+            'india' => 'Asie', 'inde' => 'Asie', 'south korea' => 'Asie', 'corée du sud' => 'Asie',
+            'thailand' => 'Asie', 'thaïlande' => 'Asie',
+            'vietnam' => 'Asie', 'indonesia' => 'Asie', 'indonésie' => 'Asie',
+            'philippines' => 'Asie', 'malaysia' => 'Asie', 'malaisie' => 'Asie',
+            'singapore' => 'Asie', 'singapour' => 'Asie',
+            'taiwan' => 'Asie', 'taïwan' => 'Asie', 'hong kong' => 'Asie',
+            'bangladesh' => 'Asie', 'pakistan' => 'Asie', 'sri lanka' => 'Asie',
+            'nepal' => 'Asie', 'népal' => 'Asie', 'myanmar' => 'Asie', 'birmanie' => 'Asie',
+            'cambodia' => 'Asie', 'cambodge' => 'Asie', 'laos' => 'Asie',
+            'mongolia' => 'Asie', 'mongolie' => 'Asie',
+            'uzbekistan' => 'Asie', 'ouzbékistan' => 'Asie',
+            'kazakhstan' => 'Asie', 'kyrgyzstan' => 'Asie', 'kirghizistan' => 'Asie',
+            'tajikistan' => 'Asie', 'tadjikistan' => 'Asie',
+            'turkmenistan' => 'Asie', 'turkménistan' => 'Asie',
+            'afghanistan' => 'Asie', 'maldives' => 'Asie', 'bhutan' => 'Asie', 'bhoutan' => 'Asie',
+            'brunei' => 'Asie', 'timor-leste' => 'Asie', 'east timor' => 'Asie',
+            'north korea' => 'Asie', 'corée du nord' => 'Asie',
+
+            // Middle East
+            'turkey' => 'Moyen-Orient', 'turquie' => 'Moyen-Orient',
+            'saudi arabia' => 'Moyen-Orient', 'arabie saoudite' => 'Moyen-Orient',
+            'uae' => 'Moyen-Orient', 'united arab emirates' => 'Moyen-Orient',
+            'émirats arabes unis' => 'Moyen-Orient', 'emirats arabes unis' => 'Moyen-Orient',
+            'qatar' => 'Moyen-Orient', 'kuwait' => 'Moyen-Orient', 'koweït' => 'Moyen-Orient',
+            'bahrain' => 'Moyen-Orient', 'bahreïn' => 'Moyen-Orient',
+            'oman' => 'Moyen-Orient', 'yemen' => 'Moyen-Orient', 'yémen' => 'Moyen-Orient',
+            'iraq' => 'Moyen-Orient', 'irak' => 'Moyen-Orient',
+            'iran' => 'Moyen-Orient', 'israel' => 'Moyen-Orient', 'israël' => 'Moyen-Orient',
+            'palestine' => 'Moyen-Orient', 'jordan' => 'Moyen-Orient', 'jordanie' => 'Moyen-Orient',
+            'lebanon' => 'Moyen-Orient', 'liban' => 'Moyen-Orient',
+            'syria' => 'Moyen-Orient', 'syrie' => 'Moyen-Orient',
+            'armenia' => 'Moyen-Orient', 'arménie' => 'Moyen-Orient',
+            'georgia' => 'Moyen-Orient', 'géorgie' => 'Moyen-Orient',
+            'azerbaijan' => 'Moyen-Orient', 'azerbaïdjan' => 'Moyen-Orient',
+
+            // Oceania
+            'australia' => 'Océanie', 'australie' => 'Océanie',
+            'new zealand' => 'Océanie', 'nouvelle-zélande' => 'Océanie',
+            'fiji' => 'Océanie', 'fidji' => 'Océanie',
+            'papua new guinea' => 'Océanie', 'papouasie-nouvelle-guinée' => 'Océanie',
+            'new caledonia' => 'Océanie', 'nouvelle-calédonie' => 'Océanie',
+            'french polynesia' => 'Océanie', 'polynésie française' => 'Océanie',
+            'samoa' => 'Océanie', 'tonga' => 'Océanie', 'vanuatu' => 'Océanie',
+            'guam' => 'Océanie', 'palau' => 'Océanie', 'micronesia' => 'Océanie',
+            'marshall islands' => 'Océanie', 'kiribati' => 'Océanie', 'tuvalu' => 'Océanie',
+            'nauru' => 'Océanie', 'solomon islands' => 'Océanie',
+
+            // Russia (transcontinental)
+            'russia' => 'Europe', 'russie' => 'Europe',
+        ];
     }
 }

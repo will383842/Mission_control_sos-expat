@@ -132,7 +132,8 @@ export interface ReminderWithInfluenceur extends Reminder {
 export interface Objective {
   id: number;
   user_id: number;
-  country: string | null;
+  continent: string | null;
+  countries: string[] | null;
   language: string | null;
   niche: string | null;
   target_count: number;

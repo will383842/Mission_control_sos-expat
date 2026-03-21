@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Objective extends Model
 {
     protected $fillable = [
-        'user_id', 'country', 'language', 'niche',
+        'user_id', 'continent', 'countries', 'language', 'niche',
         'target_count', 'deadline', 'is_active', 'created_by',
     ];
 
@@ -16,6 +16,7 @@ class Objective extends Model
         'deadline'     => 'date',
         'is_active'    => 'boolean',
         'target_count' => 'integer',
+        'countries'    => 'array',
     ];
 
     public function user()

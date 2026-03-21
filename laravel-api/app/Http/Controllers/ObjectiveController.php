@@ -39,7 +39,9 @@ class ObjectiveController extends Controller
     {
         $data = $request->validate([
             'user_id'      => 'required|exists:users,id',
-            'country'      => 'nullable|string|max:100',
+            'continent'    => 'nullable|string|max:50',
+            'countries'    => 'nullable|array',
+            'countries.*'  => 'string|max:100',
             'language'     => 'nullable|string|max:10',
             'niche'        => 'nullable|string|max:255',
             'target_count' => 'required|integer|min:1',
@@ -47,6 +49,11 @@ class ObjectiveController extends Controller
         ]);
 
         $data['created_by'] = $request->user()->id;
+
+        // Ensure countries is stored as JSON (null if empty array)
+        if (isset($data['countries']) && empty($data['countries'])) {
+            $data['countries'] = null;
+        }
 
         $objective = Objective::create($data);
 
@@ -59,13 +66,19 @@ class ObjectiveController extends Controller
     public function update(Request $request, Objective $objective)
     {
         $data = $request->validate([
-            'country'      => 'nullable|string|max:100',
+            'continent'    => 'nullable|string|max:50',
+            'countries'    => 'nullable|array',
+            'countries.*'  => 'string|max:100',
             'language'     => 'nullable|string|max:10',
             'niche'        => 'nullable|string|max:255',
             'target_count' => 'sometimes|integer|min:1',
             'deadline'     => 'sometimes|date|after:today',
             'is_active'    => 'sometimes|boolean',
         ]);
+
+        if (isset($data['countries']) && empty($data['countries'])) {
+            $data['countries'] = null;
+        }
 
         $objective->update($data);
 
@@ -120,9 +133,9 @@ class ObjectiveController extends Controller
             $query = Influenceur::where('created_by', $userId)
                 ->validForObjective();
 
-            // Apply filters if set on the objective
-            if ($objective->country) {
-                $query->where('country', $objective->country);
+            // Apply filters — countries is now an array
+            if (!empty($objective->countries)) {
+                $query->whereIn('country', $objective->countries);
             }
             if ($objective->language) {
                 $query->where('language', $objective->language);
@@ -142,7 +155,8 @@ class ObjectiveController extends Controller
 
             return [
                 'id'             => $objective->id,
-                'country'        => $objective->country,
+                'continent'      => $objective->continent,
+                'countries'      => $objective->countries,
                 'language'       => $objective->language,
                 'niche'          => $objective->niche,
                 'target_count'   => $objective->target_count,

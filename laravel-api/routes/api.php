@@ -82,6 +82,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/researchers/stats', [StatsController::class, 'researcherStats'])
         ->middleware('role:admin');
 
+    // Couverture mondiale (admin uniquement)
+    Route::get('/stats/coverage', [StatsController::class, 'coverage'])
+        ->middleware('role:admin');
+
     // Équipe (admin uniquement)
     Route::middleware('role:admin')->group(function () {
         Route::get('/team', [TeamController::class, 'index']);

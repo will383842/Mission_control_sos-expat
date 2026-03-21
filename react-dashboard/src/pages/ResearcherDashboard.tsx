@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import api from '../api/client';
 import { AuthContext } from '../hooks/useAuth';
 import type { ObjectiveProgress, ObjectiveWithProgress, Influenceur } from '../types/influenceur';
+import { getCountryFlag } from '../data/countries';
 
 const PLATFORM_COLORS: Record<string, string> = {
   instagram: 'text-pink-400',
@@ -16,22 +17,6 @@ const PLATFORM_COLORS: Record<string, string> = {
   blog: 'text-amber',
   newsletter: 'text-green-400',
 };
-
-const COUNTRY_FLAGS: Record<string, string> = {
-  france: '🇫🇷', uk: '🇬🇧', 'united kingdom': '🇬🇧', usa: '🇺🇸', 'united states': '🇺🇸',
-  germany: '🇩🇪', allemagne: '🇩🇪', spain: '🇪🇸', espagne: '🇪🇸', italy: '🇮🇹', italie: '🇮🇹',
-  portugal: '🇵🇹', belgium: '🇧🇪', belgique: '🇧🇪', netherlands: '🇳🇱', 'pays-bas': '🇳🇱',
-  switzerland: '🇨🇭', suisse: '🇨🇭', canada: '🇨🇦', brazil: '🇧🇷', bresil: '🇧🇷',
-  morocco: '🇲🇦', maroc: '🇲🇦', tunisia: '🇹🇳', tunisie: '🇹🇳', senegal: '🇸🇳',
-  'ivory coast': '🇨🇮', "cote d'ivoire": '🇨🇮', cameroon: '🇨🇲', cameroun: '🇨🇲',
-  japan: '🇯🇵', japon: '🇯🇵', australia: '🇦🇺', australie: '🇦🇺', india: '🇮🇳', inde: '🇮🇳',
-  mexico: '🇲🇽', mexique: '🇲🇽', colombia: '🇨🇴', colombie: '🇨🇴', argentina: '🇦🇷', argentine: '🇦🇷',
-};
-
-function getCountryFlag(country: string | null): string {
-  if (!country) return '🌍';
-  return COUNTRY_FLAGS[country.toLowerCase()] ?? '🏳️';
-}
 
 function getProgressColor(percentage: number, daysRemaining: number): string {
   if (daysRemaining < 0) return 'text-gray-500';
@@ -201,8 +186,16 @@ export default function ResearcherDashboard() {
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <p className="text-white font-medium flex items-center gap-2">
-                        <span className="text-lg">{getCountryFlag(obj.country)}</span>
-                        {obj.country ?? 'Tous pays'}
+                        <span className="text-lg">
+                          {obj.countries && obj.countries.length > 0
+                            ? getCountryFlag(obj.countries[0])
+                            : '🌍'}
+                        </span>
+                        {obj.countries && obj.countries.length > 0
+                          ? (obj.countries.length <= 2
+                            ? obj.countries.join(', ')
+                            : `${obj.countries[0]} +${obj.countries.length - 1}`)
+                          : 'Tous pays'}
                       </p>
                       <p className="text-xs text-muted mt-0.5">
                         {obj.language ?? 'Toutes langues'} {obj.niche ? `/ ${obj.niche}` : '/ Tous types'}
