@@ -20,6 +20,7 @@ class Influenceur extends Model
         'status', 'deal_value_cents', 'deal_probability', 'expected_close_date',
         'assigned_to', 'reminder_days', 'reminder_active', 'last_contact_at',
         'partnership_date', 'notes', 'tags', 'score', 'source', 'created_by',
+        'scraped_at', 'scraper_status', 'scraped_emails', 'scraped_phones', 'scraped_social',
     ];
 
     protected $casts = [
@@ -34,6 +35,10 @@ class Influenceur extends Model
         'deal_value_cents'    => 'integer',
         'deal_probability'    => 'integer',
         'score'               => 'integer',
+        'scraped_at'          => 'datetime',
+        'scraped_emails'      => 'array',
+        'scraped_phones'      => 'array',
+        'scraped_social'      => 'array',
     ];
 
     public function assignedToUser()
