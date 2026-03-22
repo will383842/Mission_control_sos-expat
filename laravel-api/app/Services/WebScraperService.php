@@ -93,6 +93,7 @@ class WebScraperService
             'contact_persons'  => [],
             'linked_contacts'  => [],  // name ↔ email ↔ phone ↔ role associations
             'suggested_emails' => [],  // Guessed from domain MX when scraping finds nothing
+            'detected_language' => null, // Detected from HTML lang attr + content analysis
             'scraped_pages'    => [],
             'success'          => false,
             'error'            => null,
@@ -524,6 +525,11 @@ class WebScraperService
 
         // Extract linked contacts: associate names ↔ emails ↔ phones ↔ roles
         $this->extractLinkedContacts($text, $result['linked_contacts']);
+
+        // Detect language (only on first page, where lang= attribute is most reliable)
+        if ($result['detected_language'] === null) {
+            $result['detected_language'] = $this->detectLanguage($html, $text);
+        }
     }
 
     /**
@@ -1088,6 +1094,59 @@ class WebScraperService
         }
 
         return $persons;
+    }
+
+    /**
+     * Detect the primary language of a page.
+     * Uses HTML lang attribute first, then content analysis as fallback.
+     *
+     * @return string|null ISO 639-1 code (fr, en, de, etc.) or null if unknown
+     */
+    private function detectLanguage(string $html, string $text): ?string
+    {
+        // 1. HTML lang attribute (most reliable)
+        if (preg_match('/<html[^>]*\slang=["\']([a-z]{2})/i', $html, $match)) {
+            return strtolower($match[1]);
+        }
+
+        // 2. Content-Language meta tag
+        if (preg_match('/<meta[^>]*http-equiv=["\']content-language["\'][^>]*content=["\']([a-z]{2})/i', $html, $match)) {
+            return strtolower($match[1]);
+        }
+        if (preg_match('/<meta[^>]*content=["\']([a-z]{2})["\'][^>]*http-equiv=["\']content-language["\']/', $html, $match)) {
+            return strtolower($match[1]);
+        }
+
+        // 3. Content analysis — count French vs English indicator words
+        $textLower = strtolower($text);
+
+        $frenchWords = ['école', 'lycée', 'collège', 'maternelle', 'primaire', 'inscriptions',
+            'bienvenue', 'accueil', 'notre', 'établissement', 'enseignement', 'pédagogie',
+            'parents', 'élèves', 'nous contacter', 'actualités', 'rentrée', 'secrétariat',
+            'cantine', 'horaires', 'directeur', 'directrice', 'professeurs'];
+
+        $englishWords = ['school', 'welcome', 'admission', 'enrolment', 'enrollment',
+            'curriculum', 'campus', 'about us', 'contact us', 'our school', 'students',
+            'teachers', 'principal', 'headmaster', 'facilities', 'learning', 'tuition'];
+
+        $frCount = 0;
+        $enCount = 0;
+
+        foreach ($frenchWords as $w) {
+            $frCount += substr_count($textLower, $w);
+        }
+        foreach ($englishWords as $w) {
+            $enCount += substr_count($textLower, $w);
+        }
+
+        // Need at least 3 matches to be confident
+        if ($frCount >= 3 && $frCount > $enCount * 1.5) return 'fr';
+        if ($enCount >= 3 && $enCount > $frCount * 1.5) return 'en';
+
+        // If both present equally, likely bilingual — still useful
+        if ($frCount >= 2 && $enCount >= 2) return 'fr'; // Bilingual with French = still relevant
+
+        return null;
     }
 
     /**

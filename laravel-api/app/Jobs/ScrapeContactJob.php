@@ -60,19 +60,37 @@ class ScrapeContactJob implements ShouldQueue
         // Determine which URL to scrape
         $url = $influenceur->website_url ?: $influenceur->profile_url;
 
-        // If no URL at all, try to discover the website via DuckDuckGo search
-        if (empty($url) && !empty($influenceur->name)) {
+        // Detect directory/aggregator URLs that are NOT the actual website
+        // These happen when AI research returns aefe.fr, lepetitjournal.com, etc.
+        $directoryDomains = [
+            'aefe.fr', 'aefe.gouv.fr', 'mlfmonde.org',
+            'lepetitjournal.com', 'thailandee.com', 'vivre-en-',
+            'odyssey.education', 'education.gouv.fr', 'wikipedia.org',
+        ];
+        $isDirectory = false;
+        if (!empty($url)) {
+            $urlLower = strtolower($url);
+            foreach ($directoryDomains as $dd) {
+                if (str_contains($urlLower, $dd)) {
+                    $isDirectory = true;
+                    break;
+                }
+            }
+        }
+
+        // If no URL or directory URL, discover the real website via DuckDuckGo
+        if ((empty($url) || $isDirectory) && !empty($influenceur->name)) {
             $discoveredUrl = $scraper->discoverWebsiteUrl(
                 $influenceur->name,
                 $influenceur->country
             );
             if ($discoveredUrl) {
                 $url = $discoveredUrl;
-                // Save discovered URL for future use
                 $influenceur->update(['website_url' => $discoveredUrl]);
-                Log::info('ScrapeContactJob: discovered website URL via search', [
-                    'id'  => $influenceur->id,
-                    'url' => $discoveredUrl,
+                Log::info('ScrapeContactJob: discovered real website URL via DuckDuckGo', [
+                    'id'       => $influenceur->id,
+                    'url'      => $discoveredUrl,
+                    'replaced' => $isDirectory ? 'directory URL' : 'empty',
                 ]);
             }
         }
@@ -109,6 +127,11 @@ class ScrapeContactJob implements ShouldQueue
                 $socialData['_suggested_emails'] = $result['suggested_emails'];
             }
 
+            // Store detected language in social data for frontend display
+            if (!empty($result['detected_language'])) {
+                $socialData['_detected_language'] = $result['detected_language'];
+            }
+
             // Update the influenceur with scraped data
             $updateData = [
                 'scraped_at'        => now(),
@@ -118,6 +141,24 @@ class ScrapeContactJob implements ShouldQueue
                 'scraped_social'    => !empty($socialData) ? $socialData : null,
                 'scraped_addresses' => $result['addresses'] ?: null,
             ];
+
+            // Update language if detected and different from current
+            // This helps identify non-francophone contacts imported by mistake
+            if (!empty($result['detected_language'])) {
+                $detectedLang = $result['detected_language'];
+                $currentLang = $influenceur->language;
+
+                // Only update if: no language set, or detected language differs
+                if (empty($currentLang) || $currentLang !== $detectedLang) {
+                    $updateData['language'] = $detectedLang;
+                    Log::info('ScrapeContactJob: language updated from site detection', [
+                        'id'       => $influenceur->id,
+                        'name'     => $influenceur->name,
+                        'previous' => $currentLang,
+                        'detected' => $detectedLang,
+                    ]);
+                }
+            }
 
             // Safety: if too many emails found (>10), this is probably an aggregator page
             // Keep the data but don't auto-fill the primary email
