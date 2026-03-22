@@ -178,13 +178,7 @@ class WebScraperService
                 }
             }
 
-            // Deduplicate results
-            $result['emails']          = array_values(array_unique($result['emails']));
-            $result['phones']          = array_values(array_unique($result['phones']));
-            $result['social_links']    = $this->deduplicateSocialLinks($result['social_links']);
-            $result['addresses']       = array_values(array_unique($result['addresses']));
-            $result['contact_persons'] = array_values(array_unique($result['contact_persons']));
-            $result['success']         = true;
+            $result['success'] = true;
 
         } catch (\Throwable $e) {
             $result['error'] = $e->getMessage();
@@ -194,7 +188,40 @@ class WebScraperService
             ]);
         }
 
+        // ALWAYS deduplicate + clean (even after catch)
+        $result['emails'] = $this->cleanAndDeduplicateEmails($result['emails']);
+        $result['phones'] = array_values(array_unique($result['phones']));
+        $result['social_links'] = $this->deduplicateSocialLinks($result['social_links']);
+        $result['addresses'] = array_values(array_unique($result['addresses']));
+        $result['contact_persons'] = array_values(array_unique($result['contact_persons']));
+
         return $result;
+    }
+
+    /**
+     * Clean and deduplicate emails — removes u003e prefix, trims, lowercases, deduplicates.
+     */
+    private function cleanAndDeduplicateEmails(array $emails): array
+    {
+        $cleaned = [];
+        $seen = [];
+
+        foreach ($emails as $email) {
+            // Fix unicode escapes (u003e = ">", common in JSON-in-HTML)
+            $email = preg_replace('/u003[ce]/i', '', $email);
+            $email = strtolower(trim($email, " \t\n\r\0\x0B<>"));
+
+            // Re-validate after cleaning
+            if (!$this->isValidEmail($email)) continue;
+
+            // Skip if already seen
+            if (isset($seen[$email])) continue;
+            $seen[$email] = true;
+
+            $cleaned[] = $email;
+        }
+
+        return $cleaned;
     }
 
     /**

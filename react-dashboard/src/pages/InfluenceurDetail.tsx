@@ -41,9 +41,20 @@ function classifyEmail(email: string): EmailRole {
   return 'Autre';
 }
 
-function groupEmailsByRole(emails: string[]): { role: EmailRole; emails: string[] }[] {
+function groupEmailsByRole(rawEmails: string[]): { role: EmailRole; emails: string[] }[] {
+  // 1. Clean: remove u003e prefix, trim, lowercase, deduplicate
+  const seen = new Set<string>();
+  const cleanEmails: string[] = [];
+  for (const raw of rawEmails) {
+    const email = raw.replace(/u003[ce]/gi, '').toLowerCase().trim();
+    if (!email.includes('@') || seen.has(email)) continue;
+    seen.add(email);
+    cleanEmails.push(email);
+  }
+
+  // 2. Group by role
   const map = new Map<EmailRole, string[]>();
-  for (const email of emails) {
+  for (const email of cleanEmails) {
     const role = classifyEmail(email);
     if (!map.has(role)) map.set(role, []);
     map.get(role)!.push(email);
@@ -427,7 +438,7 @@ export default function InfluenceurDetail() {
             <p className="text-muted text-xs mb-1.5 uppercase tracking-wider">Téléphones</p>
             {influenceur.scraped_phones && influenceur.scraped_phones.length > 0 ? (
               <div className="flex flex-wrap gap-3">
-                {influenceur.scraped_phones.map((ph) => (
+                {[...new Set(influenceur.scraped_phones)].map((ph) => (
                   <span key={ph} className="text-sm flex items-center gap-1.5">
                     {ph === influenceur.phone && <span title="Téléphone principal">{'✅'}</span>}
                     <a href={`tel:${ph}`} className="text-cyan hover:underline">{ph}</a>
