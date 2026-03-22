@@ -66,26 +66,44 @@ class AiPromptService
     private function schoolPrompt(string $country, string $lang): string
     {
         return <<<PROMPT
-Cherche sur le web TOUTES les écoles françaises et internationales francophones en {$country}.
+MISSION : Trouver la liste EXHAUSTIVE et COMPLÈTE de TOUTES les écoles françaises, francophones et bilingues français en {$country}. Je veux un MINIMUM de 10-20 résultats. Ne t'arrête pas aux 5 premiers.
 
-Mots-clés à utiliser :
+CATÉGORIES À CHERCHER (toutes) :
+1. Écoles du réseau AEFE (homologuées) — cherche sur aefe.fr/fr/etablissements la liste pour {$country}
+2. Écoles du réseau MLF (Mission Laïque Française) — mlfmonde.org
+3. Écoles partenaires AEFE
+4. Écoles françaises privées hors réseau
+5. Sections françaises dans des écoles internationales
+6. Écoles bilingues français-anglais ou français-langue locale
+7. Crèches et maternelles francophones
+8. Alliances françaises avec programmes scolaires
+9. Instituts français avec cours pour enfants
+
+MOTS-CLÉS de recherche à utiliser :
 - "lycée français {$country}"
 - "école française {$country}"
-- "école AEFE {$country}"
-- "école internationale francophone {$country}"
+- "AEFE {$country}" et chercher sur aefe.fr la liste complète
+- "MLF {$country}" et chercher sur mlfmonde.org
+- "école francophone {$country}"
 - "french school {$country}"
-- site:aefe.fr {$country}
+- "école bilingue français {$country}"
+- "bilingual french school {$country}"
+- "école internationale francophone {$country}"
+- "crèche française {$country}"
+- "French kindergarten {$country}"
 - "établissement homologué {$country}"
+- "section française {$country}"
+- "alliance française {$country} cours enfants"
 
-Cherche aussi sur le site officiel de l'AEFE (aefe.fr) la liste des établissements en {$country}.
+IMPORTANT : Cherche dans TOUTES les villes du pays, pas seulement la capitale. Inclus aussi les petites structures.
 
-Pour chaque école trouvée, donne :
-NOM: nom complet de l'école
-EMAIL: email trouvé sur le site de l'école (page contact)
-TEL: téléphone trouvé sur le site
-URL: site web officiel de l'école
-DIRECTEUR: nom du directeur si mentionné sur le site
-SOURCE: URL de la page où tu as trouvé ces informations
+Pour CHAQUE école trouvée, donne :
+NOM: nom complet officiel
+EMAIL: email trouvé sur leur site web (page contact, admissions, secrétariat)
+TEL: téléphone avec indicatif international
+URL: site web officiel (PAS aefe.fr ou mlfmonde.org, mais le VRAI site de l'école)
+DIRECTEUR: nom du directeur/proviseur si disponible
+SOURCE: URL où tu as trouvé l'info
 PROMPT;
     }
 

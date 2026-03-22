@@ -202,7 +202,7 @@ class ProcessAutoCampaignJob implements ShouldQueue
         // STEP 1: Perplexity — Real web search
         // ============================================================
         if ($perplexityService->isConfigured()) {
-            $deepPrompt = $prompt . "\n\nCherche en profondeur : pages 'Contact', 'About', profils sociaux avec email visible. Priorise les contacts avec email professionnel public.";
+            $deepPrompt = $prompt . "\n\nCette deuxième recherche doit trouver des résultats COMPLÉMENTAIRES que la première aurait manqués. Cherche dans des sources différentes : annuaires d'expatriés, forums, groupes Facebook, blogs d'expats, pages jaunes locales, Google Maps. Visite les pages Contact de chaque site trouvé pour extraire emails et téléphones.";
 
             $perplexityResults = $perplexityService->searchParallel($prompt, $deepPrompt, $language);
             $totalTokens += $perplexityResults['tokens'];

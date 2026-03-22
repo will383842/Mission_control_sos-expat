@@ -93,7 +93,7 @@ class RunAiResearchJob implements ShouldQueue
                 Log::info('AI Research: Using Perplexity + Claude pipeline', ['session' => $session->id]);
 
                 // Two Perplexity searches in parallel
-                $deepPrompt = $prompt . "\n\nCherche en profondeur : pages 'Contact', 'About', profils sociaux avec email visible. Priorise les contacts avec email professionnel public.";
+                $deepPrompt = $prompt . "\n\nCette deuxième recherche doit trouver des résultats COMPLÉMENTAIRES que la première aurait manqués. Cherche dans des sources différentes : annuaires d'expatriés, forums, groupes Facebook, blogs d'expats, pages jaunes locales, Google Maps. Visite les pages Contact de chaque site trouvé pour extraire emails et téléphones.";
 
                 $perplexityResults = $perplexityService->searchParallel($prompt, $deepPrompt, $session->language);
                 $totalTokens += $perplexityResults['tokens'];
