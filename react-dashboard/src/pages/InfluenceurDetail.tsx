@@ -182,9 +182,9 @@ export default function InfluenceurDetail() {
     <div className="p-4 md:p-6 text-center text-muted">Influenceur introuvable.</div>
   );
 
-  // Extract linked contacts (name ↔ email ↔ phone ↔ role) and suggested emails from scraped_social
+  // Extract linked contacts (name ↔ email ↔ phone ↔ role) and contact form URL from scraped_social
   const social = influenceur.scraped_social as Record<string, unknown> | null;
-  const suggestedEmails = (social?.['_suggested_emails'] as string[] | undefined) ?? [];
+  const contactFormUrl = (social?.['_contact_form_url'] as string | undefined) ?? null;
   const linkedContacts = (social?._linked_contacts ?? social?.contact_persons ?? []) as
     { name: string | null; role: string | null; email: string | null; phone: string | null }[];
   // Deduplicate by email
@@ -439,7 +439,15 @@ export default function InfluenceurDetail() {
                 ))}
               </div>
             ) : influenceur.scraped_at ? (
-              <p className="text-red-400/70 text-sm">Aucun email trouvé sur le site</p>
+              <div className="space-y-2">
+                <p className="text-red-400/70 text-sm">Aucun email trouvé sur le site</p>
+                {contactFormUrl && (
+                  <a href={contactFormUrl} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20 rounded-lg text-sm transition-colors">
+                    {'📝'} Formulaire de contact disponible
+                  </a>
+                )}
+              </div>
             ) : (
               <p className="text-muted text-sm">Non scrapé</p>
             )}

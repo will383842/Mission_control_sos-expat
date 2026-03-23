@@ -147,6 +147,11 @@ class ScrapeContactJob implements ShouldQueue
                 $socialData['_detected_language'] = $result['detected_language'];
             }
 
+            // Store contact form URL if found
+            if (!empty($result['contact_form_url'])) {
+                $socialData['_contact_form_url'] = $result['contact_form_url'];
+            }
+
             // Update the influenceur with scraped data
             $updateData = [
                 'scraped_at'        => now(),

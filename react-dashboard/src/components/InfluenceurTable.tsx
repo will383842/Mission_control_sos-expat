@@ -89,7 +89,16 @@ export default function InfluenceurTable({ influenceurs }: Props) {
                   })()}
                 </td>
                 <td className="px-4 py-3 text-sm whitespace-nowrap">
-                  {inf.email ? <a href={`mailto:${inf.email}`} className="text-cyan hover:underline text-xs">{inf.email}</a> : <span className="text-red-400/50 text-xs">manquant</span>}
+                  {inf.email ? (
+                    <a href={`mailto:${inf.email}`} className="text-cyan hover:underline text-xs">{inf.email}</a>
+                  ) : (() => {
+                    const formUrl = (inf.scraped_social as Record<string, unknown> | null)?.['_contact_form_url'] as string | undefined;
+                    return formUrl ? (
+                      <a href={formUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400/80 hover:text-blue-400 text-xs">{'📝'} formulaire</a>
+                    ) : (
+                      <span className="text-red-400/50 text-xs">manquant</span>
+                    );
+                  })()}
                 </td>
                 <td className="px-4 py-3 text-sm whitespace-nowrap">
                   {inf.phone ? <a href={`tel:${inf.phone}`} className="text-muted text-xs">{inf.phone}</a> : <span className="text-muted/30 text-xs">—</span>}

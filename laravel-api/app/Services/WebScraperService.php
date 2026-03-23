@@ -182,8 +182,9 @@ class WebScraperService
             'addresses'        => [],
             'contact_persons'  => [],
             'linked_contacts'  => [],  // name ↔ email ↔ phone ↔ role associations
-            'suggested_emails' => [],  // Guessed from domain MX when scraping finds nothing
-            'detected_language' => null, // Detected from HTML lang attr + content analysis
+            'suggested_emails' => [],
+            'contact_form_url' => null, // URL of the contact form page (if found)
+            'detected_language' => null,
             'scraped_pages'    => [],
             'success'          => false,
             'error'            => null,
@@ -216,11 +217,20 @@ class WebScraperService
                 return $result;
             }
 
+            // Helper: extract from a page + detect contact forms
+            $processPage = function (string $pageHtml, string $pageUrl) use (&$result) {
+                $this->extractFromHtml($pageHtml, $result);
+                // Detect contact form on this page
+                if ($result['contact_form_url'] === null && $this->hasContactForm($pageHtml)) {
+                    $result['contact_form_url'] = $pageUrl;
+                }
+            };
+
             // 1. Scrape the main page (with HTTPS→HTTP fallback)
             $mainHtml = $this->fetchPageWithFallback($url, $baseUrl);
             if ($mainHtml !== null) {
                 $result['scraped_pages'][] = $url;
-                $this->extractFromHtml($mainHtml, $result);
+                $processPage($mainHtml, $url);
             }
 
             // Also try the URL without /fr/ or /en/ prefix if present
@@ -229,7 +239,7 @@ class WebScraperService
                 $altHtml = $this->fetchPageWithFallback($altUrl, $baseUrl);
                 if ($altHtml !== null && count($result['scraped_pages']) < self::MAX_PAGES) {
                     $result['scraped_pages'][] = $altUrl;
-                    $this->extractFromHtml($altHtml, $result);
+                    $processPage($altHtml, $altUrl);
                 }
             }
 
@@ -259,7 +269,7 @@ class WebScraperService
                 if ($html !== null) {
                     $result['scraped_pages'][] = $pageUrl;
                     $scrapedNormalized[] = $normalized;
-                    $this->extractFromHtml($html, $result);
+                    $processPage($html, $pageUrl);
                 }
             }
 
@@ -283,7 +293,7 @@ class WebScraperService
                 if ($html !== null) {
                     $result['scraped_pages'][] = $pageUrl;
                     $scrapedNormalized[] = $normalized;
-                    $this->extractFromHtml($html, $result);
+                    $processPage($html, $pageUrl);
                 }
             }
 
@@ -654,6 +664,8 @@ class WebScraperService
 
         // 10. Extract tel: links (href="tel:+123456789")
         $this->extractTelLinks($html, $result['phones']);
+
+        // 11. Detect contact forms — done in scrape() after each page
 
         // Detect language (only on first page, where lang= attribute is most reliable)
         if ($result['detected_language'] === null) {
@@ -1941,6 +1953,81 @@ class WebScraperService
                     $socialLinks['whatsapp'] = $socialLinks['whatsapp'] ?? 'https://wa.me/' . $number;
                 }
             }
+        }
+    }
+
+    /**
+     * Detect if an HTML page contains a contact form.
+     * Looks for <form> elements with email/message input fields.
+     */
+    private function hasContactForm(string $html): bool
+    {
+        try {
+            // Quick check: must have a <form> tag
+            if (!str_contains(strtolower($html), '<form')) {
+                return false;
+            }
+
+            $dom = new \DOMDocument();
+            @$dom->loadHTML('<?xml encoding="utf-8"?>' . $html, LIBXML_NOERROR | LIBXML_NOWARNING);
+            $xpath = new \DOMXPath($dom);
+
+            $forms = $xpath->query('//form');
+            if ($forms->length === 0) return false;
+
+            foreach ($forms as $form) {
+                $formHtml = strtolower($dom->saveHTML($form));
+
+                // Must have at least an email-like input OR a textarea (message field)
+                $hasEmailField = str_contains($formHtml, 'type="email"')
+                    || str_contains($formHtml, 'name="email"')
+                    || str_contains($formHtml, 'name="e-mail"')
+                    || str_contains($formHtml, 'name="mail"')
+                    || str_contains($formHtml, 'id="email"');
+
+                $hasMessageField = str_contains($formHtml, '<textarea')
+                    || str_contains($formHtml, 'name="message"')
+                    || str_contains($formHtml, 'name="comments"')
+                    || str_contains($formHtml, 'name="body"')
+                    || str_contains($formHtml, 'name="content"');
+
+                $hasNameField = str_contains($formHtml, 'name="name"')
+                    || str_contains($formHtml, 'name="nom"')
+                    || str_contains($formHtml, 'name="fullname"')
+                    || str_contains($formHtml, 'name="first_name"')
+                    || str_contains($formHtml, 'name="prenom"');
+
+                $hasSubmit = str_contains($formHtml, 'type="submit"')
+                    || str_contains($formHtml, '<button');
+
+                // Skip search forms, login forms, newsletter forms
+                $isSearchForm = str_contains($formHtml, 'name="q"')
+                    || str_contains($formHtml, 'name="search"')
+                    || str_contains($formHtml, 'role="search"')
+                    || str_contains($formHtml, 'type="search"');
+
+                $isLoginForm = str_contains($formHtml, 'type="password"')
+                    || str_contains($formHtml, 'name="password"');
+
+                $isNewsletterForm = (str_contains($formHtml, 'type="email"') || str_contains($formHtml, 'name="email"'))
+                    && !$hasMessageField && !$hasNameField;
+
+                if ($isSearchForm || $isLoginForm || $isNewsletterForm) {
+                    continue;
+                }
+
+                // Contact form = has email/name field + message field, OR has 3+ relevant fields
+                if (($hasEmailField || $hasNameField) && $hasMessageField) {
+                    return true;
+                }
+                if ($hasEmailField && $hasNameField && $hasSubmit) {
+                    return true;
+                }
+            }
+
+            return false;
+        } catch (\Throwable $e) {
+            return false;
         }
     }
 
