@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import api from '../api/client';
+import { COUNTRIES } from '../lib/constants';
 
 // ============================================================
 // Types
@@ -292,34 +293,65 @@ export default function AutoCampaignPage() {
             </button>
           </div>
 
-          {/* Countries by region */}
+          {/* Countries: presets by region + all countries */}
           <div>
             <label className="block text-sm text-muted mb-2">Pays ({formCountries.length} sélectionnés)</label>
-            {Object.entries(config.country_presets).map(([region, countries]) => (
-              <div key={region} className="mb-3">
-                <button
-                  onClick={() => selectRegion(region)}
-                  className="text-sm font-medium text-violet hover:underline mb-1"
-                >
-                  {REGION_LABELS[region] || region} ({countries.length})
-                </button>
-                <div className="flex flex-wrap gap-1.5 ml-2">
-                  {countries.map(c => (
-                    <button
-                      key={c}
-                      onClick={() => toggleArrayItem(formCountries, c, setFormCountries)}
-                      className={`px-2 py-0.5 rounded text-xs border transition-colors ${
-                        formCountries.includes(c)
-                          ? 'bg-violet/20 border-violet text-white'
-                          : 'bg-surface2 border-border text-muted hover:text-white'
-                      }`}
-                    >
-                      {c}
-                    </button>
-                  ))}
+
+            {/* Quick actions */}
+            <div className="flex flex-wrap gap-2 mb-3">
+              <button
+                onClick={() => setFormCountries(COUNTRIES.map(c => c.name))}
+                className="px-3 py-1 rounded-lg text-xs font-medium bg-violet/20 border border-violet text-violet-light hover:bg-violet/30 transition-colors"
+              >
+                Tous les pays ({COUNTRIES.length})
+              </button>
+              <button
+                onClick={() => setFormCountries([])}
+                className="px-3 py-1 rounded-lg text-xs font-medium bg-surface2 border border-border text-muted hover:text-white transition-colors"
+              >
+                Tout désélectionner
+              </button>
+            </div>
+
+            {/* Region presets */}
+            {Object.entries(config.country_presets).map(([region, countries]) => {
+              const allSelected = countries.every((c: string) => formCountries.includes(c));
+              return (
+                <div key={region} className="mb-3">
+                  <button
+                    onClick={() => selectRegion(region)}
+                    className={`text-sm font-medium mb-1 transition-colors ${allSelected ? 'text-green-400' : 'text-violet hover:underline'}`}
+                  >
+                    {allSelected ? '✓ ' : ''}{REGION_LABELS[region] || region} ({countries.length})
+                  </button>
+                  <div className="flex flex-wrap gap-1.5 ml-2">
+                    {countries.map((c: string) => (
+                      <button
+                        key={c}
+                        onClick={() => toggleArrayItem(formCountries, c, setFormCountries)}
+                        className={`px-2 py-0.5 rounded text-xs border transition-colors ${
+                          formCountries.includes(c)
+                            ? 'bg-violet/20 border-violet text-white'
+                            : 'bg-surface2 border-border text-muted hover:text-white'
+                        }`}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
+
+            {/* Show count if many selected */}
+            {formCountries.length > 0 && (
+              <p className="text-xs text-muted mt-2">
+                {formCountries.length} pays sélectionnés
+                {formCountries.length > 10 && (
+                  <button onClick={() => setFormCountries([])} className="text-red-400 hover:underline ml-2">Réinitialiser</button>
+                )}
+              </p>
+            )}
           </div>
 
           {/* Languages */}
