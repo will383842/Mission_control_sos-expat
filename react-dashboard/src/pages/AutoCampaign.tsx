@@ -651,6 +651,44 @@ export default function AutoCampaignPage() {
             Détail : {selectedCampaign.campaign.name}
           </h2>
 
+          {/* Speed control — adjustable while running */}
+          {['running', 'paused'].includes(selectedCampaign.campaign.status) && (
+            <div className="bg-surface2 border border-border rounded-lg p-4">
+              <h3 className="text-sm font-medium text-white mb-3">Vitesse de la campagne</h3>
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-muted">Délai entre tâches :</label>
+                  <select
+                    value={selectedCampaign.campaign.delay_between_tasks_seconds}
+                    onChange={async (e) => {
+                      const delay = parseInt(e.target.value);
+                      try {
+                        await api.patch(`/auto-campaigns/${selectedCampaign.campaign.id}/settings`, {
+                          delay_between_tasks_seconds: delay,
+                        });
+                        // Refresh
+                        const res = await api.get(`/auto-campaigns/${selectedCampaign.campaign.id}`);
+                        setSelectedCampaign(res.data);
+                        loadData();
+                      } catch { /* ignore */ }
+                    }}
+                    className="bg-bg border border-border rounded px-2 py-1 text-sm text-white"
+                  >
+                    <option value={30}>30s (turbo)</option>
+                    <option value={60}>1 min (rapide)</option>
+                    <option value={120}>2 min</option>
+                    <option value={180}>3 min</option>
+                    <option value={300}>5 min (normal)</option>
+                    <option value={600}>10 min (lent)</option>
+                  </select>
+                </div>
+                <span className="text-xs text-muted">
+                  Estimation restante : ~{Math.ceil(((selectedCampaign.campaign.tasks_total - selectedCampaign.campaign.tasks_completed - selectedCampaign.campaign.tasks_failed - selectedCampaign.campaign.tasks_skipped) * selectedCampaign.campaign.delay_between_tasks_seconds) / 3600)}h
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Alerts */}
           {selectedCampaign.alerts.length > 0 && (
             <div className="space-y-2">

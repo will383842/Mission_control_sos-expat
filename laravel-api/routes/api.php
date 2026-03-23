@@ -198,6 +198,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{campaign}/resume', [AutoCampaignController::class, 'resume']);
         Route::post('/{campaign}/cancel', [AutoCampaignController::class, 'cancel']);
         Route::post('/{campaign}/retry-failed', [AutoCampaignController::class, 'retryFailed']);
+        Route::patch('/{campaign}/settings', [AutoCampaignController::class, 'updateSettings']);
     });
 
     // ============================================================

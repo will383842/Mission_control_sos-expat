@@ -232,6 +232,25 @@ class AutoCampaignController extends Controller
     }
 
     /**
+     * Update campaign settings (delay, retries) while running.
+     */
+    public function updateSettings(Request $request, AutoCampaign $campaign)
+    {
+        $data = $request->validate([
+            'delay_between_tasks_seconds'   => 'sometimes|integer|min:30|max:3600',
+            'max_retries'                   => 'sometimes|integer|min:1|max:5',
+            'max_consecutive_failures'      => 'sometimes|integer|min:3|max:20',
+        ]);
+
+        $campaign->update($data);
+
+        return response()->json([
+            'message'  => 'Paramètres mis à jour.',
+            'campaign' => $campaign,
+        ]);
+    }
+
+    /**
      * Cancel a campaign.
      */
     public function cancel(AutoCampaign $campaign)
