@@ -38,11 +38,28 @@ const STATUS_COLORS: Record<string, { bg: string; text: string; label: string }>
 };
 
 const CATEGORY_ICONS: Record<string, string> = {
-  school: '🏫', lawyer: '⚖️', association: '🤝', travel_agency: '✈️',
-  real_estate: '🏠', translator: '🌐', insurer: '🛡️', enterprise: '🏢',
-  press: '📰', partner: '🤝', job_board: '💼', backlink: '🔗',
-  influenceur: '⭐', blogger: '✍️', tiktoker: '🎵', youtuber: '🎥',
-  instagramer: '📸', group_admin: '👥', chatter: '💬',
+  consulat: '🏛️', association: '🤝', ecole: '🏫', institut_culturel: '🎭', chambre_commerce: '🏢',
+  presse: '📺', blog: '📝', podcast_radio: '🎙️', influenceur: '✨',
+  avocat: '⚖️', immobilier: '🏠', assurance: '🛡️', banque_fintech: '🏦',
+  traducteur: '🌐', agence_voyage: '✈️', emploi: '💼',
+  communaute_expat: '🌍', groupe_whatsapp_telegram: '💬', coworking_coliving: '🏡',
+  logement: '🔑', lieu_communautaire: '☕',
+  backlink: '🔗', annuaire: '📚', plateforme_nomad: '🧭', partenaire: '🤝',
+  // Legacy
+  school: '🏫', press: '📺', blogger: '📝', consulats: '🏛️',
+  lawyer: '⚖️', travel_agency: '✈️', real_estate: '🏠',
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  consulat: 'Consulats', association: 'Associations', ecole: 'Écoles', institut_culturel: 'Instituts culturels',
+  chambre_commerce: 'Chambres commerce', presse: 'Presse', blog: 'Blogs', podcast_radio: 'Podcasts/Radios',
+  influenceur: 'Influenceurs', avocat: 'Avocats', immobilier: 'Immobilier', assurance: 'Assurances',
+  banque_fintech: 'Banques', traducteur: 'Traducteurs', agence_voyage: 'Agences voyage', emploi: 'Emploi',
+  communaute_expat: 'Communautés', groupe_whatsapp_telegram: 'Groupes WA/TG',
+  coworking_coliving: 'Coworkings', logement: 'Logement', lieu_communautaire: 'Lieux',
+  backlink: 'Backlinks', annuaire: 'Annuaires', plateforme_nomad: 'Plateformes nomad', partenaire: 'Partenaires',
+  school: 'Écoles', press: 'Presse', blogger: 'Blogs', consulats: 'Consulats',
+  lawyer: 'Avocats', travel_agency: 'Agences voyage', real_estate: 'Immobilier',
 };
 
 export default function Directories() {
@@ -211,7 +228,7 @@ export default function Directories() {
                     ? 'bg-violet/20 border-violet text-violet-light'
                     : 'bg-surface2 border-border text-gray-300 hover:border-gray-500'
                 }`}>
-                {CATEGORY_ICONS[cat.category] || '📁'} {cat.category}
+                {CATEGORY_ICONS[cat.category] || '📁'} {CATEGORY_LABELS[cat.category] || cat.category}
                 <span className="ml-1 text-muted">({cat.count})</span>
                 <span className="ml-1 text-emerald-400">{cat.total_contacts} contacts</span>
               </button>
@@ -239,8 +256,8 @@ export default function Directories() {
               <label className="block text-xs text-muted mb-1">Catégorie *</label>
               <select value={formData.category} onChange={e => setFormData(f => ({ ...f, category: e.target.value }))}
                 className="w-full bg-bg border border-border rounded-lg px-3 py-2 text-white text-sm">
-                {Object.entries(CATEGORY_ICONS).map(([val, icon]) => (
-                  <option key={val} value={val}>{icon} {val}</option>
+                {Object.entries(CATEGORY_LABELS).filter(([v]) => !['school','press','blogger','consulats','lawyer','travel_agency','real_estate'].includes(v)).map(([val, label]) => (
+                  <option key={val} value={val}>{CATEGORY_ICONS[val] || '📁'} {label}</option>
                 ))}
               </select>
             </div>
@@ -293,7 +310,7 @@ export default function Directories() {
           <select value={filter.category} onChange={e => setFilter(f => ({ ...f, category: e.target.value }))}
             className="bg-bg border border-border rounded-lg px-3 py-1.5 text-white text-sm">
             <option value="">Toutes catégories</option>
-            {categories.map(c => <option key={c} value={c}>{CATEGORY_ICONS[c] || ''} {c}</option>)}
+            {categories.map(c => <option key={c} value={c}>{CATEGORY_ICONS[c] || ''} {CATEGORY_LABELS[c] || c}</option>)}
           </select>
         )}
         {countries.length > 1 && (
@@ -362,7 +379,7 @@ export default function Directories() {
                   </td>
                   <td className="p-3 hidden md:table-cell">
                     <span className="text-xs bg-surface2 border border-border px-2 py-0.5 rounded-full text-gray-300">
-                      {CATEGORY_ICONS[dir.category] || '📁'} {dir.category}
+                      {CATEGORY_ICONS[dir.category] || '📁'} {CATEGORY_LABELS[dir.category] || dir.category}
                     </span>
                   </td>
                   <td className="p-3 hidden lg:table-cell text-gray-300 text-xs">{dir.country || '-'}</td>

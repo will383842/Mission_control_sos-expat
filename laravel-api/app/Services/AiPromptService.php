@@ -32,27 +32,31 @@ class AiPromptService
             return $prompt . $exclusionBlock;
         }
 
-        // 2. Fallback to hardcoded prompts
+        // 2. Fallback to hardcoded prompts (new type names)
         $prompt = match ($contactType) {
-            'school' => $this->schoolPrompt($country, $language),
-            'erasmus' => $this->erasmusPrompt($country, $language),
+            'ecole' => $this->schoolPrompt($country, $language),
             'consulat' => $this->consulatPrompt($country, $language),
-            'chatter', 'job_board' => $this->jobBoardPrompt($country, $language),
             'influenceur' => $this->influenceurPrompt($country, $language),
-            'tiktoker' => $this->tiktokerPrompt($country, $language),
-            'youtuber' => $this->youtuberPrompt($country, $language),
-            'instagramer' => $this->instagramerPrompt($country, $language),
-            'blogger' => $this->bloggerPrompt($country, $language),
+            'blog' => $this->bloggerPrompt($country, $language),
             'association' => $this->associationPrompt($country, $language),
-            'press' => $this->pressPrompt($country, $language),
+            'presse' => $this->pressePrompt($country, $language),
+            'podcast_radio' => $this->podcastRadioPrompt($country, $language),
+            'communaute_expat' => $this->communauteExpatPrompt($country, $language),
             'backlink' => $this->backlinkPrompt($country, $language),
-            'real_estate' => $this->realEstatePrompt($country, $language),
-            'translator' => $this->translatorPrompt($country, $language),
-            'travel_agency' => $this->travelAgencyPrompt($country, $language),
-            'insurer', 'enterprise' => $this->enterprisePrompt($country, $language, $contactType),
-            'partner' => $this->partnerPrompt($country, $language),
-            'lawyer' => $this->lawyerPrompt($country, $language),
-            'group_admin' => $this->groupAdminPrompt($country, $language),
+            'immobilier' => $this->realEstatePrompt($country, $language),
+            'traducteur' => $this->translatorPrompt($country, $language),
+            'agence_voyage' => $this->travelAgencyPrompt($country, $language),
+            'assurance' => $this->enterprisePrompt($country, $language, 'assurance'),
+            'avocat' => $this->lawyerPrompt($country, $language),
+            'emploi' => $this->jobBoardPrompt($country, $language),
+            'groupe_whatsapp_telegram' => $this->groupAdminPrompt($country, $language),
+            'chambre_commerce' => $this->partnerPrompt($country, $language),
+            'partenaire' => $this->partnerPrompt($country, $language),
+            // Legacy names (backward compat)
+            'school' => $this->schoolPrompt($country, $language),
+            'press' => $this->pressePrompt($country, $language),
+            'blogger' => $this->bloggerPrompt($country, $language),
+            'consulats' => $this->consulatPrompt($country, $language),
             default => $this->genericPrompt($country, $language, $contactType),
         };
 
@@ -287,25 +291,45 @@ Pour chaque : NOM, EMAIL (page contact), URL (site PROPRE de l'association), TEL
 PROMPT;
     }
 
-    private function pressPrompt(string $country, string $lang): string
+    private function pressePrompt(string $country, string $lang): string
     {
         return <<<PROMPT
-Cherche les médias et journaux francophones qui couvrent l'expatriation en {$country} ou l'actualité des expatriés.
+MISSION : Trouver les VRAIS médias, journaux et magazines francophones SPÉCIFIQUES à {$country} — PAS des sites globaux, PAS des blogs, PAS des associations.
+
+TYPES DE MÉDIAS RECHERCHÉS (uniquement) :
+1. Journaux en ligne francophones basés en {$country} (ex: gazettedeberlin.de, lepetitjournal.com/bangkok)
+2. Magazines francophones sur la vie en {$country}
+3. Web radios francophones en {$country}
+4. Chaînes TV / web TV francophones locales en {$country}
+5. Sites d'actualité francophones dédiés à {$country}
 
 Mots-clés :
 - "journal français {$country}"
+- "journal francophone {$country}"
 - "média francophone {$country}"
-- "lepetitjournal.com {$country}"
+- "magazine français expatriés {$country}"
+- "web radio française {$country}"
+- "actualité française {$country}"
+- "french language newspaper {$country}"
 - "french media {$country}"
-- "presse française expatriés {$country}"
-- "magazine expatriation {$country}"
 
-⚠️ RÈGLE ABSOLUE — URL :
-- L'URL doit être le SITE WEB PROPRE du média (ex: gazette-berlin.de, info-japon.com)
-- JAMAIS un agrégateur ou gros média national comme : lemonde.fr, lefigaro.fr, france24.com, rfi.fr, wikipedia.org
-- Chaque contact = UN média individuel, PAS un article qui en liste plusieurs
+⚠️ RÈGLES STRICTES :
+- UNIQUEMENT des médias/presse (journaux, magazines, radios, TV)
+- PAS de blogs personnels (→ ils vont dans le type "blog")
+- PAS d'associations, UFE, Accueil (→ ils vont dans le type "association")
+- PAS de sites d'assurance, immobilier ou services (ACS, Expat Communication...)
+- PAS de grands médias nationaux français (LeMonde, LeFigaro, France24, RFI, Capital...)
+- PAS d'article SUR un média, mais le SITE DU MÉDIA lui-même
+- L'URL doit être le SITE WEB PROPRE du média
+- JAMAIS un répertoire (expat.com, internations.org, wikipedia.org, mondafrique.com, cfi.fr)
+- Chaque contact = UN média individuel avec son propre site web
 
-Pour chaque média : NOM, EMAIL (rédaction), URL (site PROPRE du média), JOURNALISTE (nom si trouvé), SOURCE.
+Pour chaque média trouvé :
+NOM: nom exact du média
+EMAIL: email de la rédaction (chercher sur page contact du média)
+TEL: téléphone si trouvé
+URL: site web PROPRE du média (PAS un article sur un autre site)
+SOURCE: page web où tu as trouvé ce média
 PROMPT;
     }
 
@@ -521,6 +545,74 @@ Mots-clés :
 - Chaque contact = UN consulat/ambassade individuel
 
 Pour chaque : NOM, EMAIL, URL (site OFFICIEL), TEL, ADRESSE, NOTES, SOURCE.
+PROMPT;
+    }
+
+    private function communauteExpatPrompt(string $country, string $lang): string
+    {
+        return <<<PROMPT
+MISSION : Trouver TOUTES les communautés, forums, plateformes et réseaux en ligne francophones pour expatriés en {$country}.
+
+TYPES RECHERCHÉS :
+1. Forums de discussion francophones sur {$country} (pas expat.com)
+2. Sites communautaires pour les Français de {$country}
+3. Groupes Facebook francophones en {$country} (avec lien direct)
+4. Plateformes d'entraide entre expatriés francophones en {$country}
+5. Sites de networking pour expatriés en {$country}
+6. Pages "communauté" ou "vie locale" francophones
+
+Mots-clés :
+- "communauté française {$country}"
+- "forum expatriés français {$country}"
+- "français de {$country}"
+- "vivre en {$country} communauté"
+- "réseau français {$country}"
+- "French community {$country}"
+- "expats français {$country} forum"
+- "groupe Facebook français {$country}"
+- "entraide expatriés {$country}"
+
+⚠️ RÈGLES STRICTES :
+- PAS de grands agrégateurs (expat.com, internations.org, femmexpat.com)
+- PAS d'associations (UFE, Accueil, ADFE → type "association")
+- PAS de médias/presse (→ type "presse")
+- L'URL doit être le SITE WEB PROPRE ou le LIEN DIRECT du groupe
+- Chaque contact = UNE communauté individuelle
+
+Pour chaque :
+NOM: nom de la communauté/forum/groupe
+EMAIL: email de contact si trouvé
+TEL: téléphone si trouvé
+URL: site web PROPRE ou lien direct du groupe
+PLATEFORME: website/facebook/whatsapp/telegram/forum
+SOURCE: page web où tu as trouvé cette communauté
+PROMPT;
+    }
+
+    private function podcastRadioPrompt(string $country, string $lang): string
+    {
+        return <<<PROMPT
+Cherche les podcasts et web radios francophones qui parlent de {$country}, de l'expatriation en {$country}, ou qui sont basés en {$country}.
+
+Mots-clés :
+- "podcast expatriation {$country}"
+- "podcast français {$country}"
+- "web radio française {$country}"
+- "radio francophone {$country}"
+- "podcast vivre à {$country}"
+- "french podcast {$country}"
+
+⚠️ RÈGLES :
+- L'URL doit être le lien DIRECT vers le podcast (Apple Podcasts, Spotify, site propre, Ausha, etc.)
+- PAS un article qui LISTE des podcasts
+- Chaque contact = UN podcast ou UNE radio individuelle
+
+Pour chaque :
+NOM: nom du podcast ou de la radio
+EMAIL: email de contact (page about/contact)
+URL: lien direct vers le podcast ou site de la radio
+PLATEFORME: apple_podcasts/spotify/website/ausha
+SOURCE: page web où tu as trouvé ce podcast
 PROMPT;
     }
 
