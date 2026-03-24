@@ -52,6 +52,7 @@ class AiPromptService
             'groupe_whatsapp_telegram' => $this->groupAdminPrompt($country, $language),
             'chambre_commerce' => $this->partnerPrompt($country, $language),
             'partenaire' => $this->partnerPrompt($country, $language),
+            'plateforme_nomad' => $this->plateformeNomadPrompt($country, $language),
             // Legacy names (backward compat)
             'school' => $this->schoolPrompt($country, $language),
             'press' => $this->pressePrompt($country, $language),
@@ -613,6 +614,45 @@ EMAIL: email de contact (page about/contact)
 URL: lien direct vers le podcast ou site de la radio
 PLATEFORME: apple_podcasts/spotify/website/ausha
 SOURCE: page web où tu as trouvé ce podcast
+PROMPT;
+    }
+
+    private function plateformeNomadPrompt(string $country, string $lang): string
+    {
+        return <<<PROMPT
+MISSION : Trouver les plateformes, sites et applications dédiés aux digital nomads, remote workers et expatriés technologiques en {$country} ou couvrant {$country}.
+
+TYPES RECHERCHÉS :
+1. Sites de communautés de digital nomads en {$country} (pas Nomad List)
+2. Plateformes locales pour remote workers en {$country}
+3. Guides d'installation pour digital nomads en {$country}
+4. Sites de visa nomad digital / visa remote worker en {$country}
+5. Apps de trip planning longue durée incluant {$country}
+6. Répertoires de coworkings/colivings en {$country}
+7. Communautés Slack/Discord de nomads en {$country}
+
+Mots-clés :
+- "digital nomad {$country}"
+- "remote work {$country}"
+- "nomad guide {$country}"
+- "coworking {$country} nomad"
+- "visa digital nomad {$country}"
+- "work remotely from {$country}"
+- "nomade numérique {$country}"
+- "télétravail {$country} expatrié"
+
+⚠️ RÈGLES :
+- L'URL doit être le SITE WEB PROPRE de la plateforme
+- PAS les gros agrégateurs (nomadlist.com, reddit.com, facebook.com)
+- PAS les blogs personnels (→ type "blog")
+- Chaque contact = UNE plateforme individuelle
+
+Pour chaque :
+NOM: nom de la plateforme/site
+EMAIL: email de contact si trouvé
+URL: site web PROPRE
+PLATEFORME: website/app/slack/discord
+SOURCE: page web où tu as trouvé cette plateforme
 PROMPT;
     }
 
