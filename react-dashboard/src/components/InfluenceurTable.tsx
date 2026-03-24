@@ -58,6 +58,7 @@ export default function InfluenceurTable({ influenceurs }: Props) {
               <Th label="Site web" />
               <Th label="Email" />
               <Th label="Tél" />
+              <Th label="Formulaire" />
               <Th label="Dernier contact" field="last_contact_at" />
               <Th label="Rappel" />
             </tr>
@@ -91,17 +92,26 @@ export default function InfluenceurTable({ influenceurs }: Props) {
                 <td className="px-4 py-3 text-sm whitespace-nowrap">
                   {inf.email ? (
                     <a href={`mailto:${inf.email}`} className="text-cyan hover:underline text-xs">{inf.email}</a>
-                  ) : (() => {
-                    const formUrl = (inf.scraped_social as Record<string, unknown> | null)?.['_contact_form_url'] as string | undefined;
-                    return formUrl ? (
-                      <a href={formUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400/80 hover:text-blue-400 text-xs">{'📝'} formulaire</a>
-                    ) : (
-                      <span className="text-red-400/50 text-xs">manquant</span>
-                    );
-                  })()}
+                  ) : (
+                    <span className="text-red-400/50 text-xs">manquant</span>
+                  )}
                 </td>
                 <td className="px-4 py-3 text-sm whitespace-nowrap">
                   {inf.phone ? <a href={`tel:${inf.phone}`} className="text-muted text-xs">{inf.phone}</a> : <span className="text-muted/30 text-xs">—</span>}
+                </td>
+                <td className="px-4 py-3 text-sm whitespace-nowrap">
+                  {(() => {
+                    const formUrl = (inf.scraped_social as Record<string, unknown> | null)?.['_contact_form_url'] as string | undefined;
+                    return formUrl ? (
+                      <a href={formUrl} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 rounded text-xs transition-colors"
+                        title={formUrl}>
+                        {'📝'} Contacter
+                      </a>
+                    ) : (
+                      <span className="text-muted/30 text-xs">—</span>
+                    );
+                  })()}
                 </td>
                 <td className="px-4 py-3 text-muted text-sm whitespace-nowrap">
                   {inf.last_contact_at ? new Date(inf.last_contact_at).toLocaleDateString('fr-FR') : '—'}
