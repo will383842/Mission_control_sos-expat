@@ -140,6 +140,9 @@ export default function Layout() {
                   <NavLink to="/admin/campaigns" className={navClass} onClick={handleNavClick}>
                     <span>🚀</span> Campagnes auto
                   </NavLink>
+                  <NavLink to="/admin/avancement" className={navClass} onClick={handleNavClick}>
+                    <span>🗺️</span> Avancement
+                  </NavLink>
                   <NavLink to="/equipe" className={navClass} onClick={handleNavClick}>
                     <span>⚙️</span> Équipe
                   </NavLink>

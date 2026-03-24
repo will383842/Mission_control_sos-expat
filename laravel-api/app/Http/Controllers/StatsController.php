@@ -369,6 +369,110 @@ class StatsController extends Controller
     }
 
     /**
+     * Coverage matrix: for each (contact_type, country, language) shows:
+     * - searched: bool (has an auto_campaign_task been completed for this combo?)
+     * - contacts: int (how many contacts exist)
+     * - with_email: int
+     * - with_form: int (has _contact_form_url)
+     *
+     * Filterable by ?type=press&lang=fr
+     */
+    public function coverageMatrix(Request $request)
+    {
+        $typeFilter = $request->query('type');
+        $langFilter = $request->query('lang');
+
+        // 1. What has been searched (from auto_campaign_tasks)
+        $searchedQuery = DB::table('auto_campaign_tasks')
+            ->where('status', 'completed')
+            ->select('contact_type', 'country', 'language',
+                DB::raw('MAX(created_at) as last_searched_at'),
+                DB::raw('SUM(contacts_found) as search_found'),
+                DB::raw('SUM(contacts_imported) as search_imported')
+            )
+            ->groupBy('contact_type', 'country', 'language');
+
+        if ($typeFilter) $searchedQuery->where('contact_type', $typeFilter);
+        if ($langFilter) $searchedQuery->where('language', $langFilter);
+
+        $searched = $searchedQuery->get()->keyBy(fn($r) => "{$r->contact_type}|{$r->country}|{$r->language}");
+
+        // 2. What contacts we have (from influenceurs)
+        $contactsQuery = Influenceur::query()
+            ->select('contact_type', 'country', 'language',
+                DB::raw('COUNT(*) as total'),
+                DB::raw('SUM(CASE WHEN email IS NOT NULL THEN 1 ELSE 0 END) as with_email'),
+                DB::raw('SUM(CASE WHEN phone IS NOT NULL THEN 1 ELSE 0 END) as with_phone'),
+                DB::raw("SUM(CASE WHEN scraped_social::text LIKE '%_contact_form_url%' THEN 1 ELSE 0 END) as with_form")
+            )
+            ->whereNotNull('country')
+            ->groupBy('contact_type', 'country', 'language');
+
+        if ($typeFilter) $contactsQuery->where('contact_type', $typeFilter);
+        if ($langFilter) $contactsQuery->where('language', $langFilter);
+
+        $contacts = $contactsQuery->get()->keyBy(fn($r) => "{$r->contact_type}|{$r->country}|{$r->language}");
+
+        // 3. Merge into matrix
+        $allKeys = $searched->keys()->merge($contacts->keys())->unique();
+        $matrix = [];
+
+        foreach ($allKeys as $key) {
+            [$type, $country, $lang] = explode('|', $key);
+            $s = $searched->get($key);
+            $c = $contacts->get($key);
+
+            $total = $c->total ?? 0;
+            $withEmail = $c->with_email ?? 0;
+
+            $matrix[] = [
+                'contact_type'    => $type,
+                'country'         => $country,
+                'language'        => $lang ?? 'fr',
+                'searched'        => $s !== null,
+                'last_searched_at' => $s->last_searched_at ?? null,
+                'search_found'    => (int) ($s->search_found ?? 0),
+                'search_imported' => (int) ($s->search_imported ?? 0),
+                'contacts'        => (int) $total,
+                'with_email'      => (int) $withEmail,
+                'with_phone'      => (int) ($c->with_phone ?? 0),
+                'with_form'       => (int) ($c->with_form ?? 0),
+                'email_pct'       => $total > 0 ? round($withEmail / $total * 100) : 0,
+                'contactable_pct' => $total > 0 ? round(($withEmail + ($c->with_form ?? 0)) / $total * 100) : 0,
+            ];
+        }
+
+        // Sort by type, then country
+        usort($matrix, fn($a, $b) => $a['contact_type'] <=> $b['contact_type'] ?: $a['country'] <=> $b['country']);
+
+        // Summary by type
+        $byType = collect($matrix)->groupBy('contact_type')->map(function ($rows, $type) {
+            $countries = $rows->count();
+            $searched = $rows->where('searched', true)->count();
+            $totalContacts = $rows->sum('contacts');
+            $totalEmails = $rows->sum('with_email');
+            return [
+                'type'             => $type,
+                'countries'        => $countries,
+                'countries_searched' => $searched,
+                'coverage_pct'     => $countries > 0 ? round($searched / $countries * 100) : 0,
+                'total_contacts'   => $totalContacts,
+                'with_email'       => $totalEmails,
+                'email_pct'        => $totalContacts > 0 ? round($totalEmails / $totalContacts * 100) : 0,
+            ];
+        })->values();
+
+        return response()->json([
+            'matrix'  => $matrix,
+            'summary' => $byType,
+            'filters' => [
+                'type' => $typeFilter,
+                'lang' => $langFilter,
+            ],
+        ]);
+    }
+
+    /**
      * Map lowercase country names to continents.
      */
     private function getContinentMap(): array

@@ -168,6 +168,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/stats/progress', [StatsController::class, 'progress'])
         ->middleware('role:admin');
 
+    // Matrice de couverture type × pays × langue (admin uniquement)
+    Route::get('/stats/coverage-matrix', [StatsController::class, 'coverageMatrix'])
+        ->middleware('role:admin');
+
     // ============================================================
     // SETTINGS — Scraper config etc. (admin only)
     // ============================================================

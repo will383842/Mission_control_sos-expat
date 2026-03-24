@@ -19,6 +19,7 @@ import Outreach from './pages/Outreach';
 import ContentEngine from './pages/ContentEngine';
 import Journal from './pages/Journal';
 import Directories from './pages/Directories';
+import CoverageMatrix from './pages/CoverageMatrix';
 import Layout from './components/Layout';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -89,6 +90,7 @@ export default function App() {
             <Route path="admin/prompts" element={<AdminRoute><AdminAiPrompts /></AdminRoute>} />
             <Route path="admin/scraper" element={<AdminRoute><AdminScraper /></AdminRoute>} />
             <Route path="admin/campaigns" element={<AdminRoute><AutoCampaign /></AdminRoute>} />
+            <Route path="admin/avancement" element={<AdminRoute><CoverageMatrix /></AdminRoute>} />
             <Route path="equipe" element={<AdminRoute><Equipe /></AdminRoute>} />
           </Route>
         </Routes>
