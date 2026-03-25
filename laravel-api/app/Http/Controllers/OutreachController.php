@@ -33,6 +33,10 @@ class OutreachController extends Controller
             'step_delays'           => 'sometimes|array|min:1|max:4',
             'daily_limit'           => 'sometimes|integer|min:1|max:200',
             'is_active'             => 'sometimes|boolean',
+            'calendly_url'          => 'sometimes|nullable|url|max:500',
+            'calendly_step'         => 'sometimes|nullable|integer|min:1|max:4',
+            'custom_prompt'         => 'sometimes|nullable|string|max:5000',
+            'from_name'             => 'sometimes|nullable|string|max:100',
         ]);
 
         $config = OutreachConfig::getFor($contactType);
@@ -241,5 +245,134 @@ class OutreachController extends Controller
         Influenceur::where('id', $email->influenceur_id)->update(['status' => 'refused']);
 
         return response()->json(['message' => 'Désinscription confirmée.']);
+    }
+
+    // ============================================================
+    // Sequences management
+    // ============================================================
+
+    public function sequences(Request $request)
+    {
+        $query = OutreachSequence::with('influenceur:id,name,email,contact_type,country');
+
+        if ($request->query('status')) {
+            $query->where('status', $request->query('status'));
+        }
+
+        $sequences = $query->orderByDesc('updated_at')->paginate(30);
+        return response()->json($sequences);
+    }
+
+    public function pauseSequence(OutreachSequence $sequence)
+    {
+        $sequence->update(['status' => 'paused']);
+        return response()->json(['message' => 'Séquence en pause.']);
+    }
+
+    public function resumeSequence(OutreachSequence $sequence)
+    {
+        $sequence->update(['status' => 'active']);
+        return response()->json(['message' => 'Séquence reprise.']);
+    }
+
+    public function stopSequence(OutreachSequence $sequence)
+    {
+        $sequence->update(['status' => 'stopped', 'stop_reason' => 'manual']);
+        return response()->json(['message' => 'Séquence arrêtée.']);
+    }
+
+    // ============================================================
+    // Domain health & alerts
+    // ============================================================
+
+    public function domainHealth()
+    {
+        $health = \App\Models\DomainHealth::all();
+        $warmup = WarmupState::all();
+
+        return response()->json([
+            'domains' => $health,
+            'warmup'  => $warmup,
+        ]);
+    }
+
+    public function alerts()
+    {
+        $alerts = [];
+
+        // Check bounce rate per domain
+        $domains = \App\Models\DomainHealth::all();
+        foreach ($domains as $d) {
+            if ($d->bounce_rate > 10) {
+                $alerts[] = ['type' => 'critical', 'domain' => $d->domain, 'message' => "Bounce rate {$d->bounce_rate}% — domaine en danger"];
+            } elseif ($d->bounce_rate > 5) {
+                $alerts[] = ['type' => 'warning', 'domain' => $d->domain, 'message' => "Bounce rate {$d->bounce_rate}% — surveiller"];
+            }
+            if ($d->is_blacklisted) {
+                $alerts[] = ['type' => 'critical', 'domain' => $d->domain, 'message' => "Domaine blacklisté !"];
+            }
+        }
+
+        // Check failed emails in last 24h
+        $failedCount = OutreachEmail::where('status', 'failed')
+            ->where('updated_at', '>=', now()->subDay())
+            ->count();
+        if ($failedCount > 10) {
+            $alerts[] = ['type' => 'warning', 'message' => "{$failedCount} emails échoués dans les 24h"];
+        }
+
+        return response()->json($alerts);
+    }
+
+    // ============================================================
+    // Webhook: PMTA bounce
+    // ============================================================
+
+    public function pmtaBounce(Request $request)
+    {
+        $data = $request->all();
+        $messageId = $data['message_id'] ?? $data['tracking_id'] ?? null;
+        $bounceType = $data['bounce_type'] ?? 'hard';
+        $reason = $data['reason'] ?? $data['diagnostic'] ?? 'Unknown';
+
+        if (!$messageId) {
+            return response()->json(['message' => 'Missing message_id'], 400);
+        }
+
+        $email = OutreachEmail::where('tracking_id', $messageId)
+            ->orWhere('external_id', $messageId)
+            ->first();
+
+        if (!$email) {
+            return response()->json(['message' => 'Email not found'], 404);
+        }
+
+        // Update email status
+        $email->update([
+            'status'        => 'bounced',
+            'bounced_at'    => now(),
+            'bounce_type'   => $bounceType === 'soft' ? 'soft' : 'hard',
+            'bounce_reason' => mb_substr($reason, 0, 255),
+        ]);
+
+        // Record event
+        \App\Models\EmailEvent::create([
+            'outreach_email_id' => $email->id,
+            'event_type'        => 'bounced',
+            'metadata'          => ['type' => $bounceType, 'reason' => $reason],
+            'occurred_at'       => now(),
+        ]);
+
+        // Hard bounce: stop sequence + mark email invalid
+        if ($bounceType !== 'soft') {
+            OutreachSequence::where('influenceur_id', $email->influenceur_id)
+                ->where('status', 'active')
+                ->update(['status' => 'stopped', 'stop_reason' => 'hard_bounce']);
+
+            Influenceur::where('id', $email->influenceur_id)
+                ->update(['email_verified_status' => 'invalid']);
+        }
+
+        return response()->json(['message' => 'Bounce processed.']);
     }
 }

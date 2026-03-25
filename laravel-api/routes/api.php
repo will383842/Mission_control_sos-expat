@@ -24,6 +24,7 @@ Route::get('/track/open/{trackingId}', [\App\Http\Controllers\OutreachController
 Route::get('/track/click/{trackingId}', [\App\Http\Controllers\OutreachController::class, 'trackClick']);
 Route::get('/unsubscribe/{token}', [\App\Http\Controllers\OutreachController::class, 'unsubscribePage']);
 Route::post('/unsubscribe/{token}', [\App\Http\Controllers\OutreachController::class, 'unsubscribeConfirm']);
+Route::post('/webhooks/pmta/bounce', [\App\Http\Controllers\OutreachController::class, 'pmtaBounce']);
 
 // Health check (public)
 Route::get('/health', function () {
@@ -186,6 +187,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/review/{outreachEmail}/edit', [\App\Http\Controllers\OutreachController::class, 'edit']);
         Route::post('/review/approve-batch', [\App\Http\Controllers\OutreachController::class, 'approveBatch']);
         Route::get('/stats', [\App\Http\Controllers\OutreachController::class, 'stats']);
+        Route::get('/sequences', [\App\Http\Controllers\OutreachController::class, 'sequences']);
+        Route::post('/sequences/{sequence}/pause', [\App\Http\Controllers\OutreachController::class, 'pauseSequence']);
+        Route::post('/sequences/{sequence}/resume', [\App\Http\Controllers\OutreachController::class, 'resumeSequence']);
+        Route::post('/sequences/{sequence}/stop', [\App\Http\Controllers\OutreachController::class, 'stopSequence']);
+        Route::get('/domain-health', [\App\Http\Controllers\OutreachController::class, 'domainHealth']);
+        Route::get('/alerts', [\App\Http\Controllers\OutreachController::class, 'alerts']);
     });
 
     // Quality verification (admin)

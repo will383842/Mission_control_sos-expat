@@ -84,14 +84,20 @@ class AiEmailGenerationService
             // Determine initial status
             $status = $config->auto_send ? 'approved' : 'pending_review';
 
+            // Validate minimum quality
+            if (mb_strlen($emailData['subject']) < 5 || mb_strlen($emailData['body']) < 50) {
+                Log::warning('AI Email: too short', ['id' => $inf->id, 'subject_len' => mb_strlen($emailData['subject'])]);
+                return null;
+            }
+
             $outreachEmail = OutreachEmail::create([
                 'influenceur_id'       => $inf->id,
                 'step'                 => $step,
-                'subject'              => $emailData['subject'],
-                'body_html'            => $emailData['body_html'],
+                'subject'              => mb_substr($emailData['subject'], 0, 200),
+                'body_html'            => '', // Plain text only — no HTML
                 'body_text'            => $emailData['body'],
                 'from_email'           => $fromEmail,
-                'from_name'            => 'Williams',
+                'from_name'            => $config->from_name ?? 'Williams',
                 'status'               => $status,
                 'ai_generated'         => true,
                 'ai_model'             => $this->model,
@@ -177,8 +183,15 @@ Williams
 Fondateur, SOS-Expat
 www.sos-expat.com
 
+IMPORTANT — FORMAT PLAIN TEXT :
+- JAMAIS de HTML, pas de <p>, pas de <br>, pas de balises
+- Écris en texte brut uniquement, avec des sauts de ligne \n
+- Les liens en clair (www.sos-expat.com), jamais entre balises
+- Maximum 500 caractères pour le body
+- Un seul lien dans le body (Calendly OU site, pas les deux)
+
 RÉPONSE EN JSON STRICT — rien d'autre, pas de texte avant/après :
-{"subject": "...", "body": "texte brut avec \n pour les sauts de ligne", "body_html": "<p>paragraphes HTML</p>"}
+{"subject": "objet court < 40 caractères", "body": "texte brut avec \n pour les sauts de ligne"}
 PROMPT;
     }
 
@@ -221,12 +234,27 @@ STEP,
             default => "Premier contact.",
         };
 
+        // Add Calendly if configured for this type and step
+        $config = OutreachConfig::getFor($inf->contact_type);
+        $calendlyInstruction = '';
+        if ($config->calendly_url) {
+            if ($config->calendly_step === null || $config->calendly_step === $step) {
+                $calendlyInstruction = "\n\nCALENDLY : Intègre naturellement ce lien dans ton CTA : {$config->calendly_url}\nExemple : \"On en discute 15 min ? {$config->calendly_url}\"";
+            }
+        }
+
+        // Add custom prompt override if configured
+        $customInstruction = '';
+        if ($config->custom_prompt) {
+            $customInstruction = "\n\nINSTRUCTIONS SPÉCIFIQUES POUR CE TYPE :\n{$config->custom_prompt}";
+        }
+
         return <<<PROMPT
 CONTACT :
 {$context}
 
 STEP {$step}/4 :
-{$stepInstruction}
+{$stepInstruction}{$calendlyInstruction}{$customInstruction}
 
 RAPPEL : Cet email doit être UNIQUE. Si tu as déjà écrit pour un contact similaire, trouve un angle COMPLÈTEMENT différent. Varie tes accroches, tes tournures, tes CTA. Aucun email ne doit ressembler à un autre.
 PROMPT;
@@ -292,27 +320,45 @@ PROMPT;
 
     private function parseResponse(string $text): ?array
     {
-        // Try to extract JSON from the response
         $text = trim($text);
 
-        // Remove markdown code blocks if present
-        $text = preg_replace('/^```json?\s*/i', '', $text);
-        $text = preg_replace('/\s*```$/', '', $text);
+        // Remove markdown code blocks (```json ... ``` or ``` ... ```)
+        $text = preg_replace('/^```(?:json)?\s*\n?/i', '', $text);
+        $text = preg_replace('/\n?\s*```\s*$/', '', $text);
+        $text = trim($text);
 
+        // Attempt 1: Direct JSON decode
         $data = json_decode($text, true);
-        if (!$data || !isset($data['subject']) || !isset($data['body'])) {
-            // Try to find JSON in the text
-            if (preg_match('/\{[^}]*"subject"[^}]*\}/s', $text, $match)) {
+
+        // Attempt 2: Find JSON object in surrounding text
+        if (!$data || !isset($data['subject'])) {
+            // Match from first { to last } (handles nested braces in body)
+            if (preg_match('/\{[\s\S]*\}/', $text, $match)) {
                 $data = json_decode($match[0], true);
             }
         }
 
-        if (!$data || !isset($data['subject'])) return null;
+        // Attempt 3: Extract subject and body individually via regex
+        if (!$data || !isset($data['subject'])) {
+            $subject = null;
+            $body = null;
+            if (preg_match('/"subject"\s*:\s*"([^"]+)"/', $text, $m)) $subject = $m[1];
+            if (preg_match('/"body"\s*:\s*"([\s\S]*?)(?:"\s*[,}])/', $text, $m)) $body = $m[1];
+
+            if ($subject && $body) {
+                $data = ['subject' => $subject, 'body' => str_replace('\n', "\n", $body)];
+            }
+        }
+
+        if (!$data || !isset($data['subject']) || !isset($data['body'])) return null;
+
+        // Clean the body: unescape \n, strip any HTML tags that slipped in
+        $body = str_replace('\n', "\n", $data['body']);
+        $body = strip_tags($body);
 
         return [
-            'subject'   => $data['subject'],
-            'body'      => $data['body'] ?? strip_tags($data['body_html'] ?? ''),
-            'body_html' => $data['body_html'] ?? '<p>' . nl2br(htmlspecialchars($data['body'] ?? '')) . '</p>',
+            'subject' => trim($data['subject']),
+            'body'    => trim($body),
         ];
     }
 

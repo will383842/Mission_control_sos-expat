@@ -9,6 +9,7 @@ class OutreachConfig extends Model
     protected $fillable = [
         'contact_type', 'auto_send', 'ai_generation_enabled',
         'max_steps', 'step_delays', 'daily_limit', 'is_active',
+        'calendly_url', 'calendly_step', 'custom_prompt', 'from_name',
     ];
 
     protected $casts = [
