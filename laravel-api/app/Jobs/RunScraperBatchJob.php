@@ -16,8 +16,8 @@ class RunScraperBatchJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    private const MAX_PER_BATCH = 50;
-    private const MAX_AGE_DAYS = 60; // Increased from 30
+    private const MAX_PER_BATCH = 100; // Doubled from 50
+    private const MAX_AGE_DAYS = 90;
 
     public int $timeout = 120;
     public int $tries = 1;
@@ -80,6 +80,25 @@ class RunScraperBatchJob implements ShouldQueue
                 ->get();
 
             $dispatched += $this->dispatchBatch($noEmail, 'rescrape_no_email');
+        }
+
+        // Priority 4: Contacts WITH email but never verified against their site
+        // Re-scrape to check if email matches site domain
+        if ($dispatched < self::MAX_PER_BATCH) {
+            $remaining = self::MAX_PER_BATCH - $dispatched;
+            $needsVerification = Influenceur::query()
+                ->whereNotNull('email')
+                ->where(fn($q) => $q->whereNotNull('website_url')->orWhereNotNull('profile_url'))
+                ->whereIn('contact_type', $enabledTypes)
+                ->where(function ($q) {
+                    $q->whereNull('scraped_at')                         // Never scraped
+                      ->orWhere('scraped_at', '<', now()->subDays(14)); // Or scraped > 14 days ago
+                })
+                ->orderBy('scraped_at') // Oldest first
+                ->limit($remaining)
+                ->get();
+
+            $dispatched += $this->dispatchBatch($needsVerification, 'verify_email_vs_site');
         }
 
         if ($dispatched > 0) {
