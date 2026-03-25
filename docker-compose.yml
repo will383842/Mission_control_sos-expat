@@ -101,6 +101,26 @@ services:
     networks:
       - internal
 
+  email-worker:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.api
+    container_name: inf-email-worker
+    restart: unless-stopped
+    command: ["php", "artisan", "queue:work", "redis", "--queue=email", "--sleep=5", "--tries=2", "--max-time=3600"]
+    env_file:
+      - .env.production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./.env.production:/var/www/html/.env:ro
+      - app_storage:/var/www/html/storage
+    networks:
+      - internal
+
   scraper:
     build:
       context: .

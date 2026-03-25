@@ -2,6 +2,8 @@
 
 use App\Jobs\CheckRemindersJob;
 use App\Jobs\ProcessAutoCampaignJob;
+use App\Jobs\ProcessEmailQueueJob;
+use App\Jobs\ProcessSequencesJob;
 use App\Jobs\RunQualityVerificationJob;
 use App\Jobs\RunScraperBatchJob;
 use Illuminate\Support\Facades\Schedule;
@@ -20,3 +22,9 @@ Schedule::job(new ProcessAutoCampaignJob)->everyMinute()->withoutOverlapping();
 
 // Quality verification: run full pipeline every hour
 Schedule::job(new RunQualityVerificationJob)->hourly()->withoutOverlapping();
+
+// Outreach: send approved emails every 5 minutes
+Schedule::job(new ProcessEmailQueueJob)->everyFiveMinutes()->withoutOverlapping();
+
+// Outreach: advance sequences (generate next step) every 15 minutes
+Schedule::job(new ProcessSequencesJob)->everyFifteenMinutes()->withoutOverlapping();
