@@ -168,6 +168,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/stats/progress', [StatsController::class, 'progress'])
         ->middleware('role:admin');
 
+    // Quality verification (admin)
+    Route::prefix('quality')->middleware('role:admin')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\QualityController::class, 'dashboard']);
+        Route::get('/duplicates', [\App\Http\Controllers\QualityController::class, 'duplicates']);
+        Route::post('/duplicates/{flag}/resolve', [\App\Http\Controllers\QualityController::class, 'resolveDuplicate']);
+        Route::get('/type-flags', [\App\Http\Controllers\QualityController::class, 'typeFlags']);
+        Route::post('/type-flags/{flag}/resolve', [\App\Http\Controllers\QualityController::class, 'resolveTypeFlag']);
+        Route::post('/run-all', [\App\Http\Controllers\QualityController::class, 'runAll']);
+    });
+
     // Matrice de couverture type × pays × langue (admin uniquement)
     Route::get('/stats/coverage-matrix', [StatsController::class, 'coverageMatrix'])
         ->middleware('role:admin');

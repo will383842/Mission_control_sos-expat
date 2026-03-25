@@ -2,6 +2,7 @@
 
 use App\Jobs\CheckRemindersJob;
 use App\Jobs\ProcessAutoCampaignJob;
+use App\Jobs\RunQualityVerificationJob;
 use App\Jobs\RunScraperBatchJob;
 use Illuminate\Support\Facades\Schedule;
 
@@ -16,3 +17,6 @@ Schedule::job(new RunScraperBatchJob)->hourly()->withoutOverlapping();
 // Auto campaigns: check for next task to process every minute
 // The job itself handles rate limiting (default 5min between tasks)
 Schedule::job(new ProcessAutoCampaignJob)->everyMinute()->withoutOverlapping();
+
+// Quality verification: run full pipeline every hour
+Schedule::job(new RunQualityVerificationJob)->hourly()->withoutOverlapping();
