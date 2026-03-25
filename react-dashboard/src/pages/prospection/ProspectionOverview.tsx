@@ -15,7 +15,7 @@ interface Stats {
 
 interface Alert { type: string; domain?: string; message: string }
 
-const STEP_LABELS: Record<number, string> = { 1: 'Premier contact', 2: 'Relance J+3', 3: 'Relance J+7', 4: 'Dernier msg' };
+const STEP_LABELS: Record<number, string> = { 1: 'Premier contact', 2: 'Relance J+3', 3: 'Relance J+7', 4: 'Dernier message J+14' };
 
 function pct(n: number, d: number): string {
   return d > 0 ? (n / d * 100).toFixed(1) : '0';

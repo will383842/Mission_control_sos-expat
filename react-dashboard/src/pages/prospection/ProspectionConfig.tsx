@@ -20,7 +20,7 @@ interface WarmupInfo {
   emails_sent_today: number; current_daily_limit: number;
 }
 
-const STEP_LABELS = ['Premier contact', 'Relance 1', 'Relance 2', 'Dernier message'];
+const STEP_LABELS = ['Premier contact', 'Relance J+3', 'Relance J+7', 'Dernier message J+14'];
 
 export default function ProspectionConfig() {
   const [configs, setConfigs] = useState<Config[]>([]);
