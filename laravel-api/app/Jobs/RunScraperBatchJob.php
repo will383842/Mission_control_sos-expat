@@ -17,71 +17,88 @@ class RunScraperBatchJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     private const MAX_PER_BATCH = 50;
-    private const MAX_AGE_DAYS = 30;
+    private const MAX_AGE_DAYS = 60; // Increased from 30
 
     public int $timeout = 120;
     public int $tries = 1;
 
     public function handle(): void
     {
-        // Check global toggle
         if (!Setting::getBool('scraper_enabled')) {
-            Log::debug('RunScraperBatchJob: global scraper disabled, skipping batch');
+            Log::debug('RunScraperBatchJob: global scraper disabled');
             return;
         }
 
-        // Get contact types with scraper enabled
         $enabledTypes = ContactTypeModel::where('scraper_enabled', true)
             ->where('is_active', true)
             ->pluck('value')
             ->toArray();
 
-        if (empty($enabledTypes)) {
-            Log::debug('RunScraperBatchJob: no contact types have scraper enabled');
-            return;
-        }
+        if (empty($enabledTypes)) return;
 
-        // Find contacts needing scraping
-        $contacts = Influenceur::query()
-            ->whereNull('email')                              // Missing email
-            ->where(function ($q) {                           // Has a URL to scrape
-                $q->whereNotNull('profile_url')
-                    ->where('profile_url', '!=', '')
-                    ->orWhere(function ($q2) {
-                        $q2->whereNotNull('website_url')
-                            ->where('website_url', '!=', '');
-                    });
-            })
-            ->whereIn('contact_type', $enabledTypes)          // Type has scraper enabled
-            ->whereNull('scraped_at')                         // Not already scraped
-            ->where('created_at', '>=', now()->subDays(self::MAX_AGE_DAYS)) // Recent contacts only
-            ->orderBy('created_at', 'desc')                   // Newest first
+        $dispatched = 0;
+
+        // Priority 1: Never scraped contacts (with URL, missing email)
+        $neverScraped = Influenceur::query()
+            ->whereNull('email')
+            ->where(fn($q) => $q->whereNotNull('profile_url')->orWhereNotNull('website_url'))
+            ->whereIn('contact_type', $enabledTypes)
+            ->whereNull('scraped_at')
+            ->where('created_at', '>=', now()->subDays(self::MAX_AGE_DAYS))
+            ->orderByDesc('created_at')
             ->limit(self::MAX_PER_BATCH)
             ->get();
 
-        $count = $contacts->count();
+        $dispatched += $this->dispatchBatch($neverScraped, 'never_scraped');
 
-        if ($count === 0) {
-            Log::debug('RunScraperBatchJob: no contacts need scraping');
-            return;
+        // Priority 2: Previously failed — retry (only if we haven't filled the batch)
+        if ($dispatched < self::MAX_PER_BATCH) {
+            $remaining = self::MAX_PER_BATCH - $dispatched;
+            $failed = Influenceur::query()
+                ->where('scraper_status', 'failed')
+                ->where(fn($q) => $q->whereNotNull('profile_url')->orWhereNotNull('website_url'))
+                ->whereIn('contact_type', $enabledTypes)
+                ->where('scraped_at', '<', now()->subDays(3)) // Retry after 3 days
+                ->orderByDesc('created_at')
+                ->limit($remaining)
+                ->get();
+
+            $dispatched += $this->dispatchBatch($failed, 'retry_failed');
         }
 
-        Log::info('RunScraperBatchJob: starting batch', [
-            'contacts'      => $count,
-            'enabled_types' => $enabledTypes,
-        ]);
+        // Priority 3: Scraped but no email found — re-scrape older ones
+        if ($dispatched < self::MAX_PER_BATCH) {
+            $remaining = self::MAX_PER_BATCH - $dispatched;
+            $noEmail = Influenceur::query()
+                ->whereNull('email')
+                ->where('scraper_status', 'completed')
+                ->where(fn($q) => $q->whereNotNull('profile_url')->orWhereNotNull('website_url'))
+                ->whereIn('contact_type', $enabledTypes)
+                ->where('scraped_at', '<', now()->subDays(7)) // Re-scrape after 7 days
+                ->orderBy('scraped_at')
+                ->limit($remaining)
+                ->get();
 
-        // Mark them as pending first to avoid double-dispatching
+            $dispatched += $this->dispatchBatch($noEmail, 'rescrape_no_email');
+        }
+
+        if ($dispatched > 0) {
+            Log::info('RunScraperBatchJob: dispatched', ['total' => $dispatched]);
+        }
+    }
+
+    private function dispatchBatch($contacts, string $reason): int
+    {
+        if ($contacts->isEmpty()) return 0;
+
         $ids = $contacts->pluck('id')->toArray();
         Influenceur::whereIn('id', $ids)->update(['scraper_status' => 'pending']);
 
-        // Dispatch individual jobs
         foreach ($contacts as $contact) {
             ScrapeContactJob::dispatch($contact->id);
         }
 
-        Log::info('RunScraperBatchJob: batch dispatched', [
-            'dispatched' => $count,
-        ]);
+        Log::info("RunScraperBatchJob: {$reason}", ['count' => count($ids)]);
+        return count($ids);
     }
 }

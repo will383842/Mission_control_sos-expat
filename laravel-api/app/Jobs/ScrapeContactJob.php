@@ -194,13 +194,33 @@ class ScrapeContactJob implements ShouldQueue
                 $updateData['scraped_emails'] = array_slice($result['emails'], 0, 10);
             }
 
-            // Only fill NULL/empty fields — NEVER overwrite existing data
-            if (empty($influenceur->email) && !empty($result['emails']) && !$isSuspiciousAggregator) {
-                $updateData['email'] = $result['emails'][0];
-            }
+            // Smart email filling: fill empty OR replace if mismatch detected
+            if (!$isSuspiciousAggregator && !empty($result['emails'])) {
+                $siteDomain = parse_url($url, PHP_URL_HOST);
+                if ($siteDomain) $siteDomain = preg_replace('/^www\./', '', strtolower($siteDomain));
 
-            // Suggested emails are stored for display only — NEVER auto-fill
-            // to avoid sending to invalid addresses and getting our domain blacklisted
+                if (empty($influenceur->email)) {
+                    // No email yet — pick the best one matching the site domain
+                    $bestEmail = $this->findBestEmailForDomain($result['emails'], $siteDomain);
+                    $updateData['email'] = $bestEmail ?? $result['emails'][0];
+                } else {
+                    // Has email — check if it matches the site domain
+                    $currentDomain = strtolower(substr($influenceur->email, strpos($influenceur->email, '@') + 1));
+                    $isGeneric = in_array($currentDomain, ['gmail.com','yahoo.com','yahoo.fr','hotmail.com','hotmail.fr','outlook.com','outlook.fr','live.com','free.fr','orange.fr','sfr.fr','laposte.net','icloud.com','protonmail.com']);
+
+                    if (!$isGeneric && $siteDomain && !str_contains($siteDomain, $currentDomain) && !str_contains($currentDomain, $siteDomain)) {
+                        // MISMATCH: email domain doesn't match site — try to find better one
+                        $betterEmail = $this->findBestEmailForDomain($result['emails'], $siteDomain);
+                        if ($betterEmail) {
+                            Log::info('Scraper: replacing mismatched email', [
+                                'id' => $influenceur->id, 'old' => $influenceur->email, 'new' => $betterEmail,
+                            ]);
+                            $updateData['email'] = $betterEmail;
+                            $updateData['email_verified_status'] = 'unverified';
+                        }
+                    }
+                }
+            }
 
             if (empty($influenceur->phone) && !empty($result['phones'])) {
                 $updateData['phone'] = $result['phones'][0];
@@ -438,5 +458,57 @@ class ScrapeContactJob implements ShouldQueue
             'scraped_at'     => now(),
             'scraper_status' => $status,
         ]);
+    }
+
+    /**
+     * Find the best email matching a given site domain from a list of scraped emails.
+     */
+    private function findBestEmailForDomain(array $emails, ?string $siteDomain): ?string
+    {
+        if (!$siteDomain || empty($emails)) return null;
+
+        $siteDomain = strtolower($siteDomain);
+
+        // Junk patterns to skip
+        $junk = ['noreply', 'no-reply', 'donotreply', 'postmaster', 'webmaster', 'dpo@', 'abuse@',
+            'flywheel.local', 'localhost', 'example.com', 'sentry.io', 'wixpress.com'];
+
+        foreach ($emails as $email) {
+            $email = strtolower(trim($email));
+            $domain = substr($email, strpos($email, '@') + 1);
+
+            // Skip junk
+            $isJunk = false;
+            foreach ($junk as $j) {
+                if (str_contains($email, $j)) { $isJunk = true; break; }
+            }
+            if ($isJunk) continue;
+
+            // Check domain match (exact or subdomain)
+            $rootSite = $this->extractRootDomain($siteDomain);
+            $rootEmail = $this->extractRootDomain($domain);
+
+            if ($rootSite === $rootEmail) {
+                return $email;
+            }
+        }
+
+        return null;
+    }
+
+    private function extractRootDomain(string $domain): string
+    {
+        $parts = explode('.', $domain);
+        $count = count($parts);
+        if ($count <= 2) return $domain;
+
+        $twoPartTlds = ['co.uk', 'co.jp', 'co.kr', 'co.th', 'ac.th', 'ac.uk',
+            'com.au', 'com.br', 'com.mx', 'org.uk', 'co.za', 'co.in',
+            'com.sg', 'com.my', 'com.ph', 'co.nz', 'or.jp', 'asso.fr'];
+        $lastTwo = $parts[$count - 2] . '.' . $parts[$count - 1];
+        if (in_array($lastTwo, $twoPartTlds) && $count > 2) {
+            return $parts[$count - 3] . '.' . $lastTwo;
+        }
+        return $parts[$count - 2] . '.' . $parts[$count - 1];
     }
 }

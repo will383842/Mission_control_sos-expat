@@ -201,6 +201,9 @@ class ResultParserService
                 'sentry.io', 'example.com', 'example.org', 'test.com',
                 'domain.com', 'email.com', 'monsite.fr', 'yoursite.com',
                 'wixpress.com', 'wix.com', 'squarespace.com',
+                'flywheel.local', 'localhost', 'wordpress.com',
+                'mailinator.com', 'guerrillamail.com', 'tempmail.com',
+                'yopmail.com', 'sharklasers.com', 'guerrillamailblock.com',
             ];
             $blacklistedPrefixes = [
                 'noreply', 'no-reply', 'donotreply', 'mailer-daemon',
