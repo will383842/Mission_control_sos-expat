@@ -433,6 +433,30 @@ class StatsController extends Controller
         $globalContactable = $perType->sum('contactable');
         $globalUnreachable = $perType->sum('unreachable');
 
+        // Per type + language breakdown
+        $byTypeLang = Influenceur::query()
+            ->select(
+                'contact_type',
+                'language',
+                DB::raw('COUNT(*) as total'),
+                DB::raw('SUM(CASE WHEN email IS NOT NULL THEN 1 ELSE 0 END) as with_email'),
+                DB::raw("SUM(CASE WHEN scraped_social::text LIKE '%_contact_form_url%' THEN 1 ELSE 0 END) as with_form")
+            )
+            ->whereNotNull('language')
+            ->where('language', '!=', '')
+            ->groupBy('contact_type', 'language')
+            ->orderBy('contact_type')
+            ->orderByDesc(DB::raw('COUNT(*)'))
+            ->get()
+            ->map(fn($r) => [
+                'contact_type' => $r->contact_type,
+                'language'     => $r->language,
+                'total'        => (int) $r->total,
+                'with_email'   => (int) $r->with_email,
+                'with_form'    => (int) $r->with_form,
+                'email_pct'    => $r->total > 0 ? round($r->with_email / $r->total * 100) : 0,
+            ]);
+
         return response()->json([
             'global' => [
                 'total'           => $globalTotal,
@@ -444,7 +468,8 @@ class StatsController extends Controller
                 'email_pct'       => $globalTotal > 0 ? round($globalEmails / $globalTotal * 100) : 0,
                 'contactable_pct' => $globalTotal > 0 ? round($globalContactable / $globalTotal * 100) : 0,
             ],
-            'per_type' => $perType->values(),
+            'per_type'      => $perType->values(),
+            'per_type_lang' => $byTypeLang->values(),
         ]);
     }
 

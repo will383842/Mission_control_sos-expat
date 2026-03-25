@@ -373,6 +373,23 @@ export default function AutoCampaignPage() {
     }
   };
 
+  const handleMoveQueue = async (campaignId: number, direction: 'up' | 'down') => {
+    const queued = campaigns.filter(c => c.status === 'queued');
+    const idx = queued.findIndex(c => c.id === campaignId);
+    if (idx < 0) return;
+    if (direction === 'up' && idx === 0) return;
+    if (direction === 'down' && idx === queued.length - 1) return;
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    const newOrder = [...queued];
+    [newOrder[idx], newOrder[swapIdx]] = [newOrder[swapIdx], newOrder[idx]];
+    try {
+      await api.post('/auto-campaigns/reorder', { order: newOrder.map(c => c.id) });
+      loadData();
+    } catch (err: any) {
+      setErrorMsg(err.response?.data?.message || 'Erreur');
+    }
+  };
+
   const handleSelectCampaign = async (id: number) => {
     try {
       const res = await api.get(`/auto-campaigns/${id}`);
@@ -616,6 +633,24 @@ export default function AutoCampaignPage() {
                   >
                     Reprendre
                   </button>
+                )}
+                {c.status === 'queued' && (
+                  <div className="flex gap-0.5">
+                    <button
+                      onClick={e => { e.stopPropagation(); handleMoveQueue(c.id, 'up'); }}
+                      className="px-1.5 py-1 text-xs text-muted hover:text-white hover:bg-surface2 rounded transition-colors"
+                      title="Monter dans la file"
+                    >
+                      ▲
+                    </button>
+                    <button
+                      onClick={e => { e.stopPropagation(); handleMoveQueue(c.id, 'down'); }}
+                      className="px-1.5 py-1 text-xs text-muted hover:text-white hover:bg-surface2 rounded transition-colors"
+                      title="Descendre dans la file"
+                    >
+                      ▼
+                    </button>
+                  </div>
                 )}
                 {['running', 'paused', 'queued'].includes(c.status) && (
                   <button

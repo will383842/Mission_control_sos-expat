@@ -208,6 +208,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{campaign}/retry-failed', [AutoCampaignController::class, 'retryFailed']);
         Route::patch('/{campaign}/settings', [AutoCampaignController::class, 'updateSettings']);
         Route::delete('/{campaign}', [AutoCampaignController::class, 'destroy']);
+        Route::post('/reorder', [AutoCampaignController::class, 'reorder']);
     });
 
     // ============================================================

@@ -17,6 +17,13 @@ interface GlobalStat {
   total: number; with_email: number; with_phone: number; with_form: number;
   contactable: number; unreachable: number; email_pct: number; contactable_pct: number;
 }
+interface TypeLangStat {
+  contact_type: string; language: string; total: number; with_email: number; with_form: number; email_pct: number;
+}
+
+const LANG_FLAGS: Record<string, string> = {
+  fr: '🇫🇷', en: '🇬🇧', es: '🇪🇸', de: '🇩🇪', pt: '🇧🇷', ar: '🇸🇦', it: '🇮🇹', nl: '🇳🇱', zh: '🇨🇳', ja: '🇯🇵', ko: '🇰🇷', ru: '🇷🇺', th: '🇹🇭',
+};
 
 interface ObjectiveForm {
   contact_type: string;
@@ -97,12 +104,15 @@ export default function AdminConsole() {
   const [totalValid, setTotalValid] = useState(0);
   const [globalStat, setGlobalStat] = useState<GlobalStat | null>(null);
   const [typeStats, setTypeStats] = useState<TypeStat[]>([]);
+  const [typeLangStats, setTypeLangStats] = useState<TypeLangStat[]>([]);
+  const [expandedType, setExpandedType] = useState<string | null>(null);
 
   const fetchDashboard = async () => {
     try {
       const { data } = await api.get('/stats/admin-dashboard');
       setGlobalStat(data.global);
       setTypeStats(data.per_type);
+      setTypeLangStats(data.per_type_lang || []);
     } catch { /* ignore */ }
   };
 
@@ -275,50 +285,81 @@ export default function AdminConsole() {
                 <tbody>
                   {typeStats.filter(t => t.total > 0 || t.countries_searched > 0).map(t => {
                     const contactablePct = t.total > 0 ? t.contactable_pct : 0;
+                    const langRows = typeLangStats.filter(tl => tl.contact_type === t.value);
+                    const isExpanded = expandedType === t.value;
                     return (
-                      <tr key={t.value} className="border-b border-border/50 hover:bg-surface2 transition-colors">
-                        <td className="px-4 py-3">
-                          <span className="flex items-center gap-2">
-                            <span>{t.icon}</span>
-                            <span className="text-white font-medium text-xs">{t.label}</span>
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 font-mono text-white font-bold">{t.total}</td>
-                        <td className="px-4 py-3">
-                          <span className="font-mono text-cyan">{t.with_email}</span>
-                          {t.total > 0 && <span className="text-[10px] text-muted ml-1">({t.email_pct}%)</span>}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="font-mono text-blue-400">{t.with_form}</span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="font-mono text-emerald-400">{t.with_phone}</span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <div className="w-16 bg-surface2 rounded-full h-1.5">
-                              <div
-                                className={`h-1.5 rounded-full ${contactablePct >= 80 ? 'bg-emerald-500' : contactablePct >= 50 ? 'bg-amber' : 'bg-red-500'}`}
-                                style={{ width: `${Math.max(contactablePct, 3)}%` }}
-                              />
-                            </div>
-                            <span className={`text-xs font-mono ${contactablePct >= 80 ? 'text-emerald-400' : contactablePct >= 50 ? 'text-amber' : 'text-red-400'}`}>
-                              {t.contactable} ({contactablePct}%)
+                      <React.Fragment key={t.value}>
+                        <tr
+                          onClick={() => setExpandedType(isExpanded ? null : t.value)}
+                          className="border-b border-border/50 hover:bg-surface2 transition-colors cursor-pointer"
+                        >
+                          <td className="px-4 py-3">
+                            <span className="flex items-center gap-2">
+                              <span className="text-[10px] text-muted">{isExpanded ? '▼' : '▶'}</span>
+                              <span>{t.icon}</span>
+                              <span className="text-white font-medium text-xs">{t.label}</span>
                             </span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          {t.unreachable > 0 ? (
-                            <span className="font-mono text-red-400">{t.unreachable}</span>
-                          ) : (
-                            <span className="text-muted/30">0</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-xs text-muted">
-                          {t.countries > 0 && <span className="text-white">{t.countries}</span>}
-                          {t.countries_searched > 0 && <span className="text-muted"> / {t.countries_searched} rech.</span>}
-                        </td>
-                      </tr>
+                          </td>
+                          <td className="px-4 py-3 font-mono text-white font-bold">{t.total}</td>
+                          <td className="px-4 py-3">
+                            <span className="font-mono text-cyan">{t.with_email}</span>
+                            {t.total > 0 && <span className="text-[10px] text-muted ml-1">({t.email_pct}%)</span>}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="font-mono text-blue-400">{t.with_form}</span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="font-mono text-emerald-400">{t.with_phone}</span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <div className="w-16 bg-surface2 rounded-full h-1.5">
+                                <div
+                                  className={`h-1.5 rounded-full ${contactablePct >= 80 ? 'bg-emerald-500' : contactablePct >= 50 ? 'bg-amber' : 'bg-red-500'}`}
+                                  style={{ width: `${Math.max(contactablePct, 3)}%` }}
+                                />
+                              </div>
+                              <span className={`text-xs font-mono ${contactablePct >= 80 ? 'text-emerald-400' : contactablePct >= 50 ? 'text-amber' : 'text-red-400'}`}>
+                                {t.contactable} ({contactablePct}%)
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            {t.unreachable > 0 ? (
+                              <span className="font-mono text-red-400">{t.unreachable}</span>
+                            ) : (
+                              <span className="text-muted/30">0</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-xs text-muted">
+                            {t.countries > 0 && <span className="text-white">{t.countries}</span>}
+                            {t.countries_searched > 0 && <span className="text-muted"> / {t.countries_searched} rech.</span>}
+                          </td>
+                        </tr>
+                        {isExpanded && langRows.length > 0 && langRows.map(lr => (
+                          <tr key={`${t.value}-${lr.language}`} className="bg-surface2/30 border-b border-border/30">
+                            <td className="px-4 py-2 pl-12">
+                              <span className="text-xs text-muted">
+                                {LANG_FLAGS[lr.language] || '🌐'} {lr.language.toUpperCase()}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2 font-mono text-xs text-white">{lr.total}</td>
+                            <td className="px-4 py-2">
+                              <span className="font-mono text-xs text-cyan">{lr.with_email}</span>
+                              <span className="text-[10px] text-muted ml-1">({lr.email_pct}%)</span>
+                            </td>
+                            <td className="px-4 py-2">
+                              <span className="font-mono text-xs text-blue-400">{lr.with_form}</span>
+                            </td>
+                            <td className="px-4 py-2" colSpan={4} />
+                          </tr>
+                        ))}
+                        {isExpanded && langRows.length === 0 && (
+                          <tr className="bg-surface2/30 border-b border-border/30">
+                            <td colSpan={8} className="px-4 py-2 pl-12 text-xs text-muted">Pas de ventilation par langue</td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     );
                   })}
                   {/* Types with 0 contacts and 0 searched — collapsed */}

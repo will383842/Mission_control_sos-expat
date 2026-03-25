@@ -148,6 +148,7 @@ class AutoCampaign extends Model
         }
 
         $next = static::where('status', 'queued')
+            ->orderBy('created_at')
             ->orderBy('id')
             ->first();
 
