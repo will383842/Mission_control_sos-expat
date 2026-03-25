@@ -146,8 +146,19 @@ export default function Layout() {
                   <NavLink to="/admin/qualite" className={navClass} onClick={handleNavClick}>
                     <span>✅</span> Qualite
                   </NavLink>
-                  <NavLink to="/admin/prospection" className={navClass} onClick={handleNavClick}>
-                    <span>✉️</span> Prospection
+
+                  <SectionLabel>Prospection</SectionLabel>
+                  <NavLink to="/prospection" end className={navClass} onClick={handleNavClick}>
+                    <span>✉️</span> Hub Prospection
+                  </NavLink>
+                  <NavLink to="/prospection/emails" className={navClass} onClick={handleNavClick}>
+                    <span>📨</span> Emails
+                  </NavLink>
+                  <NavLink to="/prospection/sequences" className={navClass} onClick={handleNavClick}>
+                    <span>🔄</span> Sequences
+                  </NavLink>
+                  <NavLink to="/prospection/config" className={navClass} onClick={handleNavClick}>
+                    <span>⚙️</span> Config Prospection
                   </NavLink>
                   <NavLink to="/equipe" className={navClass} onClick={handleNavClick}>
                     <span>⚙️</span> Équipe

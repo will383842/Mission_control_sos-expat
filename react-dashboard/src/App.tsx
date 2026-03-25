@@ -21,7 +21,11 @@ import Journal from './pages/Journal';
 import Directories from './pages/Directories';
 import CoverageMatrix from './pages/CoverageMatrix';
 import QualityDashboard from './pages/QualityDashboard';
-import Prospection from './pages/Prospection';
+import ProspectionHub from './pages/prospection/ProspectionHub';
+import ProspectionOverview from './pages/prospection/ProspectionOverview';
+import ProspectionEmails from './pages/prospection/ProspectionEmails';
+import ProspectionSequences from './pages/prospection/ProspectionSequences';
+import ProspectionConfig from './pages/prospection/ProspectionConfig';
 import Layout from './components/Layout';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -94,7 +98,13 @@ export default function App() {
             <Route path="admin/campaigns" element={<AdminRoute><AutoCampaign /></AdminRoute>} />
             <Route path="admin/avancement" element={<AdminRoute><CoverageMatrix /></AdminRoute>} />
             <Route path="admin/qualite" element={<AdminRoute><QualityDashboard /></AdminRoute>} />
-            <Route path="admin/prospection" element={<AdminRoute><Prospection /></AdminRoute>} />
+
+            {/* Prospection Hub + sub-pages */}
+            <Route path="prospection" element={<AdminRoute><ProspectionHub /></AdminRoute>} />
+            <Route path="prospection/overview" element={<AdminRoute><ProspectionOverview /></AdminRoute>} />
+            <Route path="prospection/emails" element={<AdminRoute><ProspectionEmails /></AdminRoute>} />
+            <Route path="prospection/sequences" element={<AdminRoute><ProspectionSequences /></AdminRoute>} />
+            <Route path="prospection/config" element={<AdminRoute><ProspectionConfig /></AdminRoute>} />
             <Route path="equipe" element={<AdminRoute><Equipe /></AdminRoute>} />
           </Route>
         </Routes>
