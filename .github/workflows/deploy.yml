@@ -24,10 +24,13 @@ jobs:
             # Backup .env.production before pull (protect secrets)
             cp .env.production .env.production.bak 2>/dev/null || true
 
-            # Pull latest code (safe — does not overwrite untracked/ignored files)
+            # Stash any local changes (production hotfixes, etc.)
+            git stash --include-untracked 2>/dev/null || true
+
+            # Pull latest code
             git fetch origin master
             git checkout master
-            git merge origin/master --ff-only || { echo "Merge conflict — aborting"; exit 1; }
+            git reset --hard origin/master
 
             # Restore .env.production (in case git removed it after gitignore change)
             cp .env.production.bak .env.production 2>/dev/null || true
