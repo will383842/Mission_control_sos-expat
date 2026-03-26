@@ -32,9 +32,9 @@ jobs:
             # Restore .env.production (in case git removed it after gitignore change)
             cp .env.production.bak .env.production 2>/dev/null || true
 
-            # Rebuild and restart containers
-            docker compose build --no-cache app queue scheduler scraper frontend
-            docker compose up -d --force-recreate app queue scheduler scraper frontend nginx-api
+            # Rebuild and restart containers (including new content + publication workers)
+            docker compose build --no-cache app queue scheduler scraper frontend content-worker publication-worker
+            docker compose up -d --force-recreate app queue scheduler scraper frontend nginx-api content-worker publication-worker
 
             # Wait for app container to be ready
             sleep 5
@@ -49,6 +49,11 @@ jobs:
             # Seed contact types + email templates (updateOrInsert — safe to re-run)
             docker exec inf-app php artisan db:seed --class=ContactTypeSeeder --force
             docker exec inf-app php artisan db:seed --class=EmailTemplateSeeder --force
+
+            # Seed Content Engine defaults (prompts, presets, publishing endpoint)
+            docker exec inf-app php artisan db:seed --class=PromptTemplateSeeder --force
+            docker exec inf-app php artisan db:seed --class=GenerationPresetSeeder --force
+            docker exec inf-app php artisan db:seed --class=PublishingEndpointSeeder --force
 
             # Verify deployment
             docker exec inf-app php artisan about || true
