@@ -18,24 +18,42 @@ class EmailVerificationService
         $email = strtolower(trim($inf->email));
         $domain = substr($email, strpos($email, '@') + 1);
 
-        // MX check
+        // MX check with retry on DNS failure
         $mxValid = false;
         $mxDomain = null;
-        try {
-            $mxRecords = [];
-            if (dns_get_record($domain, DNS_MX, $_, $mxRecords) && count($mxRecords) > 0) {
-                $mxValid = true;
-                $mxDomain = $mxRecords[0]['target'] ?? null;
-            } else {
-                // Fallback: check A record (some domains don't have MX but accept mail)
-                $aRecords = dns_get_record($domain, DNS_A);
+        $dnsError = false;
+        for ($attempt = 1; $attempt <= 3; $attempt++) {
+            try {
+                $mxRecords = [];
+                $result = @dns_get_record($domain, DNS_MX, $_, $mxRecords);
+                if ($result && count($mxRecords) > 0) {
+                    $mxValid = true;
+                    $mxDomain = $mxRecords[0]['target'] ?? null;
+                    $dnsError = false;
+                    break;
+                }
+                // No MX — try A record fallback
+                $aRecords = @dns_get_record($domain, DNS_A);
                 if (!empty($aRecords)) {
                     $mxValid = true;
                     $mxDomain = $domain . ' (A record)';
+                    $dnsError = false;
+                    break;
                 }
+                // DNS responded but no MX/A record → truly invalid
+                $dnsError = false;
+                break;
+            } catch (\Throwable $e) {
+                $dnsError = true;
+                Log::debug("MX check attempt $attempt failed", ['email' => $email, 'error' => $e->getMessage()]);
+                if ($attempt < 3) usleep(500_000); // Wait 500ms before retry
             }
-        } catch (\Throwable $e) {
-            Log::debug('MX check failed', ['email' => $email, 'error' => $e->getMessage()]);
+        }
+
+        // If ALL DNS attempts failed → skip this email (don't mark invalid)
+        if ($dnsError) {
+            Log::info('DNS temporarily unavailable, skipping', ['email' => $email]);
+            return null;
         }
 
         // SMTP check (only if MX is valid)
