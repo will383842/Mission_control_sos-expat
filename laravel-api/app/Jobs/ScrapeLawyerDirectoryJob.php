@@ -50,11 +50,12 @@ class ScrapeLawyerDirectoryJob implements ShouldQueue
 
         try {
             $totalSaved = match ($this->sourceSlug) {
-                'legal500'       => $this->scrapeLegal500($scraper),
-                'lawyer-com'     => $this->scrapeLawyerCom($scraper),
-                'abogados-ar'    => $this->scrapeAbogadosAr($scraper),
-                'rechtsanwalt'   => $this->scrapeRechtsanwalt($scraper),
-                default          => 0,
+                'legal500'             => $this->scrapeLegal500($scraper),
+                'lawyer-com'           => $this->scrapeLawyerCom($scraper),
+                'abogados-ar'          => $this->scrapeAbogadosAr($scraper),
+                'rechtsanwalt'         => $this->scrapeRechtsanwalt($scraper),
+                'website-enrichment'   => $scraper->enrichExistingLawyers(),
+                default                => 0,
             };
 
             $source->update([
