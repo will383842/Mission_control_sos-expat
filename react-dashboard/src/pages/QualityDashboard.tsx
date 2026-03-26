@@ -95,34 +95,44 @@ export default function QualityDashboard() {
       </div>
 
       {/* KPI cards */}
-      {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <div className="bg-surface border border-border rounded-xl p-4">
-            <div className="text-[10px] text-muted uppercase mb-1">Emails verifies</div>
-            <div className="text-2xl font-bold text-emerald-400">{stats.email.verified}</div>
-            <div className="text-xs text-muted">{stats.total > 0 ? Math.round(stats.email.verified / stats.total * 100) : 0}% du total</div>
+      {stats && (() => {
+        const validEmails = stats.email.verified + stats.email.risky;
+        const totalWithEmail = validEmails + stats.email.invalid + stats.email.unverified;
+        return (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div className="bg-surface border border-emerald-500/30 rounded-xl p-4">
+              <div className="text-[10px] text-muted uppercase mb-1">Emails valides</div>
+              <div className="text-2xl font-bold text-emerald-400">{validEmails}</div>
+              <div className="text-xs text-muted">{stats.email.verified} confirmes + {stats.email.risky} probables</div>
+            </div>
+            <div className="bg-surface border border-border rounded-xl p-4">
+              <div className="text-[10px] text-muted uppercase mb-1">En attente</div>
+              <div className="text-2xl font-bold text-amber">{stats.email.unverified}</div>
+              <div className="text-xs text-muted">non verifies</div>
+            </div>
+            <div className="bg-surface border border-border rounded-xl p-4">
+              <div className="text-[10px] text-muted uppercase mb-1">Invalides</div>
+              <div className="text-2xl font-bold text-red-400">{stats.email.invalid}</div>
+              <div className="text-xs text-muted">MX ou SMTP rejete</div>
+            </div>
+            <div className="bg-surface border border-border rounded-xl p-4">
+              <div className="text-[10px] text-muted uppercase mb-1">Sans email</div>
+              <div className="text-2xl font-bold text-muted">{stats.email.no_email}</div>
+              <div className="text-xs text-muted">{stats.total > 0 ? Math.round(stats.email.no_email / stats.total * 100) : 0}% du total</div>
+            </div>
+            <div className="bg-surface border border-border rounded-xl p-4">
+              <div className="text-[10px] text-muted uppercase mb-1">Doublons</div>
+              <div className="text-2xl font-bold text-violet-light">{stats.pending_dupes}</div>
+              <div className="text-xs text-muted">a resoudre</div>
+            </div>
+            <div className="bg-surface border border-border rounded-xl p-4">
+              <div className="text-[10px] text-muted uppercase mb-1">Mauvais types</div>
+              <div className="text-2xl font-bold text-orange-400">{stats.pending_types}</div>
+              <div className="text-xs text-muted">a corriger</div>
+            </div>
           </div>
-          <div className="bg-surface border border-border rounded-xl p-4">
-            <div className="text-[10px] text-muted uppercase mb-1">Non verifies</div>
-            <div className="text-2xl font-bold text-amber">{stats.email.unverified}</div>
-            <div className="text-xs text-muted">en attente</div>
-          </div>
-          <div className="bg-surface border border-border rounded-xl p-4">
-            <div className="text-[10px] text-muted uppercase mb-1">Emails invalides</div>
-            <div className="text-2xl font-bold text-red-400">{stats.email.invalid}</div>
-          </div>
-          <div className="bg-surface border border-border rounded-xl p-4">
-            <div className="text-[10px] text-muted uppercase mb-1">Doublons</div>
-            <div className="text-2xl font-bold text-violet-light">{stats.pending_dupes}</div>
-            <div className="text-xs text-muted">a resoudre</div>
-          </div>
-          <div className="bg-surface border border-border rounded-xl p-4">
-            <div className="text-[10px] text-muted uppercase mb-1">Mauvais types</div>
-            <div className="text-2xl font-bold text-orange-400">{stats.pending_types}</div>
-            <div className="text-xs text-muted">a corriger</div>
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Tabs */}
       <div className="flex gap-2">
