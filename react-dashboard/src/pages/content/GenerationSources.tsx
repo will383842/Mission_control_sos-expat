@@ -27,15 +27,19 @@ interface CategoryData {
   themes: ThemeItem[];
 }
 
+interface SourceArticle {
+  id: number; title: string; url?: string; content_text?: string; word_count?: number;
+  category?: string; section?: string; meta_title?: string; meta_description?: string;
+  source_name?: string; source_url?: string; scraped_at?: string;
+  country?: string; city?: string; replies?: number; views?: number;
+  last_post_date?: string; last_post_author?: string; article_status?: string;
+}
+interface QaQuestion { id: number; title: string; url: string; views: number; replies: number; country: string }
 interface ItemDetail {
   item: SourceItem;
-  source: {
-    id: number; title: string; url?: string; content_text?: string; word_count?: number;
-    category?: string; section?: string; meta_title?: string; meta_description?: string;
-    source_name?: string; source_url?: string; scraped_at?: string;
-    country?: string; city?: string; replies?: number; views?: number;
-    last_post_date?: string; last_post_author?: string; article_status?: string;
-  } | null;
+  source: SourceArticle | null;
+  pillar_sources: SourceArticle[] | null;
+  qa_questions: QaQuestion[] | null;
 }
 
 interface OverallStats {
@@ -367,6 +371,49 @@ export default function GenerationSources() {
                     {!detail.source.content_text && detail.source.url && (
                       <div className="text-gray-500 text-sm italic">Pas de contenu texte stocke. <a href={detail.source.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Voir sur le site source →</a></div>
                     )}
+                  </div>
+                )}
+
+                {/* Pillar article: show all aggregated sources */}
+                {detail.pillar_sources && detail.pillar_sources.length > 0 && (
+                  <div className="space-y-3">
+                    <hr className="border-gray-700" />
+                    <h4 className="text-white font-semibold text-sm">{detail.pillar_sources.length} articles sources agrégés</h4>
+                    {detail.pillar_sources.map((src, i) => (
+                      <div key={src.id} className="bg-gray-800 rounded-lg p-3 border border-gray-700">
+                        <div className="flex justify-between items-start mb-1">
+                          <span className="text-amber-400 text-xs font-medium">{src.source_name}</span>
+                          <span className="text-gray-500 text-xs">{fmt(src.word_count || 0)} mots</span>
+                        </div>
+                        <h5 className="text-white text-sm font-medium">{src.title}</h5>
+                        {src.url && <a href={src.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 text-xs hover:underline truncate block mt-0.5">{src.url}</a>}
+                        {src.meta_description && <p className="text-gray-400 text-xs mt-1">{src.meta_description}</p>}
+                        {src.content_text && (
+                          <details className="mt-2">
+                            <summary className="text-blue-400 text-xs cursor-pointer hover:text-blue-300">Voir le contenu</summary>
+                            <div className="mt-1 bg-gray-900 rounded p-2 max-h-[200px] overflow-y-auto">
+                              <pre className="text-gray-300 text-xs whitespace-pre-wrap font-sans">{src.content_text}</pre>
+                            </div>
+                          </details>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Q&A questions for pillar */}
+                {detail.qa_questions && detail.qa_questions.length > 0 && (
+                  <div className="space-y-2">
+                    <hr className="border-gray-700" />
+                    <h4 className="text-white font-semibold text-sm">Top questions Q&A ({detail.qa_questions.length})</h4>
+                    <div className="max-h-[200px] overflow-y-auto space-y-1">
+                      {detail.qa_questions.map(q => (
+                        <div key={q.id} className="flex justify-between items-center text-xs py-1 border-b border-gray-800">
+                          <a href={q.url} target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-white truncate flex-1 mr-2">{q.title}</a>
+                          <span className="text-blue-400 whitespace-nowrap">{fmt(q.views)} vues</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 

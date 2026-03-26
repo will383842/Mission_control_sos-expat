@@ -44,7 +44,29 @@ class GenerationSourceController extends Controller
         if (!$item) return response()->json(['error' => 'Not found'], 404);
 
         $sourceData = null;
-        if ($item->source_id) {
+        $pillarSources = null;
+
+        if ($item->source_type === 'pillar' && $item->data_json) {
+            // Pillar article: load all referenced source articles
+            $data = json_decode($item->data_json, true);
+            $articleIds = $data['article_ids'] ?? [];
+            if (!empty($articleIds)) {
+                $pillarSources = DB::table('content_articles as ca')
+                    ->leftJoin('content_sources as cs', 'ca.source_id', '=', 'cs.id')
+                    ->whereIn('ca.id', $articleIds)
+                    ->select('ca.id', 'ca.title', 'ca.url', 'ca.content_text', 'ca.word_count', 'ca.category', 'ca.section', 'ca.language', 'ca.meta_description', 'cs.name as source_name')
+                    ->orderByDesc('ca.word_count')
+                    ->get();
+            }
+            // Also load top Q&A questions for this country/theme
+            $qaQuestions = DB::table('content_questions')
+                ->where('country_slug', $data['country_slug'] ?? '')
+                ->where('views', '>=', 50)
+                ->orderByDesc('views')
+                ->limit(20)
+                ->select('id', 'title', 'url', 'views', 'replies', 'country')
+                ->get();
+        } elseif ($item->source_id) {
             if ($item->source_type === 'article') {
                 $sourceData = DB::table('content_articles as ca')
                     ->leftJoin('content_sources as cs', 'ca.source_id', '=', 'cs.id')
@@ -60,8 +82,10 @@ class GenerationSourceController extends Controller
         }
 
         return response()->json([
-            'item'   => $item,
-            'source' => $sourceData,
+            'item'           => $item,
+            'source'         => $sourceData,
+            'pillar_sources' => $pillarSources,
+            'qa_questions'   => $qaQuestions ?? null,
         ]);
     }
 
