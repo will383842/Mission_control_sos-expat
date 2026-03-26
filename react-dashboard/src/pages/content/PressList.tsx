@@ -12,34 +12,7 @@ import {
 import type { PressRelease, PressDossier, ContentStatus, PaginatedResponse } from '../../types/content';
 import { toast } from '../../components/Toast';
 import { ConfirmModal } from '../../components/ConfirmModal';
-import { errMsg } from './helpers';
-
-// ── Constants ───────────────────────────────────────────────
-const STATUS_COLORS: Record<ContentStatus, string> = {
-  draft: 'bg-muted/20 text-muted',
-  generating: 'bg-amber/20 text-amber animate-pulse',
-  review: 'bg-blue-500/20 text-blue-400',
-  scheduled: 'bg-violet/20 text-violet',
-  published: 'bg-success/20 text-success',
-  archived: 'bg-muted/20 text-muted',
-};
-
-const STATUS_LABELS: Record<ContentStatus, string> = {
-  draft: 'Brouillon',
-  generating: 'Generation...',
-  review: 'Revue',
-  scheduled: 'Planifie',
-  published: 'Publie',
-  archived: 'Archive',
-};
-
-const inputClass = 'bg-bg border border-border rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-violet transition-colors';
-
-function seoBarColor(score: number): string {
-  if (score >= 80) return 'bg-success';
-  if (score >= 50) return 'bg-amber';
-  return 'bg-danger';
-}
+import { errMsg, seoBarColor, inputClass, STATUS_COLORS, STATUS_LABELS } from './helpers';
 
 function formatDate(d: string | null): string {
   if (!d) return '\u2014';

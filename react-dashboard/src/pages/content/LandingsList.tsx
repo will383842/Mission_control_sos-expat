@@ -4,7 +4,7 @@ import { fetchLandings, deleteLanding } from '../../api/contentApi';
 import type { LandingPage, ContentStatus, PaginatedResponse } from '../../types/content';
 import { toast } from '../../components/Toast';
 import { ConfirmModal } from '../../components/ConfirmModal';
-import { errMsg } from './helpers';
+import { errMsg, seoBarColor, inputClass } from './helpers';
 
 // ── Constants ───────────────────────────────────────────────
 const STATUS_COLORS: Record<ContentStatus, string> = {
@@ -41,14 +41,6 @@ const LANG_OPTIONS: { value: string; label: string }[] = [
   { value: 'es', label: 'Espagnol' },
   { value: 'pt', label: 'Portugais' },
 ];
-
-const inputClass = 'bg-bg border border-border rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-violet transition-colors';
-
-function seoBarColor(score: number): string {
-  if (score >= 80) return 'bg-success';
-  if (score >= 50) return 'bg-amber';
-  return 'bg-danger';
-}
 
 function formatDate(d: string | null): string {
   if (!d) return '\u2014';

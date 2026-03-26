@@ -4,7 +4,7 @@ import { fetchArticles, deleteArticle, bulkDeleteArticles, duplicateArticle } fr
 import type { GeneratedArticle, ContentStatus, ContentType, PaginatedResponse } from '../../types/content';
 import { toast } from '../../components/Toast';
 import { ConfirmModal } from '../../components/ConfirmModal';
-import { inputClass as sharedInputClass, seoBarColor, errMsg } from './helpers';
+import { inputClass, seoBarColor, errMsg } from './helpers';
 
 // ── Constants ───────────────────────────────────────────────
 const STATUS_COLORS: Record<ContentStatus, string> = {
@@ -63,15 +63,7 @@ const TYPE_COLORS: Record<ContentType, string> = {
   tutorial: 'bg-success/20 text-success',
 };
 
-const inputClass = 'bg-bg border border-border rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-violet transition-colors';
-
 type SortField = 'title' | 'seo_score' | 'quality_score' | 'word_count' | 'created_at';
-
-function seoBarColor(score: number): string {
-  if (score >= 80) return 'bg-success';
-  if (score >= 50) return 'bg-amber';
-  return 'bg-danger';
-}
 
 // ── Component ───────────────────────────────────────────────
 export default function ArticlesList() {
