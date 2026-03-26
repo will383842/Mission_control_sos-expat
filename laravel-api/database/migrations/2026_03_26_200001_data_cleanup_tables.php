@@ -23,6 +23,9 @@ return new class extends Migration
         }
 
         // Content opportunities table
+        if (Schema::hasTable('content_opportunities')) {
+            return; // Tables already created via direct SQL
+        }
         Schema::create('content_opportunities', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('question_id')->nullable();
