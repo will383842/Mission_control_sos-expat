@@ -286,6 +286,9 @@ export default function Layout() {
                   isOpen={openGroups.content}
                   onToggle={() => toggleGroup('content')}
                 >
+                  <NavLink to="/content/sources" className={subNavClass} onClick={handleNavClick}>
+                    Sources Generation
+                  </NavLink>
                   <NavLink to="/content" end className={subNavClass} onClick={handleNavClick}>
                     Dashboard
                   </NavLink>
@@ -310,11 +313,8 @@ export default function Layout() {
                   <NavLink to="/content/links" className={subNavClass} onClick={handleNavClick}>
                     Tous les liens
                   </NavLink>
-                  <NavLink to="/content/sources" className={subNavClass} onClick={handleNavClick}>
-                    Sources Generation
-                  </NavLink>
                   <NavLink to="/content/data-cleanup" className={subNavClass} onClick={handleNavClick}>
-                    Data Cleanup
+                    Donnees brutes (traite)
                   </NavLink>
                 </NavGroup>
               )}

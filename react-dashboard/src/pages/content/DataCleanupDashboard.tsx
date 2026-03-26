@@ -76,7 +76,10 @@ export default function DataCleanupDashboard() {
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold text-white">Data Cleanup Dashboard</h1>
+      <div>
+        <h1 className="text-2xl font-bold text-white">Donnees Brutes</h1>
+        <p className="text-emerald-400 text-sm mt-1">✓ Traitement effectue — les donnees nettoyees sont dans Sources Generation</p>
+      </div>
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-gray-700 pb-0">
