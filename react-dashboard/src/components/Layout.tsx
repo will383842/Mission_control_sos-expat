@@ -278,17 +278,14 @@ export default function Layout() {
                 </NavGroup>
               )}
 
-              {/* 5. Content (group) - admin only */}
+              {/* 5. Données scrappées brutes - admin only */}
               {isAdmin && (
                 <NavGroup
-                  label="Content"
+                  label="Donnees scrappees"
                   icon="📄"
                   isOpen={openGroups.content}
                   onToggle={() => toggleGroup('content')}
                 >
-                  <NavLink to="/content/sources" className={subNavClass} onClick={handleNavClick}>
-                    Sources Generation
-                  </NavLink>
                   <NavLink to="/content" end className={subNavClass} onClick={handleNavClick}>
                     Dashboard
                   </NavLink>
@@ -314,19 +311,22 @@ export default function Layout() {
                     Tous les liens
                   </NavLink>
                   <NavLink to="/content/data-cleanup" className={subNavClass} onClick={handleNavClick}>
-                    Donnees brutes (traite)
+                    Nettoyage
                   </NavLink>
                 </NavGroup>
               )}
 
-              {/* Content Engine v2 - admin only */}
+              {/* Sources de contenu + outils de génération - admin only */}
               {isAdmin && (
                 <NavGroup
-                  label="Contenu"
+                  label="Sources de contenu"
                   icon="✍️"
                   isOpen={openGroups.contentEngine}
                   onToggle={() => toggleGroup('contentEngine')}
                 >
+                  <NavLink to="/content/sources" className={subNavClass} onClick={handleNavClick}>
+                    Sources de generation
+                  </NavLink>
                   <NavLink to="/content/overview" className={subNavClass} onClick={handleNavClick}>
                     Vue d'ensemble
                   </NavLink>
