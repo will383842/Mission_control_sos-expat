@@ -3,6 +3,7 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useContactTypes } from '../hooks/useContactTypes';
 import { useReminders } from '../hooks/useReminders';
+import { useContentSources } from '../hooks/useContentSources';
 
 // ── Chevron icon ────────────────────────────────────────────
 function ChevronIcon({ open }: { open: boolean }) {
@@ -58,6 +59,7 @@ export default function Layout() {
   const { user, logout } = useAuth();
   useContactTypes();
   const { reminders } = useReminders();
+  const contentSources = useContentSources();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -279,10 +281,19 @@ export default function Layout() {
                   onToggle={() => toggleGroup('content')}
                 >
                   <NavLink to="/content" end className={subNavClass} onClick={handleNavClick}>
-                    Hub Content
+                    Dashboard
                   </NavLink>
+                  {contentSources.map((src) => (
+                    <NavLink key={src.slug} to={`/content/${src.slug}`} className={subNavClass} onClick={handleNavClick}>
+                      <span className="flex items-center gap-2">
+                        {src.name}
+                        {src.status === 'scraping' && <span className="w-1.5 h-1.5 rounded-full bg-amber animate-pulse" />}
+                        {src.status === 'completed' && <span className="text-[10px] text-muted">{src.total_articles}</span>}
+                      </span>
+                    </NavLink>
+                  ))}
                   <NavLink to="/content/links" className={subNavClass} onClick={handleNavClick}>
-                    Liens Externes
+                    Tous les liens
                   </NavLink>
                 </NavGroup>
               )}

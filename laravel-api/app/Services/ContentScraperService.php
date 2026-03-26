@@ -50,45 +50,74 @@ class ContentScraperService
 
     /**
      * Scrape the full country list for a source (expat.com).
+     * Scrapes the main page AND all 8 continent sub-pages to get all ~219 countries.
      */
     public function scrapeCountryList(ContentSource $source): array
     {
+        $countries = [];
+
+        // Step 1: Scrape main guide page to discover continent URLs + some countries
         $html = $this->fetchPage($source->base_url);
         if (!$html) {
             Log::error('ContentScraper: failed to fetch country list', ['url' => $source->base_url]);
             return [];
         }
 
-        $countries = [];
+        $continentUrls = [];
         $dom = new \DOMDocument();
         libxml_use_internal_errors(true);
         $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html);
         libxml_clear_errors();
         $xpath = new \DOMXPath($dom);
 
-        // Try expat.com specific selector first, then fallback to generic
-        $links = $xpath->query('//div[contains(@class, "countries-list")]//a[contains(@href, "/fr/guide/")]');
-        if ($links->length === 0) {
-            $links = $xpath->query('//a[contains(@href, "/fr/guide/")]');
+        // Extract country links from main page
+        $this->extractCountryLinksFromPage($xpath, $source->base_url, $countries);
+
+        // Discover continent page URLs (e.g. /fr/guide/europe/, /fr/guide/afrique/)
+        $allLinks = $xpath->query('//a[contains(@href, "/fr/guide/")]');
+        foreach ($allLinks as $link) {
+            $href = $link->getAttribute('href');
+            // Match continent URLs: /fr/guide/{continent}/ (exactly one segment after /guide/)
+            if (preg_match('#/fr/guide/([a-z-]+)/?$#', $href, $m)) {
+                $slug = $m[1];
+                // Skip known non-continent slugs
+                if (in_array($slug, ['guide', 'villes'])) continue;
+                $url = $this->resolveUrl($href, $source->base_url);
+                $continentUrls[$slug] = $url;
+            }
+        }
+        unset($xpath, $dom);
+
+        // Known continents for expat.com (fallback if not all discovered)
+        $knownContinents = [
+            'afrique', 'asie', 'moyen-orient', 'europe',
+            'amerique-du-nord', 'amerique-du-sud', 'amerique-centrale', 'oceanie',
+        ];
+        foreach ($knownContinents as $c) {
+            if (!isset($continentUrls[$c])) {
+                $continentUrls[$c] = rtrim($source->base_url, '/') . '/' . $c . '/';
+            }
         }
 
-        foreach ($links as $link) {
-            $href = $link->getAttribute('href');
-            $text = trim($link->textContent);
+        Log::info('ContentScraper: discovered continents', [
+            'source'     => $source->slug,
+            'continents' => array_keys($continentUrls),
+        ]);
 
-            if (preg_match('#/fr/guide/([^/]+)/([^/]+)/?$#', $href, $m)) {
-                $continent = $this->normalizeContinent($m[1]);
-                $countrySlug = $m[2];
-                if ($countrySlug === 'guide') continue;
+        // Step 2: Scrape each continent page for the full country list
+        foreach ($continentUrls as $continentSlug => $continentUrl) {
+            $this->rateLimitSleep();
+            $cHtml = $this->fetchPage($continentUrl);
+            if (!$cHtml) continue;
 
-                $fullUrl = $this->resolveUrl($href, $source->base_url);
-                $countries[] = [
-                    'name'      => $text ?: ucfirst(str_replace('-', ' ', $countrySlug)),
-                    'slug'      => $countrySlug,
-                    'continent' => $continent,
-                    'guide_url' => $fullUrl,
-                ];
-            }
+            $cDom = new \DOMDocument();
+            libxml_use_internal_errors(true);
+            $cDom->loadHTML('<?xml encoding="utf-8" ?>' . $cHtml);
+            libxml_clear_errors();
+            $cXpath = new \DOMXPath($cDom);
+
+            $this->extractCountryLinksFromPage($cXpath, $continentUrl, $countries);
+            unset($cXpath, $cDom);
         }
 
         // Deduplicate by slug
@@ -101,14 +130,40 @@ class ContentScraperService
             }
         }
 
-        unset($xpath, $dom);
-
         Log::info('ContentScraper: found countries', [
             'source' => $source->slug,
             'count'  => count($unique),
         ]);
 
         return $unique;
+    }
+
+    /**
+     * Extract country links from a parsed HTML page (main guide or continent page).
+     */
+    private function extractCountryLinksFromPage(\DOMXPath $xpath, string $baseUrl, array &$countries): void
+    {
+        $links = $xpath->query('//a[contains(@href, "/fr/guide/")]');
+
+        foreach ($links as $link) {
+            $href = $link->getAttribute('href');
+            $text = trim($link->textContent);
+
+            // Match country URLs: /fr/guide/{continent}/{country}/
+            if (preg_match('#/fr/guide/([^/]+)/([^/]+)/?$#', $href, $m)) {
+                $continent = $this->normalizeContinent($m[1]);
+                $countrySlug = $m[2];
+                if ($countrySlug === 'guide') continue;
+
+                $fullUrl = $this->resolveUrl($href, $baseUrl);
+                $countries[] = [
+                    'name'      => $text ?: ucfirst(str_replace('-', ' ', $countrySlug)),
+                    'slug'      => $countrySlug,
+                    'continent' => $continent,
+                    'guide_url' => $fullUrl,
+                ];
+            }
+        }
     }
 
     /**
@@ -538,14 +593,15 @@ class ContentScraperService
     private function normalizeContinent(string $slug): string
     {
         return match ($slug) {
-            'afrique'          => 'Afrique',
-            'amerique-du-nord' => 'Amerique du Nord',
-            'amerique-du-sud'  => 'Amerique du Sud',
-            'asie'             => 'Asie',
-            'europe'           => 'Europe',
-            'moyen-orient'     => 'Moyen-Orient',
-            'oceanie'          => 'Oceanie',
-            default            => ucfirst(str_replace('-', ' ', $slug)),
+            'afrique'            => 'Afrique',
+            'amerique-du-nord'   => 'Amerique du Nord',
+            'amerique-du-sud'    => 'Amerique du Sud',
+            'amerique-centrale'  => 'Amerique Centrale',
+            'asie'               => 'Asie',
+            'europe'             => 'Europe',
+            'moyen-orient'       => 'Moyen-Orient',
+            'oceanie'            => 'Oceanie',
+            default              => ucfirst(str_replace('-', ' ', $slug)),
         };
     }
 

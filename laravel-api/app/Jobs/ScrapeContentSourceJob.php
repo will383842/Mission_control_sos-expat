@@ -17,7 +17,7 @@ class ScrapeContentSourceJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $timeout = 1200; // 20 min (200+ countries to dispatch)
+    public int $timeout = 1800; // 30 min (scrape 9 pages + dispatch 200+ countries)
     public int $tries = 1;
 
     public function __construct(

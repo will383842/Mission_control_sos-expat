@@ -13,9 +13,6 @@ interface ContentSource {
   total_articles: number;
   total_links: number;
   last_scraped_at: string | null;
-  countries_count?: number;
-  articles_count?: number;
-  external_links_count?: number;
 }
 
 interface ContentStats {
@@ -27,7 +24,6 @@ interface ContentStats {
   affiliate_links: number;
   top_domains: { domain: string; count: number; total_occurrences: number }[];
   by_category: { category: string; count: number }[];
-  link_types: { link_type: string; count: number }[];
 }
 
 export default function ContentHub() {
@@ -49,9 +45,8 @@ export default function ContentHub() {
       ]);
       setSources(srcRes.data);
       setStats(statsRes.data);
-    } catch (err) {
+    } catch {
       setError('Impossible de charger les donnees');
-      console.error('Failed to fetch content data', err);
     } finally {
       setLoading(false);
     }
@@ -70,6 +65,7 @@ export default function ContentHub() {
   const handleAddSource = async (e: FormEvent) => {
     e.preventDefault();
     setAdding(true);
+    setAddError(null);
     try {
       await api.post('/content/sources', { name: newName, base_url: newUrl });
       setNewName('');
@@ -90,26 +86,14 @@ export default function ContentHub() {
     } catch (err: any) {
       if (err.response?.status === 409) {
         setError('Scraping deja en cours pour cette source');
+        setTimeout(() => setError(null), 5000);
       }
     }
   };
 
-  const statusBadge = (status: string) => {
-    const colors: Record<string, string> = {
-      pending: 'bg-gray-600 text-gray-300',
-      scraping: 'bg-amber/20 text-amber',
-      completed: 'bg-green-900/30 text-green-400',
-    };
-    return (
-      <span className={`px-2 py-0.5 rounded text-xs font-medium ${colors[status] || 'bg-gray-600 text-gray-300'}`}>
-        {status}
-      </span>
-    );
-  };
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center h-64" role="status">
         <div className="w-8 h-8 border-2 border-violet border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -121,7 +105,7 @@ export default function ContentHub() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-title text-2xl font-bold text-white">Content Engine</h1>
-          <p className="text-muted text-sm mt-1">Scraping & analyse de contenu pour la generation d'articles</p>
+          <p className="text-muted text-sm mt-1">Scraping de sites pour alimenter la generation d'articles</p>
         </div>
         <button
           onClick={() => setShowAdd(!showAdd)}
@@ -131,7 +115,6 @@ export default function ContentHub() {
         </button>
       </div>
 
-      {/* Error banner */}
       {error && (
         <div className="bg-red-900/20 border border-red-500/30 text-red-400 p-3 rounded-xl text-sm flex items-center justify-between">
           <span>{error}</span>
@@ -143,8 +126,9 @@ export default function ContentHub() {
       {showAdd && (
         <form onSubmit={handleAddSource} className="bg-surface border border-border rounded-xl p-4 flex gap-3 items-end">
           <div className="flex-1">
-            <label className="text-xs text-muted block mb-1">Nom</label>
+            <label htmlFor="src-name" className="text-xs text-muted block mb-1">Nom</label>
             <input
+              id="src-name"
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
@@ -154,8 +138,9 @@ export default function ContentHub() {
             />
           </div>
           <div className="flex-1">
-            <label className="text-xs text-muted block mb-1">URL de base</label>
+            <label htmlFor="src-url" className="text-xs text-muted block mb-1">URL de base (guides)</label>
             <input
+              id="src-url"
               type="url"
               value={newUrl}
               onChange={(e) => setNewUrl(e.target.value)}
@@ -171,19 +156,19 @@ export default function ContentHub() {
           >
             {adding ? '...' : 'Ajouter'}
           </button>
-          {addError && <p className="text-red-400 text-xs mt-1">{addError}</p>}
+          {addError && <p className="text-red-400 text-xs">{addError}</p>}
         </form>
       )}
 
       {/* KPIs */}
       {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {[
             { label: 'Sources', value: stats.total_sources },
             { label: 'Pays', value: stats.total_countries },
             { label: 'Articles', value: stats.total_articles.toLocaleString() },
             { label: 'Liens externes', value: stats.total_links.toLocaleString() },
-            { label: 'Mots scrapes', value: stats.total_words.toLocaleString() },
+            { label: 'Mots scrapes', value: stats.total_words > 1000000 ? `${(stats.total_words / 1000000).toFixed(1)}M` : stats.total_words.toLocaleString() },
             { label: 'Liens affilies', value: stats.affiliate_links.toLocaleString() },
           ].map((kpi) => (
             <div key={kpi.label} className="bg-surface border border-border rounded-xl p-4 text-center">
@@ -194,60 +179,85 @@ export default function ContentHub() {
         </div>
       )}
 
-      {/* Sources table */}
-      <div className="bg-surface border border-border rounded-xl overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border text-left text-muted">
-              <th className="px-4 py-3 font-medium">Source</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium text-right">Pays</th>
-              <th className="px-4 py-3 font-medium text-right">Articles</th>
-              <th className="px-4 py-3 font-medium text-right">Liens</th>
-              <th className="px-4 py-3 font-medium">Dernier scraping</th>
-              <th className="px-4 py-3 font-medium"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {sources.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-muted">
-                  Aucune source. Ajoutez-en une pour commencer.
-                </td>
-              </tr>
-            ) : (
-              sources.map((src) => (
-                <tr key={src.id} className="border-b border-border/50 hover:bg-surface2 transition-colors">
-                  <td className="px-4 py-3">
-                    <Link to={`/content/${src.slug}`} className="text-violet-light hover:underline font-medium">
-                      {src.name}
-                    </Link>
-                    <div className="text-xs text-muted">{src.base_url}</div>
-                  </td>
-                  <td className="px-4 py-3">{statusBadge(src.status)}</td>
-                  <td className="px-4 py-3 text-right text-white">{src.total_countries}</td>
-                  <td className="px-4 py-3 text-right text-white">{src.total_articles}</td>
-                  <td className="px-4 py-3 text-right text-white">{src.total_links}</td>
-                  <td className="px-4 py-3 text-muted text-xs">
-                    {src.last_scraped_at ? new Date(src.last_scraped_at).toLocaleString('fr-FR') : '-'}
-                  </td>
-                  <td className="px-4 py-3">
-                    <button
-                      onClick={() => handleScrape(src.slug)}
-                      disabled={src.status === 'scraping'}
-                      className="px-3 py-1 bg-cyan/20 text-cyan rounded text-xs font-medium hover:bg-cyan/30 disabled:opacity-50 transition-colors"
-                    >
-                      {src.status === 'scraping' ? 'En cours...' : 'Scraper'}
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      {/* Sources cards */}
+      {sources.length === 0 ? (
+        <div className="bg-surface border border-border rounded-xl p-8 text-center">
+          <p className="text-muted mb-3">Aucune source. Ajoutez-en une pour commencer le scraping.</p>
+          <button
+            onClick={() => setShowAdd(true)}
+            className="px-4 py-2 bg-violet hover:bg-violet/80 text-white rounded-lg text-sm"
+          >
+            + Ajouter une source
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {sources.map((src) => (
+            <div key={src.id} className="bg-surface border border-border rounded-xl p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <Link to={`/content/${src.slug}`} className="text-white font-title font-bold text-lg hover:text-violet-light transition-colors">
+                    {src.name}
+                  </Link>
+                  <p className="text-xs text-muted">{src.base_url}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  {src.status === 'scraping' && (
+                    <span className="px-3 py-1 bg-amber/20 text-amber rounded-full text-xs font-medium animate-pulse">
+                      En cours
+                    </span>
+                  )}
+                  {src.status === 'completed' && (
+                    <span className="px-3 py-1 bg-green-900/30 text-green-400 rounded-full text-xs font-medium">
+                      Termine
+                    </span>
+                  )}
+                  {src.status === 'pending' && (
+                    <span className="px-3 py-1 bg-gray-700 text-gray-400 rounded-full text-xs font-medium">
+                      En attente
+                    </span>
+                  )}
+                  <button
+                    onClick={() => handleScrape(src.slug)}
+                    disabled={src.status === 'scraping'}
+                    className="px-3 py-1.5 bg-violet/20 text-violet-light rounded-lg text-xs font-medium hover:bg-violet/30 disabled:opacity-50 transition-colors"
+                  >
+                    {src.status === 'scraping' ? 'En cours...' : 'Scraper'}
+                  </button>
+                  <Link
+                    to={`/content/${src.slug}`}
+                    className="px-3 py-1.5 bg-surface2 text-white rounded-lg text-xs font-medium hover:bg-surface2/80 transition-colors"
+                  >
+                    Explorer
+                  </Link>
+                </div>
+              </div>
+              <div className="grid grid-cols-4 gap-4 text-center">
+                <div>
+                  <div className="text-white font-bold">{src.total_countries}</div>
+                  <div className="text-xs text-muted">Pays</div>
+                </div>
+                <div>
+                  <div className="text-white font-bold">{src.total_articles.toLocaleString()}</div>
+                  <div className="text-xs text-muted">Articles</div>
+                </div>
+                <div>
+                  <div className="text-white font-bold">{src.total_links.toLocaleString()}</div>
+                  <div className="text-xs text-muted">Liens</div>
+                </div>
+                <div>
+                  <div className="text-white font-bold text-xs">
+                    {src.last_scraped_at ? new Date(src.last_scraped_at).toLocaleDateString('fr-FR') : '-'}
+                  </div>
+                  <div className="text-xs text-muted">Dernier scraping</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
-      {/* Top domains */}
+      {/* Top domains + categories */}
       {stats && stats.top_domains.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-surface border border-border rounded-xl p-4">
