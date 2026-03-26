@@ -154,6 +154,8 @@ class ContentScraperService
                 $continent = $this->normalizeContinent($m[1]);
                 $countrySlug = $m[2];
                 if ($countrySlug === 'guide') continue;
+                // Skip URLs that end in .html (these are articles, not countries)
+                if (str_ends_with($countrySlug, '.html')) continue;
 
                 $fullUrl = $this->resolveUrl($href, $baseUrl);
                 $countries[] = [

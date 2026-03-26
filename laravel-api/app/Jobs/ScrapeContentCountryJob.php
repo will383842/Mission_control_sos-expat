@@ -76,6 +76,65 @@ class ScrapeContentCountryJob implements ShouldQueue
             $articleLinks = $scraper->scrapeCountryArticles($country);
             $scraper->rateLimitSleep();
 
+            // If no individual articles found, scrape the country guide page itself (monolithic page)
+            if (empty($articleLinks)) {
+                $guideUrl = $country->guide_url;
+                if (!isset($existingArticleUrls[$guideUrl])) {
+                    $guideContent = $scraper->scrapeArticle($guideUrl);
+                    if ($guideContent && $guideContent['word_count'] > 50) {
+                        $urlHash = hash('sha256', $guideUrl);
+                        ContentArticle::create([
+                            'source_id'        => $source->id,
+                            'country_id'       => $country->id,
+                            'title'            => $guideContent['title'] ?: "Guide {$country->name}",
+                            'slug'             => $guideContent['slug'] ?: $country->slug,
+                            'url'              => $guideUrl,
+                            'url_hash'         => $urlHash,
+                            'category'         => null,
+                            'content_text'     => $guideContent['content_text'],
+                            'content_html'     => $guideContent['content_html'],
+                            'word_count'       => $guideContent['word_count'],
+                            'language'         => $guideContent['language'],
+                            'external_links'   => $guideContent['external_links'],
+                            'ads_and_sponsors' => $guideContent['ads_and_sponsors'],
+                            'images'           => $guideContent['images'],
+                            'meta_title'       => $guideContent['meta_title'],
+                            'meta_description' => $guideContent['meta_description'],
+                            'is_guide'         => true,
+                            'scraped_at'       => now(),
+                        ]);
+
+                        // Save external links
+                        foreach ($guideContent['external_links'] as $link) {
+                            $linkHash = hash('sha256', $link['url']);
+                            if (!isset($existingLinkHashes[$linkHash])) {
+                                ContentExternalLink::create([
+                                    'source_id'    => $source->id,
+                                    'article_id'   => ContentArticle::where('url_hash', $urlHash)->value('id'),
+                                    'url'          => $link['url'],
+                                    'url_hash'     => $linkHash,
+                                    'original_url' => $link['original_url'],
+                                    'domain'       => $link['domain'],
+                                    'anchor_text'  => $link['anchor_text'],
+                                    'context'      => $link['context'],
+                                    'country_id'   => $country->id,
+                                    'link_type'    => $link['link_type'],
+                                    'is_affiliate' => $link['is_affiliate'],
+                                    'language'     => $guideContent['language'] ?? 'fr',
+                                ]);
+                                $existingLinkHashes[$linkHash] = true;
+                            }
+                        }
+
+                        $scrapedCount++;
+                        Log::info('ScrapeContentCountryJob: scraped monolithic guide page', [
+                            'country'    => $country->slug,
+                            'word_count' => $guideContent['word_count'],
+                        ]);
+                    }
+                }
+            }
+
             foreach ($articleLinks as $articleData) {
                 if (isset($existingArticleUrls[$articleData['url']])) {
                     $scrapedCount++;
