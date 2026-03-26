@@ -299,6 +299,9 @@ export default function Layout() {
                   <NavLink to="/content/contacts" className={subNavClass} onClick={handleNavClick}>
                     Contacts
                   </NavLink>
+                  <NavLink to="/content/questions" className={subNavClass} onClick={handleNavClick}>
+                    Q&A Forum
+                  </NavLink>
                   <NavLink to="/content/affiliates" className={subNavClass} onClick={handleNavClick}>
                     Liens Affilies
                   </NavLink>

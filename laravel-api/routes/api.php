@@ -10,6 +10,7 @@ use App\Http\Controllers\BusinessDirectoryController;
 use App\Http\Controllers\ContentCampaignController;
 use App\Http\Controllers\ContentContactController;
 use App\Http\Controllers\ContentEngineController;
+use App\Http\Controllers\ContentQuestionController;
 use App\Http\Controllers\CostController;
 use App\Http\Controllers\DirectoryController;
 use App\Http\Controllers\GeneratedArticleController;
@@ -326,6 +327,16 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{id}', [BusinessDirectoryController::class, 'show']);
         Route::post('/scrape/{sourceSlug}', [BusinessDirectoryController::class, 'scrape']);
         Route::post('/scrape-details/{sourceSlug}', [BusinessDirectoryController::class, 'scrapeDetails']);
+    });
+
+    // ============================================================
+    // Q&A (forum questions scraped from expat sites)
+    // ============================================================
+    Route::prefix('questions')->middleware('role:admin')->group(function () {
+        Route::get('/', [ContentQuestionController::class, 'index']);
+        Route::get('/stats', [ContentQuestionController::class, 'stats']);
+        Route::put('/{id}/status', [ContentQuestionController::class, 'updateStatus']);
+        Route::post('/scrape/{sourceSlug}', [ContentQuestionController::class, 'scrape']);
     });
 
     // ============================================================

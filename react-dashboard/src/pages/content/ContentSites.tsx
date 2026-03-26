@@ -110,6 +110,14 @@ export default function ContentSites() {
     }
   };
 
+  const handleScrapeQA = async (slug: string) => {
+    try {
+      await api.post(`/questions/scrape/${slug}`);
+    } catch {
+      setError('Erreur lancement Q&A');
+    }
+  };
+
   const handleScrapeFull = async (slug: string) => {
     try {
       await api.post(`/content/sources/${slug}/scrape-full`);
@@ -252,6 +260,10 @@ export default function ContentSites() {
                 <button onClick={() => handleScrapeBusinesses(src.slug)}
                   className="px-3 py-1.5 bg-cyan/20 text-cyan rounded-lg text-xs font-medium hover:bg-cyan/30 transition-colors">
                   Scraper l'annuaire
+                </button>
+                <button onClick={() => handleScrapeQA(src.slug)}
+                  className="px-3 py-1.5 bg-purple-900/30 text-purple-400 rounded-lg text-xs font-medium hover:bg-purple-900/40 transition-colors">
+                  Scraper Q&A forum
                 </button>
                 <button onClick={() => handleScrapeFull(src.slug)} disabled={src.status === 'scraping'}
                   className="px-3 py-1.5 bg-white/10 text-white rounded-lg text-xs font-medium hover:bg-white/20 disabled:opacity-50 transition-colors">

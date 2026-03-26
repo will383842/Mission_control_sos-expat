@@ -30,6 +30,7 @@ import AffiliateLinks from './pages/content/AffiliateLinks';
 import CountryProfiles from './pages/content/CountryProfiles';
 import CountryProfileDetail from './pages/content/CountryProfileDetail';
 import ContentContacts from './pages/content/ContentContacts';
+import ContentQuestions from './pages/content/ContentQuestions';
 import ProspectionHub from './pages/prospection/ProspectionHub';
 import ProspectionOverview from './pages/prospection/ProspectionOverview';
 import ProspectionEmails from './pages/prospection/ProspectionEmails';
@@ -123,6 +124,7 @@ export default function App() {
             <Route path="content/links" element={<AdminRoute><ContentLinks /></AdminRoute>} />
             <Route path="content/businesses" element={<AdminRoute><BusinessDirectory /></AdminRoute>} />
             <Route path="content/contacts" element={<AdminRoute><ContentContacts /></AdminRoute>} />
+            <Route path="content/questions" element={<AdminRoute><ContentQuestions /></AdminRoute>} />
             <Route path="content/affiliates" element={<AdminRoute><AffiliateLinks /></AdminRoute>} />
             <Route path="content/countries" element={<AdminRoute><CountryProfiles /></AdminRoute>} />
             <Route path="content/country/:countrySlug" element={<AdminRoute><CountryProfileDetail /></AdminRoute>} />
