@@ -13,7 +13,7 @@ export type GenerationPhase =
 export type CampaignType = 'country_coverage' | 'thematic' | 'pillar_cluster' | 'comparative_series' | 'custom';
 export type CampaignStatus = 'draft' | 'running' | 'paused' | 'completed' | 'cancelled';
 export type PublicationStatus = 'pending' | 'publishing' | 'published' | 'failed' | 'cancelled';
-export type EndpointType = 'firestore' | 'wordpress' | 'webhook' | 'export';
+export type EndpointType = 'firestore' | 'wordpress' | 'webhook' | 'export' | 'blog';
 
 // ============================================================
 // ARTICLES

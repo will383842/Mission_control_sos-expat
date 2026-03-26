@@ -7,6 +7,7 @@ use App\Models\QaEntry;
 use App\Models\QuestionCluster;
 use App\Services\AI\OpenAiService;
 use App\Services\PerplexitySearchService;
+use App\Services\Seo\SeoAnalysisService;
 use App\Services\Seo\SlugService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
@@ -22,6 +23,7 @@ class QaFromQuestionsService
         private OpenAiService $openAi,
         private PerplexitySearchService $perplexity,
         private SlugService $slugService,
+        private SeoAnalysisService $seoAnalysis,
     ) {}
 
     /**
@@ -194,12 +196,11 @@ class QaFromQuestionsService
 
             // 5. Generate JSON-LD (relatedIds computed after, so generate after step 6)
 
-            // 6. Find related Q&A (same country + category, exclude similar questions)
+            // 6. Find related Q&A (same country + category, exclude current entry)
             $relatedIds = QaEntry::where('country', $country)
                 ->where('category', $category ?? 'general')
                 ->where('language', $language)
                 ->where('status', '!=', 'draft')
-                ->where('question', 'not ilike', '%' . Str::slug(mb_substr($title, 0, 50)) . '%')
                 ->limit(5)
                 ->pluck('id')
                 ->toArray();
@@ -231,6 +232,16 @@ class QaFromQuestionsService
                 'related_qa_ids' => $relatedIds,
                 'sources' => $sources,
             ]);
+
+            // 8. Run SEO analysis to populate seo_score
+            try {
+                $this->seoAnalysis->analyze($entry);
+            } catch (\Throwable $e) {
+                Log::warning('QaFromQuestions: SEO analysis failed (non-blocking)', [
+                    'qa_entry_id' => $entry->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
 
             return $entry;
         } catch (\Throwable $e) {

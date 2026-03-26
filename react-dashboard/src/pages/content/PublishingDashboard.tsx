@@ -28,6 +28,7 @@ const ENDPOINT_TYPE_COLORS: Record<EndpointType, string> = {
   wordpress: 'bg-blue-500/20 text-blue-400',
   webhook: 'bg-violet/20 text-violet-light',
   export: 'bg-success/20 text-success',
+  blog: 'bg-pink-500/20 text-pink-400',
 };
 
 const QUEUE_STATUS_COLORS: Record<string, string> = {
@@ -218,6 +219,7 @@ export default function PublishingDashboard() {
             >
               <option value="firestore">Firestore</option>
               <option value="wordpress">WordPress</option>
+              <option value="blog">Blog SOS-Expat</option>
               <option value="webhook">Webhook</option>
               <option value="export">Export</option>
             </select>

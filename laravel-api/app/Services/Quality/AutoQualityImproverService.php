@@ -47,7 +47,7 @@ class AutoQualityImproverService
         try {
             // Initial evaluation
             $checklist = $this->seoChecklist->evaluate($article);
-            $initialScore = $checklist->overall_score ?? 0;
+            $initialScore = $checklist->overall_checklist_score ?? 0;
 
             Log::info('Auto-quality improvement started', [
                 'article_id'    => $article->id,
@@ -73,7 +73,7 @@ class AutoQualityImproverService
                 $passCount = $pass;
 
                 // Get failed checks sorted by weight/impact
-                $failedChecks = $this->getFailedChecks($checklist);
+                $failedChecks = $this->getFailedChecks($checklist, $pass);
 
                 if (empty($failedChecks)) {
                     break;
@@ -91,7 +91,7 @@ class AutoQualityImproverService
 
                         // Re-evaluate to get new score
                         $checklist = $this->seoChecklist->evaluate($article);
-                        $currentScore = $checklist->overall_score ?? $currentScore;
+                        $currentScore = $checklist->overall_checklist_score ?? $currentScore;
 
                         $improvements[] = [
                             'pass'         => $pass,
@@ -702,7 +702,7 @@ class AutoQualityImproverService
     /**
      * Extract failed checks from a SeoChecklist record, sorted by priority.
      */
-    private function getFailedChecks($checklist): array
+    private function getFailedChecks($checklist, int $currentPass = 1): array
     {
         $failedChecks = [];
 
@@ -713,25 +713,40 @@ class AutoQualityImproverService
             'has_faq_schema'         => ['field' => 'has_faq_schema', 'type' => 'missing_faqs', 'weight' => 6, 'description' => 'Schema FAQ manquant'],
             'has_article_schema'     => ['field' => 'has_article_schema', 'type' => 'missing_schema', 'weight' => 6, 'description' => 'Schema Article manquant'],
             'keyword_first_para'     => ['field' => 'keyword_in_first_paragraph', 'type' => 'missing_definition', 'weight' => 5, 'description' => 'Mot-clé absent du premier paragraphe'],
-            'internal_links'         => ['field' => 'has_internal_links', 'type' => 'missing_internal_links', 'weight' => 4, 'description' => 'Liens internes insuffisants'],
-            'brand_compliance'       => ['type' => 'brand_violations', 'weight' => 3, 'description' => 'Violations de la charte de marque'],
-            'tone'                   => ['type' => 'tone_issues', 'weight' => 2, 'description' => 'Ton inadapté à la marque'],
+            'internal_links'         => ['field' => 'internal_links_count', 'type' => 'missing_internal_links', 'weight' => 4, 'description' => 'Liens internes insuffisants', 'threshold' => 3],
+            'brand_compliance'       => ['type' => 'brand_violations', 'weight' => 3, 'description' => 'Violations de la charte de marque', 'first_pass_only' => true],
+            'tone'                   => ['type' => 'tone_issues', 'weight' => 2, 'description' => 'Ton inadapté à la marque', 'first_pass_only' => true],
             'eeat'                   => ['type' => 'missing_eeat', 'weight' => 1, 'description' => 'Signaux E-E-A-T manquants'],
         ];
 
         foreach ($checkMapping as $key => $config) {
             // For checks with a field on the checklist model
             if (isset($config['field'])) {
-                $value = $checklist->{$config['field']} ?? null;
-                if ($value === false || $value === 0 || $value === null) {
-                    $failedChecks[] = [
-                        'type'        => $config['type'],
-                        'weight'      => $config['weight'],
-                        'description' => $config['description'],
-                    ];
+                // Numeric threshold check (e.g. internal_links_count < 3)
+                if (isset($config['threshold'])) {
+                    $value = $checklist->{$config['field']} ?? 0;
+                    if ($value < $config['threshold']) {
+                        $failedChecks[] = [
+                            'type'        => $config['type'],
+                            'weight'      => $config['weight'],
+                            'description' => $config['description'],
+                        ];
+                    }
+                } else {
+                    $value = $checklist->{$config['field']} ?? null;
+                    if ($value === false || $value === 0 || $value === null) {
+                        $failedChecks[] = [
+                            'type'        => $config['type'],
+                            'weight'      => $config['weight'],
+                            'description' => $config['description'],
+                        ];
+                    }
                 }
             } else {
-                // Always run brand/tone/eeat checks on first pass
+                // Brand/tone checks only on first pass to avoid infinite loops
+                if (!empty($config['first_pass_only']) && $currentPass > 1) {
+                    continue;
+                }
                 $failedChecks[] = [
                     'type'        => $config['type'],
                     'weight'      => $config['weight'],
@@ -764,14 +779,20 @@ class AutoQualityImproverService
             'has_article_schema'        => 'Schema Article manquant',
             'has_faq_schema'            => 'Schema FAQ manquant',
             'has_breadcrumb_schema'     => 'Schema BreadcrumbList manquant',
-            'has_internal_links'        => 'Liens internes insuffisants',
-            'has_external_links'        => 'Liens externes insuffisants',
         ];
 
         foreach ($booleanChecks as $field => $description) {
             if (isset($data[$field]) && !$data[$field]) {
                 $issues[] = $description;
             }
+        }
+
+        // Numeric threshold checks
+        if (isset($data['internal_links_count']) && $data['internal_links_count'] < 3) {
+            $issues[] = 'Liens internes insuffisants';
+        }
+        if (isset($data['external_links_count']) && $data['external_links_count'] < 2) {
+            $issues[] = 'Liens externes insuffisants';
         }
 
         return $issues;

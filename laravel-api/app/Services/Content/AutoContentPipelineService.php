@@ -228,41 +228,41 @@ class AutoContentPipelineService
         // ═══════════════════════════════════════════════════════
         Log::info('AutoContentPipeline: Step 6 — Tracking keywords');
 
-        $untracked = GeneratedArticle::where('language', 'fr')
+        GeneratedArticle::where('language', 'fr')
             ->whereNull('parent_article_id')
             ->whereDoesntHave('keywords')
             ->whereIn('status', ['draft', 'review', 'published'])
-            ->get();
-
-        foreach ($untracked as $article) {
-            try {
-                $keywords = $this->keywordTracking->analyzeArticleKeywords($article);
-                if (!empty($keywords)) {
-                    $this->keywordTracking->trackKeywordsForArticle($article, $keywords);
+            ->chunkById(50, function ($articles) {
+                foreach ($articles as $article) {
+                    try {
+                        $keywords = $this->keywordTracking->analyzeArticleKeywords($article);
+                        if (!empty($keywords)) {
+                            $this->keywordTracking->trackKeywordsForArticle($article, $keywords);
+                        }
+                    } catch (\Throwable $e) {
+                        // Non-blocking
+                    }
                 }
-            } catch (\Throwable $e) {
-                // Non-blocking
-            }
-        }
+            });
 
         // ═══════════════════════════════════════════════════════
         // STEP 7: Run SEO checklist on all new articles
         // ═══════════════════════════════════════════════════════
         Log::info('AutoContentPipeline: Step 7 — SEO checklists');
 
-        $unchecked = GeneratedArticle::where('language', 'fr')
+        GeneratedArticle::where('language', 'fr')
             ->whereNull('parent_article_id')
             ->whereDoesntHave('seoChecklist')
             ->whereIn('status', ['draft', 'review', 'published'])
-            ->get();
-
-        foreach ($unchecked as $article) {
-            try {
-                $this->seoChecklist->evaluate($article);
-            } catch (\Throwable $e) {
-                // Non-blocking
-            }
-        }
+            ->chunkById(50, function ($articles) {
+                foreach ($articles as $article) {
+                    try {
+                        $this->seoChecklist->evaluate($article);
+                    } catch (\Throwable $e) {
+                        // Non-blocking
+                    }
+                }
+            });
 
         $summary['completed_at'] = now()->toIso8601String();
         $summary['duration_seconds'] = now()->diffInSeconds($summary['started_at']);
@@ -300,7 +300,11 @@ class AutoContentPipelineService
             'language' => 'fr',
             'country' => $cluster->country,
             'content_type' => 'article',
-            'keywords' => $brief?->suggested_keywords['primary'] ?? [],
+            'keywords' => (function () use ($brief) {
+                $primaryKeywords = $brief?->suggested_keywords['primary'] ?? [];
+                if (is_string($primaryKeywords)) $primaryKeywords = [$primaryKeywords];
+                return $primaryKeywords;
+            })(),
             'cluster_id' => $cluster->id,
             'tone' => 'professional',
             'length' => 'long',

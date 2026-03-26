@@ -17,7 +17,7 @@ class ProcessTranslationBatchJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $timeout = 60;
+    public int $timeout = 300;
     public int $tries = 3;
 
     public function __construct(
@@ -169,7 +169,15 @@ class ProcessTranslationBatchJob implements ShouldQueue
 
         $parentId = $original->parent_qa_id ?? $original->id;
 
-        QaEntry::create([
+        // Adapt JSON-LD: replace language prefix in URLs
+        $adaptedJsonLd = $original->json_ld;
+        if ($adaptedJsonLd) {
+            $jsonLdStr = json_encode($adaptedJsonLd);
+            $jsonLdStr = str_replace("/{$original->language}/", "/{$targetLanguage}/", $jsonLdStr);
+            $adaptedJsonLd = json_decode($jsonLdStr, true);
+        }
+
+        $translatedQa = QaEntry::create([
             'uuid' => (string) \Illuminate\Support\Str::uuid(),
             'parent_qa_id' => $parentId,
             'parent_article_id' => $original->parent_article_id,
@@ -183,7 +191,7 @@ class ProcessTranslationBatchJob implements ShouldQueue
             'slug' => $slug,
             'meta_title' => mb_substr($translatedMetaTitle, 0, 60),
             'meta_description' => mb_substr($translatedMetaDesc, 0, 160),
-            'json_ld' => $original->json_ld,
+            'json_ld' => $adaptedJsonLd,
             'keywords_primary' => $original->keywords_primary,
             'source_type' => $original->source_type,
             'status' => 'review',

@@ -8,6 +8,8 @@ use App\Models\QuestionCluster;
 use App\Services\AI\OpenAiService;
 use App\Services\PerplexitySearchService;
 use App\Services\Seo\JsonLdService;
+use App\Services\Content\SeoChecklistService;
+use App\Services\Seo\SeoAnalysisService;
 use App\Services\Seo\SlugService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -24,6 +26,8 @@ class ArticleFromQuestionsService
         private PerplexitySearchService $perplexity,
         private SlugService $slugService,
         private JsonLdService $jsonLd,
+        private SeoAnalysisService $seoAnalysis,
+        private SeoChecklistService $seoChecklist,
     ) {}
 
     /**
@@ -190,7 +194,18 @@ class ArticleFromQuestionsService
             $jsonLdData = $this->generateArticleJsonLd($article, $faqItems);
             $article->update(['json_ld' => $jsonLdData]);
 
-            // Phase 6: Link back to cluster and questions
+            // Phase 6: SEO analysis and checklist
+            try {
+                $this->seoAnalysis->analyze($article);
+                $this->seoChecklist->evaluate($article);
+            } catch (\Throwable $e) {
+                Log::warning('ArticleFromQuestions: SEO analysis failed (non-blocking)', [
+                    'article_id' => $article->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            // Phase 7: Link back to cluster and questions
             $cluster->update([
                 'generated_article_id' => $article->id,
                 'status' => $cluster->generated_qa_count > 0 ? 'completed' : 'ready',
@@ -200,7 +215,7 @@ class ArticleFromQuestionsService
             foreach ($questions as $question) {
                 $question->update([
                     'generated_article_id' => $article->id,
-                    'article_status' => 'published',
+                    'article_status' => 'generated',
                 ]);
             }
 

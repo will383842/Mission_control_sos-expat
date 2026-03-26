@@ -46,21 +46,60 @@ class FirestorePublisher
             $data['fields']['hreflang_map'] = ['stringValue' => json_encode($content->hreflang_map)];
         }
 
+        // Add FAQs if available
+        if (method_exists($content, 'faqs') && $content->faqs) {
+            $faqsData = $content->faqs->map(fn ($faq) => [
+                'question' => $faq->question,
+                'answer' => $faq->answer,
+            ])->toArray();
+            $data['fields']['faqs'] = ['stringValue' => json_encode($faqsData)];
+        }
+
+        // Add featured image if available
+        if ($content->featured_image_url) {
+            $data['fields']['featured_image'] = ['stringValue' => json_encode([
+                'url' => $content->featured_image_url,
+                'alt' => $content->featured_image_alt ?? '',
+                'attribution' => $content->featured_image_attribution ?? '',
+            ])];
+        }
+
+        // Add reading time if available
+        if ($content->reading_time_minutes) {
+            $data['fields']['reading_time_minutes'] = ['integerValue' => (string) $content->reading_time_minutes];
+        }
+
+        // Add keywords if available
+        if ($content->keywords_primary) {
+            $data['fields']['keywords_primary'] = ['stringValue' => $content->keywords_primary];
+        }
+        if ($content->keywords_secondary) {
+            $data['fields']['keywords_secondary'] = ['stringValue' => json_encode($content->keywords_secondary)];
+        }
+
         // Use Firebase REST API
         $documentId = $content->uuid ?? $content->id;
 
         try {
-            // For production, use service account auth. For now, use simple REST.
             $url = "https://firestore.googleapis.com/v1/projects/{$projectId}/databases/(default)/documents/{$collection}/{$documentId}";
 
-            $response = Http::timeout(30)
-                ->patch($url, $data);
+            $token = $this->getAccessToken();
+            $request = Http::timeout(30);
+            if ($token) {
+                $request = $request->withToken($token);
+            }
+            $response = $request->patch($url, $data);
 
             if ($response->successful()) {
                 Log::info('FirestorePublisher: published', ['id' => $documentId, 'collection' => $collection]);
+
+                // Build public article URL
+                $siteUrl = config('services.site.url', 'https://sos-expat.com');
+                $publicUrl = rtrim($siteUrl, '/') . '/' . ($content->language ?? 'fr') . '/blog/' . ($content->slug ?? $documentId);
+
                 return [
                     'external_id' => $documentId,
-                    'external_url' => "https://firestore.googleapis.com/v1/projects/{$projectId}/databases/(default)/documents/{$collection}/{$documentId}",
+                    'external_url' => $publicUrl,
                 ];
             }
 
@@ -70,6 +109,47 @@ class FirestorePublisher
             Log::error('FirestorePublisher: exception', ['error' => $e->getMessage()]);
             throw $e;
         }
+    }
+
+    /**
+     * Get a Google access token using the Firebase service account key.
+     */
+    private function getAccessToken(): string
+    {
+        $keyPath = config('services.firebase.service_account_key');
+        if (!$keyPath || !file_exists(base_path($keyPath))) {
+            // Fallback: try without auth (works for public Firestore rules or emulator)
+            return '';
+        }
+
+        $serviceAccount = json_decode(file_get_contents(base_path($keyPath)), true);
+
+        // Build JWT
+        $now = time();
+        $header = base64_encode(json_encode(['alg' => 'RS256', 'typ' => 'JWT']));
+        $payload = base64_encode(json_encode([
+            'iss' => $serviceAccount['client_email'],
+            'scope' => 'https://www.googleapis.com/auth/datastore',
+            'aud' => 'https://oauth2.googleapis.com/token',
+            'iat' => $now,
+            'exp' => $now + 3600,
+        ]));
+
+        $signature = '';
+        openssl_sign("$header.$payload", $signature, $serviceAccount['private_key'], 'SHA256');
+        $jwt = "$header.$payload." . base64_encode($signature);
+
+        // Exchange JWT for access token
+        $response = Http::asForm()->post('https://oauth2.googleapis.com/token', [
+            'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+            'assertion' => $jwt,
+        ]);
+
+        if ($response->successful()) {
+            return $response->json('access_token');
+        }
+
+        throw new \RuntimeException('Failed to get Firebase access token: ' . $response->body());
     }
 
     private function toFirestoreFields(array $data): array

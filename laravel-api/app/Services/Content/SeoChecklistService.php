@@ -279,8 +279,8 @@ class SeoChecklistService
             Log::info('SeoChecklist: evaluation complete', [
                 'article_id' => $article->id,
                 'score' => $overallScore,
-                'passed' => $passedChecks,
-                'total' => $totalChecks,
+                'earned_weight' => $earnedWeight,
+                'total_weight' => $totalWeight,
             ]);
 
             return $checklist;

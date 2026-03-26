@@ -279,7 +279,11 @@ class DailyContentSchedulerService
                     'language'     => 'fr',
                     'country'      => $cluster->country,
                     'content_type' => $isPillar ? 'guide' : 'article',
-                    'keywords'     => $brief?->suggested_keywords['primary'] ?? [],
+                    'keywords'     => (function () use ($brief) {
+                        $pk = $brief?->suggested_keywords['primary'] ?? [];
+                        if (is_string($pk)) $pk = [$pk];
+                        return $pk;
+                    })(),
                     'cluster_id'   => $cluster->id,
                     'tone'         => 'professional',
                     'length'       => $isPillar ? 'long' : 'medium',

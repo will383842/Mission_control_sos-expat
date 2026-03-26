@@ -2,8 +2,10 @@
 
 namespace App\Jobs;
 
+use App\Jobs\GenerateSitemapJob;
 use App\Models\PublicationQueueItem;
 use App\Models\PublicationSchedule;
+use App\Services\Publishing\BlogPublisher;
 use App\Services\Publishing\FirestorePublisher;
 use App\Services\Publishing\WordPressPublisher;
 use Illuminate\Bus\Queueable;
@@ -87,8 +89,9 @@ class PublishContentJob implements ShouldQueue
             $result = match ($endpoint->type) {
                 'firestore' => app(FirestorePublisher::class)->publish($publishable, $endpoint),
                 'wordpress' => app(WordPressPublisher::class)->publish($publishable, $endpoint),
-                'webhook' => $this->publishViaWebhook($publishable, $endpoint),
-                default => throw new \RuntimeException("Unknown endpoint type: {$endpoint->type}"),
+                'blog'      => app(BlogPublisher::class)->publish($publishable, $endpoint),
+                'webhook'   => $this->publishViaWebhook($publishable, $endpoint),
+                default     => throw new \RuntimeException("Unknown endpoint type: {$endpoint->type}"),
             };
 
             $item->update([
@@ -112,7 +115,10 @@ class PublishContentJob implements ShouldQueue
                 'external_url' => $result['external_url'] ?? null,
             ]);
 
-            // Submit to IndexNow for fast indexing
+            // Regenerate sitemap after successful publication
+            GenerateSitemapJob::dispatch();
+
+            // Submit to IndexNow for fast indexing (uses public URL from publisher)
             if (!empty($result['external_url'])) {
                 SubmitIndexNowJob::dispatch($result['external_url']);
             }

@@ -7,6 +7,7 @@ use App\Models\GeneratedArticleFaq;
 use App\Models\QaEntry;
 use App\Services\AI\OpenAiService;
 use App\Services\PerplexitySearchService;
+use App\Services\Seo\SeoAnalysisService;
 use App\Services\Seo\SlugService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
@@ -23,6 +24,7 @@ class QaGenerationService
         private OpenAiService $openAi,
         private PerplexitySearchService $perplexity,
         private SlugService $slugService,
+        private SeoAnalysisService $seoAnalysis,
     ) {}
 
     /**
@@ -221,12 +223,11 @@ class QaGenerationService
             $slug = $this->slugService->generateSlug($question, $language);
             $slug = $this->slugService->ensureUnique($slug, $language, 'qa_entries');
 
-            // Find related Q&A (exclude similar questions)
+            // Find related Q&A (exclude current entry after creation)
             $relatedIds = QaEntry::where('country', $country)
                 ->where('category', $category)
                 ->where('language', $language)
                 ->where('status', '!=', 'draft')
-                ->where('question', 'not ilike', '%' . Str::slug(mb_substr($question, 0, 50)) . '%')
                 ->limit(5)
                 ->pluck('id')
                 ->toArray();
@@ -257,6 +258,16 @@ class QaGenerationService
                 'related_qa_ids' => $relatedIds,
                 'sources' => $answerData['sources'] ?? [],
             ]);
+
+            // Run SEO analysis to populate seo_score
+            try {
+                $this->seoAnalysis->analyze($entry);
+            } catch (\Throwable $e) {
+                Log::warning('QaGeneration: SEO analysis failed (non-blocking)', [
+                    'qa_entry_id' => $entry->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
 
             return $entry;
         } catch (\Throwable $e) {
