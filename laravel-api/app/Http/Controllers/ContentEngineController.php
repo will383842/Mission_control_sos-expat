@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Jobs\ScrapeFemmexpatJob;
 use App\Jobs\ScrapeFrancaisEtrangerJob;
+use App\Jobs\ScrapeGenericSiteJob;
 use App\Jobs\ScrapeContentMagazineJob;
 use App\Jobs\ScrapeContentSourceJob;
 use App\Models\ContentArticle;
@@ -295,7 +296,7 @@ class ContentEngineController extends Controller
         match ($source->slug) {
             'femmexpat'              => ScrapeFemmexpatJob::dispatch($source->id),
             'francais-a-l-etranger' => ScrapeFrancaisEtrangerJob::dispatch($source->id),
-            default                 => ScrapeFemmexpatJob::dispatch($source->id), // Generic WordPress scraper
+            default                 => ScrapeGenericSiteJob::dispatch($source->id),
         };
 
         return response()->json(['message' => 'Full site scraping started', 'source' => $source->fresh()]);
