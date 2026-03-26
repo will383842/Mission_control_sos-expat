@@ -81,9 +81,12 @@ class ScrapeForumQuestionsJob implements ShouldQueue
             for ($page = 1; $page <= self::MAX_PAGES_PER_COUNTRY; $page++) {
                 $this->rateLimitSleep();
 
+                // FR uses /page/N/, EN uses /N/
                 $pageUrl = $page === 1
                     ? $forum['url']
-                    : $forum['url'] . $page . '/';
+                    : ($this->language === 'fr'
+                        ? $forum['url'] . 'page/' . $page . '/'
+                        : $forum['url'] . $page . '/');
 
                 $pageHtml = $this->fetchPage($pageUrl);
                 if (!$pageHtml) break;
@@ -228,13 +231,14 @@ class ScrapeForumQuestionsJob implements ShouldQueue
                     }
 
                     // Parse last post info
+                    // FR: "Dernier post 25 Mar 2026, 14:32 par Username"
+                    // EN: "25 Mar 2026, 14:32 by Username"
                     $lastPostLabel = $topic['lastPost']['label'] ?? '';
                     $lastPostDate = null;
                     $lastPostAuthor = null;
-                    if (preg_match('/^(.+?)\s+by\s+(.+)$/i', $lastPostLabel, $lm)) {
-                        $lastPostDate = trim($lm[1]);
-                        $lastPostAuthor = trim($lm[2]);
-                    } elseif (preg_match('/^(.+?)\s+par\s+(.+)$/i', $lastPostLabel, $lm)) {
+                    // Remove "Dernier post " / "Last post " prefix
+                    $cleaned = preg_replace('/^(Dernier post|Last post)\s+/i', '', $lastPostLabel);
+                    if (preg_match('/^(.+?)\s+(?:by|par)\s+(.+)$/i', $cleaned, $lm)) {
                         $lastPostDate = trim($lm[1]);
                         $lastPostAuthor = trim($lm[2]);
                     }
