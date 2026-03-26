@@ -323,6 +323,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/export', [BusinessDirectoryController::class, 'export']);
         Route::get('/{id}', [BusinessDirectoryController::class, 'show']);
         Route::post('/scrape/{sourceSlug}', [BusinessDirectoryController::class, 'scrape']);
+        Route::post('/scrape-details/{sourceSlug}', [BusinessDirectoryController::class, 'scrapeDetails']);
     });
 
     // ============================================================

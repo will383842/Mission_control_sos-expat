@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ScrapeBusinessDetailsJob;
 use App\Jobs\ScrapeBusinessDirectoryJob;
 use App\Models\ContentBusiness;
 use App\Models\ContentSource;
@@ -116,6 +117,13 @@ class BusinessDirectoryController extends Controller
         $source = ContentSource::where('slug', $sourceSlug)->firstOrFail();
         ScrapeBusinessDirectoryJob::dispatch($source->id);
         return response()->json(['message' => 'Business directory scraping started']);
+    }
+
+    public function scrapeDetails(string $sourceSlug): JsonResponse
+    {
+        $source = ContentSource::where('slug', $sourceSlug)->firstOrFail();
+        ScrapeBusinessDetailsJob::dispatch($source->id);
+        return response()->json(['message' => 'Business details (emails) scraping started']);
     }
 
     public function countries(Request $request): JsonResponse

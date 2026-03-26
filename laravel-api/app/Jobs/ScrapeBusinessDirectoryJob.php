@@ -18,7 +18,7 @@ class ScrapeBusinessDirectoryJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $timeout = 3600;
+    public int $timeout = 14400; // 4h — 37 countries x 30 categories
     public int $tries = 1;
 
     public function __construct(
