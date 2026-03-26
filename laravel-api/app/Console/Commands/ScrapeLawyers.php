@@ -41,7 +41,7 @@ class ScrapeLawyers extends Command
 
         $this->info('Legal500: discovering countries...');
         $countries = $scraper->legal500DiscoverCountries();
-        $this->info("Legal500: {$count} countries found", ['count' => count($countries)]);
+        $this->info("Legal500: " . count($countries) . " countries found");
 
         $totalSaved = 0;
 
