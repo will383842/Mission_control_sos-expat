@@ -325,6 +325,15 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ============================================================
+    // GENERATION SOURCES (Sources pour l'outil de generation)
+    // ============================================================
+    Route::prefix('generation-sources')->middleware('role:admin')->group(function () {
+        Route::get('/categories', [\App\Http\Controllers\GenerationSourceController::class, 'categories']);
+        Route::get('/stats', [\App\Http\Controllers\GenerationSourceController::class, 'stats']);
+        Route::get('/{categorySlug}/items', [\App\Http\Controllers\GenerationSourceController::class, 'categoryItems']);
+    });
+
+    // ============================================================
     // BUSINESS DIRECTORY (Annuaire entreprises)
     // ============================================================
     Route::prefix('businesses')->middleware('role:admin')->group(function () {

@@ -310,6 +310,12 @@ export default function Layout() {
                   <NavLink to="/content/links" className={subNavClass} onClick={handleNavClick}>
                     Tous les liens
                   </NavLink>
+                  <NavLink to="/content/sources" className={subNavClass} onClick={handleNavClick}>
+                    Sources Generation
+                  </NavLink>
+                  <NavLink to="/content/data-cleanup" className={subNavClass} onClick={handleNavClick}>
+                    Data Cleanup
+                  </NavLink>
                 </NavGroup>
               )}
 

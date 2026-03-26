@@ -1,0 +1,279 @@
+import { useEffect, useState, useCallback } from 'react';
+import api from '../../api/client';
+
+// ── Types ──────────────────────────────────────────────────
+interface Category {
+  id: number; slug: string; name: string; description: string; icon: string; sort_order: number;
+  total_items: number; cleaned_items: number; raw_items: number; ready_items: number;
+  countries: number; themes: number; sub_categories: number;
+}
+
+interface SourceItem {
+  id: number; source_type: string; source_id: number | null; title: string;
+  country: string | null; country_slug: string | null; theme: string | null;
+  sub_category: string | null; language: string; word_count: number;
+  quality_score: number; is_cleaned: boolean; processing_status: string;
+  used_count: number; data_json: Record<string, unknown> | null;
+}
+
+interface SubCategory { sub_category: string; count: number; cleaned: number; raw: number }
+interface CountryItem { country: string; country_slug: string; count: number }
+interface ThemeItem { theme: string; count: number }
+
+interface CategoryData {
+  items: { data: SourceItem[]; total: number; current_page: number; last_page: number };
+  sub_categories: SubCategory[];
+  countries: CountryItem[];
+  themes: ThemeItem[];
+}
+
+interface OverallStats {
+  overall: { total: number; cleaned: number; raw: number; ready: number; used: number; countries: number; themes: number };
+  by_status: { processing_status: string; count: number }[];
+  by_source_type: { source_type: string; count: number }[];
+}
+
+// ── Helpers ────────────────────────────────────────────────
+const ICONS: Record<string, string> = {
+  globe: '🌍', 'bar-chart': '📊', 'message-circle': '💬', type: '✏️',
+  'help-circle': '❓', 'file-text': '📄', search: '🔍', 'alert-triangle': '⚠️', users: '👥',
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  raw: 'bg-gray-600 text-gray-300', cleaned: 'bg-blue-500/20 text-blue-400',
+  ready: 'bg-emerald-500/20 text-emerald-400', used: 'bg-purple-500/20 text-purple-400',
+};
+
+const THEME_LABELS: Record<string, string> = {
+  visa: 'Visa', emploi: 'Emploi', logement: 'Logement', sante: 'Sante',
+  banque: 'Banque', education: 'Education', transport: 'Transport', telecom: 'Telecom',
+  fiscalite: 'Fiscalite', retraite: 'Retraite', famille: 'Famille', cout_vie: 'Cout de vie',
+  general: 'General', autre: 'Autre', 'question-directe': 'Question directe',
+  'sujet-discussion': 'Discussion', retraites: 'Retraites', familles: 'Familles',
+  'digital-nomads': 'Digital Nomads', entrepreneurs: 'Entrepreneurs', pvtistes: 'PVTistes',
+};
+
+function fmt(n: number): string { return n.toLocaleString('fr-FR'); }
+
+// ── Component ──────────────────────────────────────────────
+export default function GenerationSources() {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [stats, setStats] = useState<OverallStats | null>(null);
+  const [selectedCat, setSelectedCat] = useState<string | null>(null);
+  const [catData, setCatData] = useState<CategoryData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [catLoading, setCatLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Filters
+  const [filterCleaned, setFilterCleaned] = useState<string>('');
+  const [filterTheme, setFilterTheme] = useState('');
+  const [filterCountry, setFilterCountry] = useState('');
+  const [filterSubCat, setFilterSubCat] = useState('');
+  const [filterSearch, setFilterSearch] = useState('');
+  const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    Promise.all([
+      api.get('/generation-sources/categories'),
+      api.get('/generation-sources/stats'),
+    ]).then(([catRes, statsRes]) => {
+      setCategories(catRes.data);
+      setStats(statsRes.data);
+    }).catch(() => setError('Erreur de chargement'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const loadCategory = useCallback(async (slug: string, p = 1) => {
+    setCatLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.set('page', String(p));
+      if (filterCleaned) params.set('cleaned', filterCleaned);
+      if (filterTheme) params.set('theme', filterTheme);
+      if (filterCountry) params.set('country_slug', filterCountry);
+      if (filterSubCat) params.set('sub_category', filterSubCat);
+      if (filterSearch) params.set('search', filterSearch);
+      const res = await api.get(`/generation-sources/${slug}/items?${params}`);
+      setCatData(res.data);
+    } catch { /* ignore */ }
+    setCatLoading(false);
+  }, [filterCleaned, filterTheme, filterCountry, filterSubCat, filterSearch]);
+
+  useEffect(() => {
+    if (selectedCat) { setPage(1); loadCategory(selectedCat, 1); }
+  }, [selectedCat, filterCleaned, filterTheme, filterCountry, filterSubCat, filterSearch, loadCategory]);
+
+  const handlePageChange = (p: number) => {
+    setPage(p);
+    if (selectedCat) loadCategory(selectedCat, p);
+  };
+
+  if (loading) return <div className="p-8 text-gray-400 animate-pulse">Chargement des sources...</div>;
+  if (error) return <div className="p-8 text-red-400">{error}</div>;
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-white">Sources de Generation</h1>
+        <p className="text-gray-400 text-sm mt-1">Base de donnees organisee pour l'outil de generation d'articles</p>
+      </div>
+
+      {/* Global Stats */}
+      {stats && (
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <StatCard label="Total items" value={fmt(stats.overall.total)} />
+          <StatCard label="Base nettoyee" value={fmt(stats.overall.cleaned)} color="text-blue-400" />
+          <StatCard label="Base brute" value={fmt(stats.overall.raw)} color="text-gray-400" />
+          <StatCard label="Prets a generer" value={fmt(stats.overall.ready)} color="text-emerald-400" />
+          <StatCard label="Pays couverts" value={fmt(stats.overall.countries)} color="text-amber-400" />
+        </div>
+      )}
+
+      {/* Categories Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {categories.map(cat => (
+          <button key={cat.slug} onClick={() => { setSelectedCat(cat.slug); setFilterSubCat(''); setFilterTheme(''); setFilterCountry(''); setFilterCleaned(''); setFilterSearch(''); }}
+            className={`text-left p-4 rounded-lg border transition-all ${selectedCat === cat.slug ? 'bg-blue-600/20 border-blue-500' : 'bg-gray-800 border-gray-700 hover:border-gray-500'}`}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xl">{ICONS[cat.icon] || '📁'}</span>
+              <h3 className="font-semibold text-white">{cat.name}</h3>
+            </div>
+            <p className="text-xs text-gray-400 mb-3 line-clamp-2">{cat.description}</p>
+            <div className="flex gap-3 text-xs">
+              <span className="text-white font-bold">{fmt(cat.total_items)} items</span>
+              <span className="text-blue-400">{fmt(cat.cleaned_items)} nettoyes</span>
+              {cat.raw_items > 0 && <span className="text-gray-500">{fmt(cat.raw_items)} bruts</span>}
+              {cat.ready_items > 0 && <span className="text-emerald-400">{fmt(cat.ready_items)} prets</span>}
+            </div>
+            {cat.countries > 0 && <div className="text-xs text-gray-500 mt-1">{cat.countries} pays · {cat.themes} themes · {cat.sub_categories} sous-categories</div>}
+          </button>
+        ))}
+      </div>
+
+      {/* Category Detail */}
+      {selectedCat && catData && (
+        <div className="bg-gray-800 rounded-lg p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-white">{categories.find(c => c.slug === selectedCat)?.name}</h2>
+            <span className="text-sm text-gray-400">{fmt(catData.items.total)} resultats</span>
+          </div>
+
+          {/* Filters */}
+          <div className="flex flex-wrap gap-2">
+            <select value={filterCleaned} onChange={e => setFilterCleaned(e.target.value)} className="bg-gray-700 text-white text-xs rounded px-2 py-1.5 border border-gray-600">
+              <option value="">Tout (brut + nettoye)</option>
+              <option value="true">Base nettoyee</option>
+              <option value="false">Base brute</option>
+            </select>
+            {catData.themes.length > 1 && (
+              <select value={filterTheme} onChange={e => setFilterTheme(e.target.value)} className="bg-gray-700 text-white text-xs rounded px-2 py-1.5 border border-gray-600">
+                <option value="">Tous les themes</option>
+                {catData.themes.map(t => <option key={t.theme} value={t.theme}>{THEME_LABELS[t.theme] || t.theme} ({t.count})</option>)}
+              </select>
+            )}
+            {catData.countries.length > 1 && (
+              <select value={filterCountry} onChange={e => setFilterCountry(e.target.value)} className="bg-gray-700 text-white text-xs rounded px-2 py-1.5 border border-gray-600">
+                <option value="">Tous les pays</option>
+                {catData.countries.map(c => <option key={c.country_slug} value={c.country_slug}>{c.country} ({c.count})</option>)}
+              </select>
+            )}
+            {catData.sub_categories.length > 1 && (
+              <select value={filterSubCat} onChange={e => setFilterSubCat(e.target.value)} className="bg-gray-700 text-white text-xs rounded px-2 py-1.5 border border-gray-600">
+                <option value="">Toutes sous-categories</option>
+                {catData.sub_categories.map(s => <option key={s.sub_category} value={s.sub_category}>{s.sub_category} ({s.count})</option>)}
+              </select>
+            )}
+            <input type="text" placeholder="Rechercher..." value={filterSearch} onChange={e => setFilterSearch(e.target.value)}
+              className="bg-gray-700 text-white text-xs rounded px-2 py-1.5 border border-gray-600 w-48"
+            />
+          </div>
+
+          {/* Sub-categories sidebar summary */}
+          {catData.sub_categories.length > 0 && !filterSubCat && (
+            <div className="flex flex-wrap gap-1.5">
+              {catData.sub_categories.slice(0, 20).map(s => (
+                <button key={s.sub_category} onClick={() => setFilterSubCat(s.sub_category)}
+                  className="px-2 py-0.5 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-300 transition-colors"
+                >
+                  {s.sub_category} <span className="text-gray-500">{s.count}</span>
+                  {s.raw > 0 && <span className="text-red-400 ml-1">({s.raw} bruts)</span>}
+                </button>
+              ))}
+              {catData.sub_categories.length > 20 && <span className="text-xs text-gray-500 self-center">+{catData.sub_categories.length - 20} autres</span>}
+            </div>
+          )}
+
+          {/* Items table */}
+          {catLoading ? (
+            <div className="text-gray-400 animate-pulse py-4">Chargement...</div>
+          ) : (
+            <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+              <table className="w-full text-sm">
+                <thead className="sticky top-0 bg-gray-800">
+                  <tr className="text-gray-400 border-b border-gray-700">
+                    <th className="text-left py-2 px-2 w-8">#</th>
+                    <th className="text-left py-2 px-2">Titre</th>
+                    <th className="text-left py-2 px-2">Pays</th>
+                    <th className="text-left py-2 px-2">Theme</th>
+                    <th className="text-left py-2 px-2">Sous-cat.</th>
+                    <th className="text-right py-2 px-2">Mots</th>
+                    <th className="text-right py-2 px-2">Score</th>
+                    <th className="text-center py-2 px-2">Statut</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {catData.items.data.map((item, i) => (
+                    <tr key={item.id} className="border-b border-gray-700/30 hover:bg-gray-700/20">
+                      <td className="py-1.5 px-2 text-gray-500 text-xs">{(page - 1) * 50 + i + 1}</td>
+                      <td className="py-1.5 px-2 text-white max-w-sm truncate" title={item.title}>
+                        {item.title}
+                        {item.source_type === 'template' && item.data_json && (
+                          <span className="ml-1 text-xs text-amber-400">[{(item.data_json as {variables?: string[]}).variables?.join(', ')}]</span>
+                        )}
+                      </td>
+                      <td className="py-1.5 px-2 text-gray-300 text-xs">{item.country || '-'}</td>
+                      <td className="py-1.5 px-2 text-xs">
+                        <span className="px-1.5 py-0.5 bg-blue-500/10 text-blue-400 rounded">{THEME_LABELS[item.theme || ''] || item.theme || '-'}</span>
+                      </td>
+                      <td className="py-1.5 px-2 text-gray-500 text-xs truncate max-w-[120px]">{item.sub_category || '-'}</td>
+                      <td className="py-1.5 px-2 text-right text-xs">{item.word_count > 0 ? fmt(item.word_count) : '-'}</td>
+                      <td className="py-1.5 px-2 text-right text-xs font-bold" style={{ color: item.quality_score >= 80 ? '#34d399' : item.quality_score >= 50 ? '#fbbf24' : '#9ca3af' }}>
+                        {item.quality_score}
+                      </td>
+                      <td className="py-1.5 px-2 text-center">
+                        <span className={`px-1.5 py-0.5 rounded text-xs ${STATUS_COLORS[item.processing_status] || 'bg-gray-600 text-gray-300'}`}>
+                          {item.is_cleaned ? '✓' : '○'} {item.processing_status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {catData.items.last_page > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-2">
+              <button disabled={page <= 1} onClick={() => handlePageChange(page - 1)} className="px-3 py-1 bg-gray-700 rounded text-sm disabled:opacity-30">Prec.</button>
+              <span className="text-sm text-gray-400">Page {page} / {catData.items.last_page}</span>
+              <button disabled={page >= catData.items.last_page} onClick={() => handlePageChange(page + 1)} className="px-3 py-1 bg-gray-700 rounded text-sm disabled:opacity-30">Suiv.</button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StatCard({ label, value, color = 'text-white' }: { label: string; value: string; color?: string }) {
+  return (
+    <div className="bg-gray-800 rounded-lg p-3">
+      <div className="text-xs text-gray-400">{label}</div>
+      <div className={`text-lg font-bold ${color}`}>{value}</div>
+    </div>
+  );
+}

@@ -108,6 +108,9 @@ export default function ContentHub() {
           <p className="text-muted text-sm mt-1">Scraping de sites pour alimenter la generation d'articles</p>
         </div>
         <div className="flex gap-2">
+          <Link to="/content/sources" className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium transition-colors">
+            Sources Generation
+          </Link>
           <Link to="/content/data-cleanup" className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-sm font-medium transition-colors">
             Data Cleanup
           </Link>

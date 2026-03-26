@@ -75,6 +75,7 @@ const PressList = React.lazy(() => import('./pages/content/PressList'));
 const PressDetail = React.lazy(() => import('./pages/content/PressDetail'));
 const DossierDetail = React.lazy(() => import('./pages/content/DossierDetail'));
 const DataCleanupDashboard = React.lazy(() => import('./pages/content/DataCleanupDashboard'));
+const GenerationSources = React.lazy(() => import('./pages/content/GenerationSources'));
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = React.useContext(AuthContext);
@@ -145,6 +146,7 @@ export default function App() {
             <Route path="content/questions" element={<AdminRoute><ContentQuestions /></AdminRoute>} />
             <Route path="content/affiliates" element={<AdminRoute><AffiliateLinks /></AdminRoute>} />
             <Route path="content/data-cleanup" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><DataCleanupDashboard /></React.Suspense></AdminRoute>} />
+            <Route path="content/sources" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><GenerationSources /></React.Suspense></AdminRoute>} />
             <Route path="content/countries" element={<AdminRoute><CountryProfiles /></AdminRoute>} />
             <Route path="content/country/:countrySlug" element={<AdminRoute><CountryProfileDetail /></AdminRoute>} />
 
