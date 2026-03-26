@@ -295,6 +295,9 @@ export default function Layout() {
                   <NavLink to="/content/businesses" className={subNavClass} onClick={handleNavClick}>
                     Annuaire
                   </NavLink>
+                  <NavLink to="/content/lawyers" className={subNavClass} onClick={handleNavClick}>
+                    Avocats
+                  </NavLink>
                   <NavLink to="/content/countries" className={subNavClass} onClick={handleNavClick}>
                     Fiches Pays
                   </NavLink>

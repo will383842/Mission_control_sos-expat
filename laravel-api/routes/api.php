@@ -349,6 +349,20 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ============================================================
+    // Lawyers Directory (worldwide lawyer scraping)
+    // ============================================================
+    Route::prefix('lawyers')->middleware('role:admin')->group(function () {
+        Route::get('/', [\App\Http\Controllers\LawyerDirectoryController::class, 'index']);
+        Route::get('/stats', [\App\Http\Controllers\LawyerDirectoryController::class, 'stats']);
+        Route::get('/countries', [\App\Http\Controllers\LawyerDirectoryController::class, 'countries']);
+        Route::get('/sources', [\App\Http\Controllers\LawyerDirectoryController::class, 'sources']);
+        Route::get('/export', [\App\Http\Controllers\LawyerDirectoryController::class, 'export']);
+        Route::get('/{id}', [\App\Http\Controllers\LawyerDirectoryController::class, 'show'])->where('id', '[0-9]+');
+        Route::post('/scrape/{sourceSlug}', [\App\Http\Controllers\LawyerDirectoryController::class, 'scrape']);
+        Route::post('/scrape-all', [\App\Http\Controllers\LawyerDirectoryController::class, 'scrapeAll']);
+    });
+
+    // ============================================================
     // Q&A (forum questions scraped from expat sites)
     // ============================================================
     Route::prefix('questions')->middleware('role:admin')->group(function () {

@@ -25,6 +25,7 @@ import ContentSourcePage from './pages/content/ContentSource';
 import ContentCountryPage from './pages/content/ContentCountry';
 import ContentArticlePage from './pages/content/ContentArticle';
 import BusinessDirectory from './pages/content/BusinessDirectory';
+import LawyerDirectory from './pages/content/LawyerDirectory';
 import ContentSites from './pages/content/ContentSites';
 import AffiliateLinks from './pages/content/AffiliateLinks';
 import CountryProfiles from './pages/content/CountryProfiles';
@@ -142,6 +143,7 @@ export default function App() {
             <Route path="content/sites" element={<AdminRoute><ContentSites /></AdminRoute>} />
             <Route path="content/links" element={<AdminRoute><ContentLinks /></AdminRoute>} />
             <Route path="content/businesses" element={<AdminRoute><BusinessDirectory /></AdminRoute>} />
+            <Route path="content/lawyers" element={<AdminRoute><LawyerDirectory /></AdminRoute>} />
             <Route path="content/contacts" element={<AdminRoute><ContentContacts /></AdminRoute>} />
             <Route path="content/questions" element={<AdminRoute><ContentQuestions /></AdminRoute>} />
             <Route path="content/affiliates" element={<AdminRoute><AffiliateLinks /></AdminRoute>} />
