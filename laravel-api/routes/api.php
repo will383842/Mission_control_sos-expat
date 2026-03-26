@@ -3,11 +3,21 @@
 use App\Http\Controllers\AiResearchController;
 use App\Http\Controllers\AutoCampaignController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ComparativeController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\AiPromptController;
 use App\Http\Controllers\BusinessDirectoryController;
+use App\Http\Controllers\ContentCampaignController;
 use App\Http\Controllers\ContentEngineController;
+use App\Http\Controllers\CostController;
 use App\Http\Controllers\DirectoryController;
+use App\Http\Controllers\GeneratedArticleController;
+use App\Http\Controllers\GenerationController;
+use App\Http\Controllers\LandingPageController;
+use App\Http\Controllers\MediaController;
+use App\Http\Controllers\PressController;
+use App\Http\Controllers\PublishingController;
+use App\Http\Controllers\SeoController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ContactTypeController;
 use App\Http\Controllers\ContentMetricController;
@@ -292,6 +302,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/articles/{id}', [ContentEngineController::class, 'showArticle']);
         Route::get('/external-links', [ContentEngineController::class, 'externalLinks']);
         Route::get('/external-links/export', [ContentEngineController::class, 'exportLinks']);
+        Route::get('/affiliate-domains', [ContentEngineController::class, 'affiliateDomains']);
         Route::get('/stats', [ContentEngineController::class, 'stats']);
     });
 
@@ -316,5 +327,117 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/team', [TeamController::class, 'store']);
         Route::put('/team/{user}', [TeamController::class, 'update']);
         Route::delete('/team/{user}', [TeamController::class, 'destroy']);
+    });
+
+    // ====================================================================
+    // CONTENT ENGINE (Generation, SEO, Publishing, Campaigns, Costs, Media)
+    // ====================================================================
+    Route::middleware('role:admin')->prefix('content-gen')->group(function () {
+        // Articles
+        Route::get('/articles', [GeneratedArticleController::class, 'index']);
+        Route::post('/articles', [GeneratedArticleController::class, 'store']);
+        Route::get('/articles/{article}', [GeneratedArticleController::class, 'show']);
+        Route::put('/articles/{article}', [GeneratedArticleController::class, 'update']);
+        Route::delete('/articles/{article}', [GeneratedArticleController::class, 'destroy']);
+        Route::post('/articles/{article}/publish', [GeneratedArticleController::class, 'publish']);
+        Route::post('/articles/{article}/unpublish', [GeneratedArticleController::class, 'unpublish']);
+        Route::post('/articles/{article}/duplicate', [GeneratedArticleController::class, 'duplicate']);
+        Route::post('/articles/bulk-publish', [GeneratedArticleController::class, 'bulkPublish']);
+        Route::delete('/articles/bulk-delete', [GeneratedArticleController::class, 'bulkDelete']);
+        Route::get('/articles/{article}/versions', [GeneratedArticleController::class, 'versions']);
+        Route::post('/articles/{article}/versions/{version}/restore', [GeneratedArticleController::class, 'restoreVersion']);
+
+        // Comparatives
+        Route::get('/comparatives', [ComparativeController::class, 'index']);
+        Route::post('/comparatives', [ComparativeController::class, 'store']);
+        Route::get('/comparatives/{comparative}', [ComparativeController::class, 'show']);
+        Route::put('/comparatives/{comparative}', [ComparativeController::class, 'update']);
+        Route::delete('/comparatives/{comparative}', [ComparativeController::class, 'destroy']);
+        Route::post('/comparatives/{comparative}/publish', [ComparativeController::class, 'publish']);
+
+        // Landing Pages
+        Route::get('/landings', [LandingPageController::class, 'index']);
+        Route::post('/landings', [LandingPageController::class, 'store']);
+        Route::get('/landings/{landing}', [LandingPageController::class, 'show']);
+        Route::put('/landings/{landing}', [LandingPageController::class, 'update']);
+        Route::delete('/landings/{landing}', [LandingPageController::class, 'destroy']);
+        Route::post('/landings/{landing}/publish', [LandingPageController::class, 'publish']);
+        Route::post('/landings/{landing}/ctas', [LandingPageController::class, 'manageCtas']);
+
+        // Press
+        Route::prefix('press')->group(function () {
+            Route::get('/releases', [PressController::class, 'releaseIndex']);
+            Route::post('/releases', [PressController::class, 'releaseStore']);
+            Route::get('/releases/{release}', [PressController::class, 'releaseShow']);
+            Route::put('/releases/{release}', [PressController::class, 'releaseUpdate']);
+            Route::delete('/releases/{release}', [PressController::class, 'releaseDestroy']);
+            Route::post('/releases/{release}/publish', [PressController::class, 'releasePublish']);
+            Route::get('/releases/{release}/export-pdf', [PressController::class, 'releaseExportPdf']);
+            Route::get('/releases/{release}/export-word', [PressController::class, 'releaseExportWord']);
+
+            Route::get('/dossiers', [PressController::class, 'dossierIndex']);
+            Route::post('/dossiers', [PressController::class, 'dossierStore']);
+            Route::get('/dossiers/{dossier}', [PressController::class, 'dossierShow']);
+            Route::put('/dossiers/{dossier}', [PressController::class, 'dossierUpdate']);
+            Route::delete('/dossiers/{dossier}', [PressController::class, 'dossierDestroy']);
+            Route::post('/dossiers/{dossier}/items', [PressController::class, 'dossierAddItem']);
+            Route::delete('/dossiers/{dossier}/items/{item}', [PressController::class, 'dossierRemoveItem']);
+            Route::put('/dossiers/{dossier}/reorder', [PressController::class, 'dossierReorderItems']);
+            Route::get('/dossiers/{dossier}/export-pdf', [PressController::class, 'dossierExportPdf']);
+        });
+
+        // Campaigns
+        Route::get('/campaigns', [ContentCampaignController::class, 'index']);
+        Route::post('/campaigns', [ContentCampaignController::class, 'store']);
+        Route::get('/campaigns/{campaign}', [ContentCampaignController::class, 'show']);
+        Route::put('/campaigns/{campaign}', [ContentCampaignController::class, 'update']);
+        Route::delete('/campaigns/{campaign}', [ContentCampaignController::class, 'destroy']);
+        Route::post('/campaigns/{campaign}/start', [ContentCampaignController::class, 'start']);
+        Route::post('/campaigns/{campaign}/pause', [ContentCampaignController::class, 'pause']);
+        Route::post('/campaigns/{campaign}/resume', [ContentCampaignController::class, 'resume']);
+        Route::post('/campaigns/{campaign}/cancel', [ContentCampaignController::class, 'cancel']);
+        Route::get('/campaigns/{campaign}/items', [ContentCampaignController::class, 'items']);
+
+        // Generation
+        Route::get('/generation/stats', [GenerationController::class, 'stats']);
+        Route::get('/generation/history', [GenerationController::class, 'history']);
+        Route::get('/generation/presets', [GenerationController::class, 'presetsIndex']);
+        Route::post('/generation/presets', [GenerationController::class, 'presetStore']);
+        Route::put('/generation/presets/{preset}', [GenerationController::class, 'presetUpdate']);
+        Route::delete('/generation/presets/{preset}', [GenerationController::class, 'presetDelete']);
+        Route::get('/generation/prompts', [GenerationController::class, 'promptsIndex']);
+        Route::post('/generation/prompts', [GenerationController::class, 'promptStore']);
+        Route::put('/generation/prompts/{prompt}', [GenerationController::class, 'promptUpdate']);
+        Route::delete('/generation/prompts/{prompt}', [GenerationController::class, 'promptDelete']);
+        Route::post('/generation/prompts/test', [GenerationController::class, 'testPrompt']);
+
+        // SEO
+        Route::get('/seo/dashboard', [SeoController::class, 'dashboard']);
+        Route::post('/seo/analyze', [SeoController::class, 'analyze']);
+        Route::get('/seo/hreflang-matrix', [SeoController::class, 'hreflangMatrix']);
+        Route::get('/seo/internal-links-graph', [SeoController::class, 'internalLinksGraph']);
+        Route::get('/seo/orphaned', [SeoController::class, 'orphanedArticles']);
+        Route::post('/seo/fix-orphaned', [SeoController::class, 'fixOrphaned']);
+        Route::get('/seo/sitemap.xml', [SeoController::class, 'sitemap']);
+
+        // Publishing
+        Route::get('/publishing/endpoints', [PublishingController::class, 'endpointsIndex']);
+        Route::post('/publishing/endpoints', [PublishingController::class, 'endpointStore']);
+        Route::put('/publishing/endpoints/{endpoint}', [PublishingController::class, 'endpointUpdate']);
+        Route::delete('/publishing/endpoints/{endpoint}', [PublishingController::class, 'endpointDestroy']);
+        Route::get('/publishing/queue', [PublishingController::class, 'queue']);
+        Route::post('/publishing/queue/{item}/execute', [PublishingController::class, 'executeQueueItem']);
+        Route::post('/publishing/queue/{item}/cancel', [PublishingController::class, 'cancelQueueItem']);
+        Route::get('/publishing/endpoints/{endpoint}/schedule', [PublishingController::class, 'getSchedule']);
+        Route::put('/publishing/endpoints/{endpoint}/schedule', [PublishingController::class, 'updateSchedule']);
+
+        // Costs
+        Route::get('/costs/overview', [CostController::class, 'overview']);
+        Route::get('/costs/breakdown', [CostController::class, 'breakdown']);
+        Route::get('/costs/trends', [CostController::class, 'trends']);
+
+        // Media
+        Route::get('/media/unsplash', [MediaController::class, 'searchUnsplash']);
+        Route::post('/media/generate-image', [MediaController::class, 'generateImage']);
     });
 });

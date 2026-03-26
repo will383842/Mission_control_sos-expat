@@ -218,6 +218,42 @@ class ContentEngineController extends Controller
         return response()->json($data);
     }
 
+    /**
+     * Affiliate domains: sites with affiliate programs, grouped by domain.
+     * Filters out false positives (gov sites, europa.eu, google, etc. that just have UTM params).
+     */
+    public function affiliateDomains(): JsonResponse
+    {
+        // Domains that are NOT affiliate programs (just have UTM tracking on their links)
+        $excludePatterns = [
+            '%.gov', '%.gov.%', '%.gouv.%', '%.gob.%', '%.edu', '%.edu.%',
+            '%.int', 'europa.eu', '%.europa.eu',
+            'www.google.%', 'maps.google.%',
+            '%.wikipedia.org', '%.pagesjaunes.%',
+            '%.ac.%', // academic
+        ];
+
+        $query = ContentExternalLink::selectRaw("
+            domain,
+            SUM(occurrences) as total_mentions,
+            COUNT(*) as liens_uniques,
+            MIN(url) as exemple_url,
+            MIN(anchor_text) FILTER (WHERE anchor_text IS NOT NULL AND anchor_text != '') as exemple_anchor
+        ")
+        ->where('is_affiliate', true);
+
+        foreach ($excludePatterns as $pattern) {
+            $query->where('domain', 'NOT ILIKE', $pattern);
+        }
+
+        $results = $query->groupBy('domain')
+            ->havingRaw('SUM(occurrences) >= 2')
+            ->orderByDesc('total_mentions')
+            ->get();
+
+        return response()->json($results);
+    }
+
     public function exportLinks(Request $request): \Symfony\Component\HttpFoundation\StreamedResponse
     {
         $query = ContentExternalLink::query()
