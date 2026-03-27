@@ -52,7 +52,7 @@ interface OverallStats {
 const ICONS: Record<string, string> = {
   globe: '🌍', 'bar-chart': '📊', 'message-circle': '💬', type: '✏️',
   'help-circle': '❓', 'file-text': '📄', search: '🔍', 'alert-triangle': '⚠️', users: '👥',
-  'book-open': '📖',
+  'book-open': '📖', 'book': '📚',
 };
 
 const STATUS_COLORS: Record<string, string> = {

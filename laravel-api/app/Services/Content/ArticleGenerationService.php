@@ -247,6 +247,20 @@ class ArticleGenerationService
             $this->phase12_addImages($article->fresh(), $params['image_source'] ?? 'unsplash');
             $this->logPhase($article, 'images', 'success', null, 0, 0, $this->elapsed($phaseStart));
 
+            // Ensure featured_image_url is set from images relation if not already
+            $article->refresh();
+            if (!$article->featured_image_url) {
+                $firstImage = $article->images()->first();
+                if ($firstImage) {
+                    $article->update([
+                        'featured_image_url' => $firstImage->url,
+                        'featured_image_alt' => $firstImage->alt_text,
+                        'featured_image_attribution' => $firstImage->attribution ?? null,
+                    ]);
+                    Log::info('Featured image fallback: set from first image in relation', ['article_id' => $article->id]);
+                }
+            }
+
             // Phase 13: Generate slugs
             $phaseStart = microtime(true);
             $this->phase13_generateSlugs($article->fresh());
