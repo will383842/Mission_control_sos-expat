@@ -36,6 +36,11 @@ return [
         'failures_webhook' => env('SLACK_FAILURES_WEBHOOK'),
     ],
 
+    'telegram_alerts' => [
+        'bot_token' => env('TELEGRAM_ALERT_BOT_TOKEN'),
+        'chat_id' => env('TELEGRAM_ALERT_CHAT_ID'),
+    ],
+
     'anthropic' => [
         'api_key' => env('ANTHROPIC_API_KEY', ''),
         'model'   => env('ANTHROPIC_MODEL', 'claude-sonnet-4-20250514'),

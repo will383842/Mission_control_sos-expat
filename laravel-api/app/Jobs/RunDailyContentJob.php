@@ -44,18 +44,21 @@ class RunDailyContentJob implements ShouldQueue
             'trace' => $e->getTraceAsString(),
         ]);
 
-        // Send Slack notification if configured
-        $slackWebhook = config('services.slack.failures_webhook');
-        if ($slackWebhook) {
+        // Send Telegram alert if configured
+        $botToken = config('services.telegram_alerts.bot_token');
+        $chatId = config('services.telegram_alerts.chat_id');
+        if ($botToken && $chatId) {
             try {
-                \Illuminate\Support\Facades\Http::post($slackWebhook, [
-                    'text' => "🚨 *Job Failed*: " . class_basename(static::class) . "\n" .
+                \Illuminate\Support\Facades\Http::post("https://api.telegram.org/bot{$botToken}/sendMessage", [
+                    'chat_id' => $chatId,
+                    'parse_mode' => 'Markdown',
+                    'text' => "🚨 *Job Failed*: `" . class_basename(static::class) . "`\n" .
                               "Error: " . mb_substr($e->getMessage(), 0, 500) . "\n" .
                               "Time: " . now()->toDateTimeString(),
                 ]);
-            } catch (\Throwable $slackError) {
-                Log::warning('Failed to send Slack notification', [
-                    'error' => $slackError->getMessage(),
+            } catch (\Throwable $tgError) {
+                Log::warning('Failed to send Telegram alert', [
+                    'error' => $tgError->getMessage(),
                 ]);
             }
         }
