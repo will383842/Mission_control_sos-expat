@@ -44,6 +44,8 @@ services:
       dockerfile: deploy/Dockerfile.api
     container_name: inf-app
     restart: unless-stopped
+    mem_limit: 512m
+    memswap_limit: 512m
     env_file:
       - .env.production
     depends_on:
