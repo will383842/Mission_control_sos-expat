@@ -617,13 +617,13 @@ class ArticleGenerationService
         $instructions = $params['instructions'] ?? '';
         $contentType = $params['content_type'] ?? 'article';
 
-        // Use typeConfig for target words range (overrides legacy 'length' param)
+        // Target word counts — ambitious for world-class content
         $targetWords = $typeConfig['target_words_range'] ?? match ($params['length'] ?? $typeConfig['length'] ?? 'long') {
-            'short' => '800-1200',
-            'medium' => '1200-1800',
-            'long' => '1800-2800',
-            'extra_long' => '2800-4000',
-            default => '1800-2800',
+            'short' => '1500-2000',
+            'medium' => '2000-3000',
+            'long' => '3000-4500',
+            'extra_long' => '4500-7000',
+            default => '3000-4500',
         };
 
         $keywordsStr = !empty($keywords) ? implode(', ', $keywords) : '';
@@ -638,34 +638,43 @@ class ArticleGenerationService
                 'target_words' => $targetWords,
                 'year' => date('Y'),
             ])
-            : "Tu es un rédacteur web professionnel et expert SEO. Rédige un article COMPLET et DÉTAILLÉ en HTML. "
+            : "Tu es un journaliste expert et rédacteur SEO de classe mondiale. "
+              . "Tu rédiges des articles de référence qui se classent #1 sur Google. "
               . "Langue: {$language}. Ton: {$tone}.\n\n"
-              . "LONGUEUR OBLIGATOIRE: L'article DOIT contenir MINIMUM {$targetWords} mots. "
-              . "C'est une exigence absolue. Un article trop court sera rejeté. "
-              . "Développe chaque section avec des détails, exemples concrets, chiffres et conseils pratiques.\n\n"
-              . "RÈGLES DE STRUCTURE HTML:\n"
-              . "- Utilise des balises HTML: <h2>, <h3>, <p>, <ul>, <ol>, <li>, <strong>, <em>, <blockquote>\n"
-              . "- 6-8 sections avec <h2> (pas de <h1>, il sera le titre de la page)\n"
-              . "- Chaque section: 2-3 paragraphes minimum\n"
-              . "- Utilise <strong> pour les termes importants et mots-clés\n"
-              . "- Inclus au moins 2 listes (<ul> ou <ol>)\n"
-              . "- Le premier paragraphe doit contenir le mot-clé principal\n"
-              . "- Pas de balises <html>, <head>, <body> — seulement le contenu de l'article\n"
-              . "- Pas de commentaires HTML ni de métadonnées\n\n"
-              . "RÈGLES SEO:\n"
-              . "- Densité du mot-clé principal: 1-2%\n"
-              . "- Mots-clés secondaires répartis naturellement\n"
-              . "- Phrases variées: courtes et longues alternées\n"
-              . "- Paragraphes de 3-5 lignes maximum\n\n"
-              . "RÈGLE H2 OBLIGATOIRE :\n"
-              . "- Le mot-clé principal DOIT apparaître dans au moins 2 titres H2 sur les 6-8\n"
-              . "- Variantes acceptées : synonymes, forme plurielle, reformulation naturelle\n"
-              . "- Exemples : si le mot-clé est \"visa Allemagne\", un H2 peut être \"Quel visa choisir pour l'Allemagne ?\" ou \"Les types de visa en Allemagne\"\n\n"
-              . "IMPORTANT: Mentionne l'année " . date('Y') . " dans le premier paragraphe et dans les données chiffrées. Utilise des formulations 'En " . date('Y') . ",...'\n\n"
-              . "PLACEMENT OBLIGATOIRE DU MOT-CLÉ PRINCIPAL :\n"
-              . "- Dans le premier paragraphe (déjà demandé)\n"
-              . "- Dans au moins 2 titres H2\n"
-              . "- En gras (<strong>) au moins 1 fois dans le corps du texte\n"
+              . "═══ EXIGENCE ABSOLUE DE LONGUEUR ═══\n"
+              . "L'article DOIT contenir MINIMUM {$targetWords} mots. PAS MOINS.\n"
+              . "Un article de moins de " . explode('-', $targetWords)[0] . " mots sera REJETÉ et tu devras le refaire.\n"
+              . "Pour atteindre cette longueur :\n"
+              . "- 8-12 sections <h2> avec chacune 3-5 paragraphes de 80-120 mots\n"
+              . "- Des sous-sections <h3> dans les sections longues\n"
+              . "- Des exemples concrets, des études de cas, des témoignages\n"
+              . "- Des données chiffrées récentes (" . date('Y') . "), prix, statistiques\n"
+              . "- Des tableaux comparatifs HTML (<table>) quand pertinent\n"
+              . "- Des encadrés 'Bon à savoir' avec <blockquote>\n"
+              . "- Des listes détaillées avec explications pour chaque point\n\n"
+              . "═══ QUALITÉ WORLD-CLASS ═══\n"
+              . "- Chaque affirmation doit être étayée par un fait, un chiffre ou une source\n"
+              . "- Inclus des conseils pratiques que le lecteur peut appliquer immédiatement\n"
+              . "- Anticipe les questions du lecteur et réponds-y dans le texte\n"
+              . "- Utilise des transitions fluides entre les sections\n"
+              . "- Varie le vocabulaire : évite les répétitions\n"
+              . "- Écris pour un humain, pas pour un robot : sois engageant et utile\n\n"
+              . "═══ STRUCTURE HTML ═══\n"
+              . "- Balises: <h2>, <h3>, <p>, <ul>, <ol>, <li>, <strong>, <em>, <blockquote>, <table>, <thead>, <tbody>, <tr>, <th>, <td>\n"
+              . "- 8-12 sections <h2> (PAS de <h1>)\n"
+              . "- Au moins 3 listes (<ul>/<ol>) avec 5+ items chacune\n"
+              . "- Au moins 1 tableau comparatif (<table>) si le sujet s'y prête\n"
+              . "- Au moins 2 <blockquote> pour les conseils importants\n"
+              . "- Premier paragraphe : accroche + mot-clé principal + année " . date('Y') . "\n"
+              . "- Dernier paragraphe : conclusion avec récapitulatif et appel à l'action\n"
+              . "- Pas de <html>, <head>, <body> — seulement le contenu article\n\n"
+              . "═══ SEO AVANCÉ ═══\n"
+              . "- Mot-clé principal dans : premier paragraphe, 2+ titres H2, 1x en <strong>\n"
+              . "- Densité mot-clé principal : 1-2%\n"
+              . "- Mots-clés secondaires répartis naturellement (1 par section minimum)\n"
+              . "- Phrases variées : 15-25 mots en moyenne, alterner courtes/longues\n"
+              . "- Paragraphes de 3-5 lignes max\n"
+              . "- Mentionne '" . date('Y') . "' dans les données chiffrées\n"
               . "- Dans la conclusion\n"
               . "- Densité totale : 1-2% (ni trop, ni trop peu)\n"
               . "Le mot-clé doit apparaître NATURELLEMENT — jamais forcé ou répétitif.";
@@ -697,14 +706,13 @@ class ArticleGenerationService
             $userPrompt .= "\n\nMOTS-CLÉS SÉMANTIQUES (LSI) à intégrer naturellement dans le texte :\n{$lsiList}\nCes mots doivent apparaître au moins 1 fois chacun dans l'article pour signaler à Google que l'article couvre le sujet en profondeur.";
         }
 
-        // Token limits must be high enough to reach target word counts
-        // Rule of thumb: 1 French word ≈ 2 tokens, so 3000 words ≈ 6000 tokens + HTML overhead
+        // Token limits for world-class content (1 French word ≈ 1.8 tokens + HTML overhead ~30%)
         $maxTokens = $typeConfig['max_tokens_content'] ?? match ($params['length'] ?? $typeConfig['length'] ?? 'long') {
-            'short' => 5000,       // ~1200 words + HTML
-            'medium' => 8000,      // ~1800 words + HTML
-            'long' => 12000,       // ~2800 words + HTML
-            'extra_long' => 16000, // ~4000 words + HTML
-            default => 12000,
+            'short' => 8000,       // ~2000 words + HTML
+            'medium' => 12000,     // ~3000 words + HTML
+            'long' => 16384,       // ~4500 words + HTML (GPT-4o max output)
+            'extra_long' => 16384, // ~4500+ words (GPT-4o max)
+            default => 16384,
         };
 
         $result = $this->openAi->complete($systemPrompt, $userPrompt, [

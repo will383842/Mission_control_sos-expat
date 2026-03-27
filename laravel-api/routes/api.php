@@ -335,6 +335,16 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ============================================================
+    // COUNTRY DIRECTORY (Annuaire pays — liens officiels expatries)
+    // ============================================================
+    Route::prefix('country-directory')->middleware('role:admin')->group(function () {
+        Route::get('/countries', [\App\Http\Controllers\CountryDirectoryController::class, 'countries']);
+        Route::get('/stats', [\App\Http\Controllers\CountryDirectoryController::class, 'stats']);
+        Route::get('/country/{countryCode}', [\App\Http\Controllers\CountryDirectoryController::class, 'country']);
+        Route::get('/export-blog', [\App\Http\Controllers\CountryDirectoryController::class, 'exportForBlog']);
+    });
+
+    // ============================================================
     // BUSINESS DIRECTORY (Annuaire entreprises)
     // ============================================================
     Route::prefix('businesses')->middleware('role:admin')->group(function () {
