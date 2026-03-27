@@ -161,26 +161,31 @@ class ArticleGenerationService
             $this->phase05b_featuredSnippet($article, $params['keywords'][0] ?? $params['topic'], $params['language'] ?? 'fr');
 
             // Phase 6: Generate FAQ
-            $effectiveFaqCount = $params['faq_count'] ?? $typeConfig['faq_count'];
-            if (($params['generate_faq'] ?? true) && $effectiveFaqCount > 0) {
-                $phaseStart = microtime(true);
-                $faqs = $this->phase06_generateFaq(
-                    $title,
-                    $contentHtml,
-                    $params['language'] ?? 'fr',
-                    $effectiveFaqCount
-                );
-                if (!empty($faqs)) {
-                    foreach ($faqs as $index => $faq) {
-                        GeneratedArticleFaq::create([
-                            'article_id' => $article->id,
-                            'question' => $faq['question'] ?? '',
-                            'answer' => $faq['answer'] ?? '',
-                            'sort_order' => $index,
-                        ]);
+            try {
+                $effectiveFaqCount = $params['faq_count'] ?? $typeConfig['faq_count'] ?? 6;
+                if (($params['generate_faq'] ?? true) && $effectiveFaqCount > 0) {
+                    $phaseStart = microtime(true);
+                    $faqs = $this->phase06_generateFaq(
+                        $title,
+                        $contentHtml,
+                        $params['language'] ?? 'fr',
+                        $effectiveFaqCount
+                    );
+                    if (!empty($faqs)) {
+                        foreach ($faqs as $index => $faq) {
+                            GeneratedArticleFaq::create([
+                                'article_id' => $article->id,
+                                'question' => $faq['question'] ?? '',
+                                'answer' => $faq['answer'] ?? '',
+                                'sort_order' => $index,
+                            ]);
+                        }
                     }
+                    $this->logPhase($article, 'faq', 'success', count($faqs) . ' FAQs generated', 0, 0, $this->elapsed($phaseStart));
                 }
-                $this->logPhase($article, 'faq', 'success', count($faqs) . ' FAQs generated', 0, 0, $this->elapsed($phaseStart));
+            } catch (\Throwable $e) {
+                Log::warning('Phase 6 (FAQ) failed, continuing', ['error' => $e->getMessage(), 'article_id' => $article->id]);
+                $this->sendTelegramAlert('6 — FAQs', $e->getMessage(), $article);
             }
 
             // Phase 7: Generate meta tags
@@ -336,10 +341,16 @@ class ArticleGenerationService
                 ]);
             }
 
-            // Phase 15: Translations are now handled via TranslationBatchService (manual)
-            // Kept as no-op for backward compatibility — use /translations/start API instead.
-
-            // Status already set to 'review' before phase 14
+            // Phase 15: Auto-dispatch translations to all 8 target languages
+            try {
+                $targetLanguages = ['en', 'es', 'de', 'pt', 'ru', 'zh', 'ar', 'hi'];
+                $article->refresh();
+                $this->phase15_dispatchTranslations($article, $targetLanguages);
+                Log::info('Phase 15: translations dispatched for 8 languages', ['article_id' => $article->id]);
+            } catch (\Throwable $e) {
+                Log::warning('Phase 15 (translations) failed, continuing', ['error' => $e->getMessage(), 'article_id' => $article->id]);
+                $this->sendTelegramAlert('15 — Traductions', $e->getMessage(), $article);
+            }
 
             // Update cluster if generated from one
             if (!empty($params['cluster_id'])) {
