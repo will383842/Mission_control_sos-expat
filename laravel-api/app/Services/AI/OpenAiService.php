@@ -275,43 +275,58 @@ class OpenAiService
 
     /**
      * Check if we are within daily and monthly budgets.
+     * Uses a distributed lock to prevent race conditions between concurrent requests.
      */
     private function checkBudget(): bool
     {
-        try {
-            $dailyBudget = (int) config('services.ai.daily_budget', 5000);
-            $monthlyBudget = (int) config('services.ai.monthly_budget', 100000);
-            $blockOnExceeded = (bool) config('services.ai.block_on_exceeded', false);
+        $dailyBudget = (int) config('services.openai.daily_budget', 5000);
+        $monthlyBudget = (int) config('services.openai.monthly_budget', 100000);
+        $blockOnExceeded = config('services.openai.block_on_exceeded', true);
 
-            $todayCost = (int) ApiCost::whereDate('created_at', now()->toDateString())->sum('cost_cents');
-            $monthlyCost = (int) ApiCost::whereYear('created_at', now()->year)
+        // Use distributed lock to prevent race conditions
+        $lockKey = 'ai_budget_check:' . now()->toDateString();
+        $lock = \Illuminate\Support\Facades\Cache::lock($lockKey, 10);
+
+        try {
+            $lock->block(5); // Wait up to 5 seconds for lock
+
+            $todayCost = \App\Models\ApiCost::whereDate('created_at', now()->toDateString())
+                ->sum('cost_cents');
+
+            $monthCost = \App\Models\ApiCost::whereYear('created_at', now()->year)
                 ->whereMonth('created_at', now()->month)
                 ->sum('cost_cents');
 
-            $overDaily = $todayCost >= $dailyBudget;
-            $overMonthly = $monthlyCost >= $monthlyBudget;
+            $overDaily = $dailyBudget > 0 && $todayCost >= $dailyBudget;
+            $overMonthly = $monthlyBudget > 0 && $monthCost >= $monthlyBudget;
 
             if ($overDaily || $overMonthly) {
-                $context = [
-                    'today_cost' => $todayCost,
+                $reason = $overDaily ? 'daily' : 'monthly';
+                Log::warning("AI budget exceeded ({$reason})", [
+                    'daily_spent' => $todayCost,
                     'daily_budget' => $dailyBudget,
-                    'monthly_cost' => $monthlyCost,
+                    'monthly_spent' => $monthCost,
                     'monthly_budget' => $monthlyBudget,
-                ];
+                ]);
 
                 if ($blockOnExceeded) {
-                    Log::error('OpenAI budget exceeded — blocking', $context);
                     return false;
                 }
-
-                Log::warning('OpenAI budget exceeded — continuing (block disabled)', $context);
             }
 
             return true;
+        } catch (\Illuminate\Contracts\Cache\LockTimeoutException $e) {
+            // Lock timeout - be safe, deny the call
+            Log::error('Budget check lock timeout - denying API call');
+            return false;
         } catch (\Throwable $e) {
-            Log::error('OpenAI budget check failed', ['message' => $e->getMessage()]);
-            // Allow calls if budget check fails
-            return true;
+            // Any other error - be safe, deny the call
+            Log::error('Budget check failed - denying API call', [
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        } finally {
+            optional($lock)->forceRelease();
         }
     }
 }

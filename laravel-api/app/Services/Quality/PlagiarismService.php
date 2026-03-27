@@ -75,7 +75,7 @@ class PlagiarismService
 
                 $similarity = $this->calculateJaccardSimilarity($shingles, $candidateShingles);
 
-                if ($similarity > 10.0) {
+                if ($similarity > 20.0) {
                     $matchingPhrases = $this->findMatchingPhrases($text, $candidateText, self::MIN_PHRASE_WORDS);
 
                     $matches[] = [
@@ -100,9 +100,9 @@ class PlagiarismService
             $highestSimilarity = !empty($matches) ? $matches[0]['similarity'] : 0.0;
 
             // Determine status
-            if ($highestSimilarity >= 50) {
+            if ($highestSimilarity >= 35) {
                 $status = 'plagiarized';
-            } elseif ($highestSimilarity >= 10) {
+            } elseif ($highestSimilarity >= 20) {
                 $status = 'similar';
             } else {
                 $status = 'original';
@@ -124,7 +124,7 @@ class PlagiarismService
             ]);
 
             return [
-                'is_original'       => $highestSimilarity < 10,
+                'is_original'       => $highestSimilarity < 20,
                 'similarity_percent' => $highestSimilarity,
                 'status'            => $status,
                 'matches'           => $matches,

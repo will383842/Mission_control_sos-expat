@@ -43,5 +43,21 @@ class RunDailyContentJob implements ShouldQueue
             'error' => $e->getMessage(),
             'trace' => $e->getTraceAsString(),
         ]);
+
+        // Send Slack notification if configured
+        $slackWebhook = config('services.slack.failures_webhook');
+        if ($slackWebhook) {
+            try {
+                \Illuminate\Support\Facades\Http::post($slackWebhook, [
+                    'text' => "🚨 *Job Failed*: " . class_basename(static::class) . "\n" .
+                              "Error: " . mb_substr($e->getMessage(), 0, 500) . "\n" .
+                              "Time: " . now()->toDateTimeString(),
+                ]);
+            } catch (\Throwable $slackError) {
+                Log::warning('Failed to send Slack notification', [
+                    'error' => $slackError->getMessage(),
+                ]);
+            }
+        }
     }
 }

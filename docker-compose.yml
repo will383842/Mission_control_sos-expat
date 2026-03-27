@@ -4,13 +4,13 @@ services:
     container_name: inf-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${DB_DATABASE:-influenceurs_tracker}
+      POSTGRES_DB: ${DB_DATABASE:-mission_control}
       POSTGRES_USER: ${DB_USERNAME:-inf_user}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-inf_secret}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-inf_user} -d ${DB_DATABASE:-influenceurs_tracker}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-inf_user} -d ${DB_DATABASE:-mission_control}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -24,8 +24,10 @@ services:
     command: >
       redis-server
       --appendonly yes
-      --maxmemory 64mb
-      --maxmemory-policy noeviction
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    mem_limit: 512m
+    memswap_limit: 512m
     volumes:
       - redis_data:/data
     healthcheck:
@@ -50,10 +52,11 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "php -r 'exit(0);' || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost/up || exit 1"]
       interval: 30s
-      timeout: 5s
+      timeout: 10s
       retries: 3
+      start_period: 40s
     volumes:
       - ./.env.production:/var/www/html/.env:ro
       - public_shared:/var/www/html/public-shared
@@ -68,6 +71,8 @@ services:
     container_name: inf-scheduler
     restart: unless-stopped
     command: ["/bin/sh", "-c", "while true; do php artisan schedule:run --verbose; sleep 60; done"]
+    mem_limit: 256m
+    memswap_limit: 256m
     env_file:
       - .env.production
     depends_on:
@@ -88,6 +93,8 @@ services:
     container_name: inf-queue
     restart: unless-stopped
     command: ["php", "artisan", "queue:work", "redis", "--queue=default", "--sleep=3", "--tries=3", "--max-time=3600"]
+    mem_limit: 512m
+    memswap_limit: 512m
     env_file:
       - .env.production
     depends_on:
@@ -108,6 +115,8 @@ services:
     container_name: inf-email-worker
     restart: unless-stopped
     command: ["php", "artisan", "queue:work", "redis", "--queue=email", "--sleep=5", "--tries=2", "--max-time=3600"]
+    mem_limit: 256m
+    memswap_limit: 256m
     env_file:
       - .env.production
     depends_on:
@@ -128,6 +137,8 @@ services:
     container_name: inf-scraper
     restart: unless-stopped
     command: ["php", "artisan", "queue:work", "redis", "--queue=scraper", "--sleep=5", "--tries=1", "--max-jobs=50", "--max-time=3600"]
+    mem_limit: 512m
+    memswap_limit: 512m
     env_file:
       - .env.production
     depends_on:
@@ -197,6 +208,8 @@ services:
     container_name: inf-publication-worker
     restart: unless-stopped
     command: ["php", "artisan", "queue:work", "redis", "--queue=publication", "--sleep=5", "--tries=5", "--timeout=120", "--memory=256"]
+    mem_limit: 512m
+    memswap_limit: 512m
     env_file:
       - .env.production
     depends_on:

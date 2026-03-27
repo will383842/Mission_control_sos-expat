@@ -10,6 +10,7 @@ RUN apk add --no-cache \
     freetype-dev \
     libjpeg-turbo-dev \
     libpng-dev \
+    curl \
     $PHPIZE_DEPS
 
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
@@ -47,7 +48,8 @@ RUN echo '[www]' > /usr/local/etc/php-fpm.d/zz-custom.conf \
     && echo 'pm.max_children = 15' >> /usr/local/etc/php-fpm.d/zz-custom.conf \
     && echo 'pm.start_servers = 3' >> /usr/local/etc/php-fpm.d/zz-custom.conf \
     && echo 'pm.min_spare_servers = 2' >> /usr/local/etc/php-fpm.d/zz-custom.conf \
-    && echo 'pm.max_spare_servers = 5' >> /usr/local/etc/php-fpm.d/zz-custom.conf
+    && echo 'pm.max_spare_servers = 5' >> /usr/local/etc/php-fpm.d/zz-custom.conf \
+    && echo 'pm.max_requests = 500' >> /usr/local/etc/php-fpm.d/zz-custom.conf
 
 RUN echo 'opcache.enable=1' > /usr/local/etc/php/conf.d/opcache-custom.ini \
     && echo 'opcache.memory_consumption=128' >> /usr/local/etc/php/conf.d/opcache-custom.ini \

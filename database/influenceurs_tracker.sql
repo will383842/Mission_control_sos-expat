@@ -1,16 +1,16 @@
 -- ============================================================
--- Schema : influenceurs_tracker
--- Projet  : Influenceurs_Tracker_sos_expat
+-- Schema : mission_control
+-- Projet  : Mission_control_sos-expat
 -- Port    : 3309 (dédié)
 -- NOTE: Laravel migrations (laravel-api/database/migrations/) are the
 --       source of truth for the database schema. This SQL dump is
 --       provided for reference only and may be out of date.
 -- ============================================================
 
-CREATE DATABASE IF NOT EXISTS `influenceurs_tracker`
+CREATE DATABASE IF NOT EXISTS `mission_control`
   CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-USE `influenceurs_tracker`;
+USE `mission_control`;
 
 -- Exécuter les migrations Laravel via :
 --   php artisan migrate --seed

@@ -13,6 +13,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -178,52 +179,58 @@ class PublishContentJob implements ShouldQueue
 
     /**
      * Check if publishing rate limits are respected.
+     * Uses lockForUpdate on the schedule row to serialise concurrent checks.
      */
     private function isWithinRateLimit(int $endpointId): bool
     {
-        $schedule = PublicationSchedule::where('endpoint_id', $endpointId)->first();
+        return DB::transaction(function () use ($endpointId) {
+            // Lock the schedule row to serialise concurrent rate-limit checks
+            $schedule = PublicationSchedule::where('endpoint_id', $endpointId)
+                ->lockForUpdate()
+                ->first();
 
-        if (!$schedule || !$schedule->is_active) {
+            if (!$schedule || !$schedule->is_active) {
+                return true;
+            }
+
+            // Check max per hour
+            if ($schedule->max_per_hour > 0) {
+                $publishedLastHour = PublicationQueueItem::where('endpoint_id', $endpointId)
+                    ->where('status', 'published')
+                    ->where('published_at', '>=', now()->subHour())
+                    ->count();
+
+                if ($publishedLastHour >= $schedule->max_per_hour) {
+                    return false;
+                }
+            }
+
+            // Check max per day
+            if ($schedule->max_per_day > 0) {
+                $publishedToday = PublicationQueueItem::where('endpoint_id', $endpointId)
+                    ->where('status', 'published')
+                    ->where('published_at', '>=', now()->startOfDay())
+                    ->count();
+
+                if ($publishedToday >= $schedule->max_per_day) {
+                    return false;
+                }
+            }
+
+            // Check minimum interval
+            if ($schedule->min_interval_minutes > 0) {
+                $lastPublished = PublicationQueueItem::where('endpoint_id', $endpointId)
+                    ->where('status', 'published')
+                    ->orderByDesc('published_at')
+                    ->value('published_at');
+
+                if ($lastPublished && now()->diffInMinutes($lastPublished) < $schedule->min_interval_minutes) {
+                    return false;
+                }
+            }
+
             return true;
-        }
-
-        // Check max per hour
-        if ($schedule->max_per_hour > 0) {
-            $publishedLastHour = PublicationQueueItem::where('endpoint_id', $endpointId)
-                ->where('status', 'published')
-                ->where('published_at', '>=', now()->subHour())
-                ->count();
-
-            if ($publishedLastHour >= $schedule->max_per_hour) {
-                return false;
-            }
-        }
-
-        // Check max per day
-        if ($schedule->max_per_day > 0) {
-            $publishedToday = PublicationQueueItem::where('endpoint_id', $endpointId)
-                ->where('status', 'published')
-                ->where('published_at', '>=', now()->startOfDay())
-                ->count();
-
-            if ($publishedToday >= $schedule->max_per_day) {
-                return false;
-            }
-        }
-
-        // Check minimum interval
-        if ($schedule->min_interval_minutes > 0) {
-            $lastPublished = PublicationQueueItem::where('endpoint_id', $endpointId)
-                ->where('status', 'published')
-                ->orderByDesc('published_at')
-                ->value('published_at');
-
-            if ($lastPublished && now()->diffInMinutes($lastPublished) < $schedule->min_interval_minutes) {
-                return false;
-            }
-        }
-
-        return true;
+        });
     }
 
     /**
@@ -295,5 +302,21 @@ class PublishContentJob implements ShouldQueue
             'queue_item_id' => $this->queueItemId,
             'error' => $e->getMessage(),
         ]);
+
+        // Send Slack notification if configured
+        $slackWebhook = config('services.slack.failures_webhook');
+        if ($slackWebhook) {
+            try {
+                Http::post($slackWebhook, [
+                    'text' => "🚨 *Job Failed*: " . class_basename(static::class) . "\n" .
+                              "Error: " . mb_substr($e->getMessage(), 0, 500) . "\n" .
+                              "Time: " . now()->toDateTimeString(),
+                ]);
+            } catch (\Throwable $slackError) {
+                Log::warning('Failed to send Slack notification', [
+                    'error' => $slackError->getMessage(),
+                ]);
+            }
+        }
     }
 }

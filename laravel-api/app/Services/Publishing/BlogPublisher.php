@@ -86,6 +86,7 @@ class BlogPublisher
 
         // ── Build payload ────────────────────────────────────────
         $payload = [
+            'idempotency_key'    => $parentArticle->uuid ?? ($parentArticle->id . '_' . now()->timestamp),
             'external_id'        => $parentArticle->uuid,
             'content_type'       => $parentArticle->content_type ?? 'article',
             'category_slug'      => $categorySlug,

@@ -1,6 +1,6 @@
-# Influenceurs Tracker — SOS-Expat
+# Mission Control — SOS-Expat
 
-CRM de gestion des influenceurs pour SOS-Expat.com.
+Centre de commande : influenceurs, contacts, rappels et statistiques.
 Projet **100% standalone** — base de données et backend indépendants.
 
 ## Stack
@@ -24,9 +24,9 @@ Projet **100% standalone** — base de données et backend indépendants.
 
 Dans phpMyAdmin ou MySQL CLI :
 ```sql
-CREATE DATABASE influenceurs_tracker CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE mission_control CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER 'inf_user'@'localhost' IDENTIFIED BY 'votre_mot_de_passe';
-GRANT ALL ON influenceurs_tracker.* TO 'inf_user'@'localhost';
+GRANT ALL ON mission_control.* TO 'inf_user'@'localhost';
 ```
 
 ### 2. Backend Laravel

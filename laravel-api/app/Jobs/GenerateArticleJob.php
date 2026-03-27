@@ -15,8 +15,16 @@ class GenerateArticleJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $timeout = 600;
-    public int $tries = 2;
-    public int $maxExceptions = 1;
+    public int $tries = 3;
+    public int $maxExceptions = 2;
+
+    /**
+     * Exponential backoff in seconds: 1min, then 5min.
+     */
+    public function backoff(): array
+    {
+        return [60, 300];
+    }
 
     public function __construct(
         public array $params,
@@ -58,5 +66,21 @@ class GenerateArticleJob implements ShouldQueue
             'error' => $e->getMessage(),
             'trace' => $e->getTraceAsString(),
         ]);
+
+        // Send Slack notification if configured
+        $slackWebhook = config('services.slack.failures_webhook');
+        if ($slackWebhook) {
+            try {
+                \Illuminate\Support\Facades\Http::post($slackWebhook, [
+                    'text' => "🚨 *Job Failed*: " . class_basename(static::class) . "\n" .
+                              "Error: " . mb_substr($e->getMessage(), 0, 500) . "\n" .
+                              "Time: " . now()->toDateTimeString(),
+                ]);
+            } catch (\Throwable $slackError) {
+                Log::warning('Failed to send Slack notification', [
+                    'error' => $slackError->getMessage(),
+                ]);
+            }
+        }
     }
 }

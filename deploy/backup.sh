@@ -20,7 +20,7 @@ echo "[BACKUP] Dumping PostgreSQL..."
 PGPASSWORD="${DB_PASSWORD}" pg_dump \
   -h "${DB_HOST:-inf-postgres}" \
   -U "${DB_USERNAME:-inf_user}" \
-  -d "${DB_DATABASE:-influenceurs_tracker}" \
+  -d "${DB_DATABASE:-mission_control}" \
   --format=custom \
   --compress=9 \
   -f "$BACKUP_DIR/db_${DATE}.dump"
@@ -32,7 +32,7 @@ echo "[BACKUP] Database dump: $DB_SIZE"
 RECORD_COUNT=$(PGPASSWORD="${DB_PASSWORD}" psql \
   -h "${DB_HOST:-inf-postgres}" \
   -U "${DB_USERNAME:-inf_user}" \
-  -d "${DB_DATABASE:-influenceurs_tracker}" \
+  -d "${DB_DATABASE:-mission_control}" \
   -t -c "SELECT json_build_object(
     'influenceurs', (SELECT count(*) FROM influenceurs WHERE deleted_at IS NULL),
     'contacts', (SELECT count(*) FROM contacts WHERE deleted_at IS NULL),

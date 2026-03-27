@@ -13,7 +13,7 @@
 #
 # AUTOMATISER (Windows Task Scheduler) :
 #   - Créer une tâche planifiée qui exécute :
-#     bash "C:\Users\willi\Documents\Projets\VS_CODE\Outils_communication\Influenceurs_tracker_sos_expat\scripts\backup-to-local.sh"
+#     bash "C:\Users\willi\Documents\Projets\VS_CODE\Outils_communication\Mission_control_sos-expat\scripts\backup-to-local.sh"
 #   - Fréquence : quotidienne, par exemple à 08:00
 #
 # =============================================================================
@@ -23,7 +23,7 @@ set -e
 VPS_HOST="root@95.216.179.163"
 CONTAINER_BACKUP_DIR="/var/www/html/storage/backups"
 VPS_TMP_DIR="/tmp/inf-backups"
-LOCAL_BACKUP_DIR="C:/Users/willi/Documents/Backups/influenceurs-tracker"
+LOCAL_BACKUP_DIR="C:/Users/willi/Documents/Backups/mission-control"
 KEEP_DAYS=30
 
 # Couleurs

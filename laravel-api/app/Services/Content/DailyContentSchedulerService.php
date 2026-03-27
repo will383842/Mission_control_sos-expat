@@ -12,6 +12,7 @@ use App\Models\TopicCluster;
 use App\Services\Quality\AutoQualityImproverService;
 use App\Services\Quality\PlagiarismService;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class DailyContentSchedulerService
@@ -45,117 +46,133 @@ class DailyContentSchedulerService
             ]);
         }
 
-        // Check today's log — if already completed, skip
-        $todayLog = DailyContentLog::where('schedule_id', $schedule->id)
-            ->where('date', today()->toDateString())
-            ->first();
+        // Distributed lock to prevent concurrent runs for the same schedule+day
+        $lockKey = "scheduler:daily:{$schedule->id}:" . today()->toDateString();
+        $lock = Cache::lock($lockKey, 3600);
 
-        if ($todayLog && $todayLog->completed_at) {
-            Log::info('DailyContentScheduler: already completed today', [
-                'schedule' => $schedule->name,
-                'log_id'   => $todayLog->id,
+        if (!$lock->get()) {
+            Log::info('DailyContentScheduler: already running for today', ['schedule_id' => $schedule->id]);
+            return DailyContentLog::where('schedule_id', $schedule->id)
+                ->where('date', today()->toDateString())
+                ->latest()
+                ->first();
+        }
+
+        try {
+            // Check today's log — if already completed, skip
+            $todayLog = DailyContentLog::where('schedule_id', $schedule->id)
+                ->where('date', today()->toDateString())
+                ->first();
+
+            if ($todayLog && $todayLog->completed_at) {
+                Log::info('DailyContentScheduler: already completed today', [
+                    'schedule' => $schedule->name,
+                    'log_id'   => $todayLog->id,
+                ]);
+                return $todayLog;
+            }
+
+            // Create or reuse today's log
+            $log = $todayLog ?? DailyContentLog::create([
+                'schedule_id' => $schedule->id,
+                'date'        => today()->toDateString(),
+                'started_at'  => now(),
             ]);
-            return $todayLog;
+
+            if (!$log->started_at) {
+                $log->update(['started_at' => now()]);
+            }
+
+            $errors = $log->errors ?? [];
+
+            Log::info('DailyContentScheduler: starting', [
+                'schedule' => $schedule->name,
+                'log_id'   => $log->id,
+            ]);
+
+            // ═══════════════════════════════════════════════════════
+            // 1. Pillar articles (long, 3000+ words, guide content)
+            // ═══════════════════════════════════════════════════════
+            $pillarNeeded = $schedule->pillar_articles_per_day - $log->pillar_generated;
+            if ($pillarNeeded > 0) {
+                Log::info('DailyContentScheduler: generating pillar articles', ['needed' => $pillarNeeded]);
+                $this->generateArticles($log, $schedule, 'pillar', $pillarNeeded, $errors);
+            }
+
+            // ═══════════════════════════════════════════════════════
+            // 2. Normal articles (medium, 1500-2500 words)
+            // ═══════════════════════════════════════════════════════
+            $normalNeeded = $schedule->normal_articles_per_day - $log->normal_generated;
+            if ($normalNeeded > 0) {
+                Log::info('DailyContentScheduler: generating normal articles', ['needed' => $normalNeeded]);
+                $this->generateArticles($log, $schedule, 'normal', $normalNeeded, $errors);
+            }
+
+            // ═══════════════════════════════════════════════════════
+            // 3. Q&A generation
+            // ═══════════════════════════════════════════════════════
+            $qaNeeded = $schedule->qa_per_day - $log->qa_generated;
+            if ($qaNeeded > 0) {
+                Log::info('DailyContentScheduler: generating Q&A entries', ['needed' => $qaNeeded]);
+                $this->generateQa($log, $schedule, $qaNeeded, $errors);
+            }
+
+            // ═══════════════════════════════════════════════════════
+            // 4. Comparative articles
+            // ═══════════════════════════════════════════════════════
+            $compNeeded = $schedule->comparatives_per_day - $log->comparatives_generated;
+            if ($compNeeded > 0) {
+                Log::info('DailyContentScheduler: generating comparatives', ['needed' => $compNeeded]);
+                $this->generateComparatives($log, $schedule, $compNeeded, $errors);
+            }
+
+            // ═══════════════════════════════════════════════════════
+            // 4b. News articles (2 per day)
+            // ═══════════════════════════════════════════════════════
+            $newsNeeded = 2 - ($log->news_generated ?? 0);
+            if ($newsNeeded > 0) {
+                Log::info('DailyContentScheduler: generating news articles', ['needed' => $newsNeeded]);
+                $this->generateNews($log, $schedule, $newsNeeded, $errors);
+            }
+
+            // ═══════════════════════════════════════════════════════
+            // 5. Custom titles (one-shot, removed after generation)
+            // ═══════════════════════════════════════════════════════
+            $customTitles = $schedule->custom_titles ?? [];
+            if (!empty($customTitles)) {
+                Log::info('DailyContentScheduler: generating custom titles', ['count' => count($customTitles)]);
+                $this->generateCustomTitles($log, $schedule, $customTitles, $errors);
+            }
+
+            // ═══════════════════════════════════════════════════════
+            // 6. Schedule publications for today
+            // ═══════════════════════════════════════════════════════
+            Log::info('DailyContentScheduler: scheduling publications');
+            $publishedCount = $this->schedulePublicationsForToday($schedule);
+            $log->update(['published' => $publishedCount]);
+
+            // Finalize
+            $log->update([
+                'errors'       => !empty($errors) ? $errors : null,
+                'completed_at' => now(),
+            ]);
+
+            Log::info('DailyContentScheduler: completed', [
+                'schedule'   => $schedule->name,
+                'log_id'     => $log->id,
+                'pillar'     => $log->pillar_generated,
+                'normal'     => $log->normal_generated,
+                'qa'         => $log->qa_generated,
+                'comparatives' => $log->comparatives_generated,
+                'custom'     => $log->custom_generated,
+                'published'  => $publishedCount,
+                'errors'     => count($errors),
+            ]);
+
+            return $log->fresh();
+        } finally {
+            $lock->forceRelease();
         }
-
-        // Create or reuse today's log
-        $log = $todayLog ?? DailyContentLog::create([
-            'schedule_id' => $schedule->id,
-            'date'        => today()->toDateString(),
-            'started_at'  => now(),
-        ]);
-
-        if (!$log->started_at) {
-            $log->update(['started_at' => now()]);
-        }
-
-        $errors = $log->errors ?? [];
-
-        Log::info('DailyContentScheduler: starting', [
-            'schedule' => $schedule->name,
-            'log_id'   => $log->id,
-        ]);
-
-        // ═══════════════════════════════════════════════════════
-        // 1. Pillar articles (long, 3000+ words, guide content)
-        // ═══════════════════════════════════════════════════════
-        $pillarNeeded = $schedule->pillar_articles_per_day - $log->pillar_generated;
-        if ($pillarNeeded > 0) {
-            Log::info('DailyContentScheduler: generating pillar articles', ['needed' => $pillarNeeded]);
-            $this->generateArticles($log, $schedule, 'pillar', $pillarNeeded, $errors);
-        }
-
-        // ═══════════════════════════════════════════════════════
-        // 2. Normal articles (medium, 1500-2500 words)
-        // ═══════════════════════════════════════════════════════
-        $normalNeeded = $schedule->normal_articles_per_day - $log->normal_generated;
-        if ($normalNeeded > 0) {
-            Log::info('DailyContentScheduler: generating normal articles', ['needed' => $normalNeeded]);
-            $this->generateArticles($log, $schedule, 'normal', $normalNeeded, $errors);
-        }
-
-        // ═══════════════════════════════════════════════════════
-        // 3. Q&A generation
-        // ═══════════════════════════════════════════════════════
-        $qaNeeded = $schedule->qa_per_day - $log->qa_generated;
-        if ($qaNeeded > 0) {
-            Log::info('DailyContentScheduler: generating Q&A entries', ['needed' => $qaNeeded]);
-            $this->generateQa($log, $schedule, $qaNeeded, $errors);
-        }
-
-        // ═══════════════════════════════════════════════════════
-        // 4. Comparative articles
-        // ═══════════════════════════════════════════════════════
-        $compNeeded = $schedule->comparatives_per_day - $log->comparatives_generated;
-        if ($compNeeded > 0) {
-            Log::info('DailyContentScheduler: generating comparatives', ['needed' => $compNeeded]);
-            $this->generateComparatives($log, $schedule, $compNeeded, $errors);
-        }
-
-        // ═══════════════════════════════════════════════════════
-        // 4b. News articles (2 per day)
-        // ═══════════════════════════════════════════════════════
-        $newsNeeded = 2 - ($log->news_generated ?? 0);
-        if ($newsNeeded > 0) {
-            Log::info('DailyContentScheduler: generating news articles', ['needed' => $newsNeeded]);
-            $this->generateNews($log, $schedule, $newsNeeded, $errors);
-        }
-
-        // ═══════════════════════════════════════════════════════
-        // 5. Custom titles (one-shot, removed after generation)
-        // ═══════════════════════════════════════════════════════
-        $customTitles = $schedule->custom_titles ?? [];
-        if (!empty($customTitles)) {
-            Log::info('DailyContentScheduler: generating custom titles', ['count' => count($customTitles)]);
-            $this->generateCustomTitles($log, $schedule, $customTitles, $errors);
-        }
-
-        // ═══════════════════════════════════════════════════════
-        // 6. Schedule publications for today
-        // ═══════════════════════════════════════════════════════
-        Log::info('DailyContentScheduler: scheduling publications');
-        $publishedCount = $this->schedulePublicationsForToday($schedule);
-        $log->update(['published' => $publishedCount]);
-
-        // Finalize
-        $log->update([
-            'errors'       => !empty($errors) ? $errors : null,
-            'completed_at' => now(),
-        ]);
-
-        Log::info('DailyContentScheduler: completed', [
-            'schedule'   => $schedule->name,
-            'log_id'     => $log->id,
-            'pillar'     => $log->pillar_generated,
-            'normal'     => $log->normal_generated,
-            'qa'         => $log->qa_generated,
-            'comparatives' => $log->comparatives_generated,
-            'custom'     => $log->custom_generated,
-            'published'  => $publishedCount,
-            'errors'     => count($errors),
-        ]);
-
-        return $log->fresh();
     }
 
     /**
