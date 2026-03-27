@@ -15,7 +15,7 @@ INSERT INTO country_directory (country_code, country_name, country_slug, contine
 ('HR','Croatie','croatie','europe','immigration',NULL,'MVEP Croatie — Visa','https://mvep.gov.hr/services-for-citizens/consular-information/visas/122','mvep.gov.hr','Visa et entree en Croatie (Schengen)',90,true,'visa Croatie','noopener'),
 ('UA','Ukraine','ukraine','europe','immigration',NULL,'DMSU — Migration Ukraine','https://dmsu.gov.ua/en-home.html','dmsu.gov.ua','Service des migrations d Ukraine',85,true,'immigration Ukraine','noopener'),
 ('AL','Albanie','albanie','europe','immigration',NULL,'MFA Albanie — Visa','https://punetejashtme.gov.al/en/services-and-opportunities/visa-regime-for-foreigners/','punetejashtme.gov.al','Regime de visa pour etrangers',85,true,'visa Albanie','noopener'),
-('BA','Bosnie-Herzegovine','bosnie-herzegovine','europe','immigration',NULL,'MFA Bosnie — Visa','https://www.mvp.gov.ba/konzularne_informacije/vize/default.aspx','mvp.gov.ba','Informations visa Bosnie',85,true,'visa Bosnie','noopener'),
+('BA','Bosnie-Herzegovine','bosnie-herzegovine','europe','immigration',NULL,'MFA Bosnie — Visa','https://mvp.gov.ba/en/vize','mvp.gov.ba','Informations visa Bosnie',85,true,'visa Bosnie','noopener'),
 
 -- Ameriques restantes
 ('EC','Equateur','equateur','amerique-sud','immigration',NULL,'Cancilleria Ecuador — Visa','https://www.cancilleria.gob.ec/visa/','cancilleria.gob.ec','Visa et residence en Equateur',85,true,'visa Equateur','noopener'),
@@ -68,7 +68,7 @@ INSERT INTO country_directory (country_code, country_name, country_slug, contine
 ('AE','Emirats arabes unis','emirats-arabes-unis','asie','sante','hopital-jci','Mediclinic Dubai','https://www.mediclinic.ae/','mediclinic.ae','Reseau d hopitaux aux Emirats',80,false,'Mediclinic Dubai','noopener'),
 ('IN','Inde','inde','asie','sante','hopital-jci','Apollo Hospitals','https://www.apollohospitals.com/','apollohospitals.com','Plus grand reseau hospitalier prive en Inde, accredite JCI',85,false,'Apollo Hospitals','noopener'),
 ('IN','Inde','inde','asie','sante','hopital-jci','Fortis Healthcare','https://www.fortishealthcare.com/','fortishealthcare.com','Grand reseau hospitalier indien',80,false,'Fortis Healthcare','noopener'),
-('JP','Japon','japon','asie','sante','hopital','St. Luke''s International Hospital','https://hospital.luke.ac.jp/en/','luke.ac.jp','Hopital international de reference a Tokyo',85,false,'St Luke''s Tokyo','noopener'),
+('JP','Japon','japon','asie','sante','hopital','St. Luke''s International Hospital','https://hospital.luke.ac.jp/eng/','luke.ac.jp','Hopital international de reference a Tokyo',85,false,'St Luke''s Tokyo','noopener'),
 ('KR','Coree du Sud','coree-du-sud','asie','sante','hopital-jci','Samsung Medical Center','https://www.samsunghospital.com/','samsunghospital.com','Centre medical de reference a Seoul',85,false,'Samsung Medical Center','noopener'),
 ('TR','Turquie','turquie','asie','sante','hopital-jci','Acibadem Healthcare','https://www.acibadem.com.tr/en/','acibadem.com.tr','Reseau d hopitaux accredites JCI en Turquie',85,false,'Acibadem','noopener'),
 ('MY','Malaisie','malaisie','asie','sante','hopital-jci','Gleneagles Hospital KL','https://gleneagles.com.my/','gleneagles.com.my','Hopital international a Kuala Lumpur',80,false,'Gleneagles KL','noopener'),
@@ -123,7 +123,7 @@ INSERT INTO country_directory (country_code, country_name, country_slug, contine
 ('CA','Canada','canada','amerique-nord','telecom','mobile','Rogers','https://www.rogers.com/','rogers.com','1er operateur canadien',80,false,'Rogers','noopener nofollow'),
 ('CA','Canada','canada','amerique-nord','telecom','prepaye','Fido — Prepaye Canada','https://www.fido.ca/','fido.ca','Marque prepayee de Rogers, populaire chez les expatries',75,false,'Fido','noopener nofollow'),
 ('MX','Mexique','mexique','amerique-nord','telecom','mobile','Telcel','https://www.telcel.com/','telcel.com','1er operateur mexicain (America Movil)',80,false,'Telcel','noopener nofollow'),
-('BR','Bresil','bresil','amerique-sud','telecom','mobile','Claro Brasil','https://www.claro.com.br/','claro.com.br','1er operateur bresilien',80,false,'Claro BR','noopener nofollow'),
+('BR','Bresil','bresil','amerique-sud','telecom','mobile','Claro Brasil','https://www.claro.com.br/celular','claro.com.br','1er operateur bresilien',80,false,'Claro BR','noopener nofollow'),
 ('AR','Argentine','argentine','amerique-sud','telecom','mobile','Claro Argentina','https://www.claro.com.ar/','claro.com.ar','1er operateur argentin',80,false,'Claro AR','noopener nofollow'),
 ('CO','Colombie','colombie','amerique-sud','telecom','mobile','Claro Colombia','https://www.claro.com.co/','claro.com.co','1er operateur colombien',80,false,'Claro CO','noopener nofollow'),
 

@@ -28,7 +28,7 @@ INSERT INTO country_directory (country_code, country_name, country_slug, contine
 -- ESPAGNE (ES)
 INSERT INTO country_directory (country_code, country_name, country_slug, continent, category, sub_category, title, url, domain, description, trust_score, is_official, anchor_text, rel_attribute) VALUES
 ('ES','Espagne','espagne','europe','immigration',NULL,'Secretaria de Estado de Migraciones','https://www.inclusion.gob.es/web/migraciones/','inclusion.gob.es','NIE, carte de residence, permis travail',90,true,'immigration Espagne','noopener'),
-('ES','Espagne','espagne','europe','immigration','nie','Policia Nacional — NIE','https://www.policia.es/documentacion/extranjeros.html','policia.es','Demarches NIE pour etrangers',90,true,'NIE Espagne','noopener'),
+('ES','Espagne','espagne','europe','immigration','nie','Policia Nacional — NIE','https://sede.policia.gob.es/portalCiudadano/_en/tramites_extranjeria.php','sede.policia.gob.es','Demarches NIE et sejour pour etrangers',90,true,'NIE Espagne','noopener'),
 ('ES','Espagne','espagne','europe','sante',NULL,'Seguridad Social','https://www.seg-social.es/','seg-social.es','Securite sociale espagnole',90,true,'Seguridad Social','noopener'),
 ('ES','Espagne','espagne','europe','logement',NULL,'Idealista Espagne','https://www.idealista.com/','idealista.com','1er portail immobilier espagnol',80,false,'Idealista','noopener nofollow'),
 ('ES','Espagne','espagne','europe','logement',NULL,'Fotocasa','https://www.fotocasa.es/','fotocasa.es','Portail immobilier espagnol',80,false,'Fotocasa','noopener nofollow'),

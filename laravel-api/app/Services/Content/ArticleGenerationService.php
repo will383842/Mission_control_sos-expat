@@ -220,32 +220,56 @@ class ArticleGenerationService
             $article->update(['json_ld' => $jsonLdData]);
             $this->logPhase($article, 'jsonld', 'success', null, 0, 0, $this->elapsed($phaseStart));
 
+            // ═══ CORE CONTENT COMPLETE ═══
+            // Mark as review NOW — all enhancement phases below are non-blocking
+            $article->update(['status' => 'review']);
+            Log::info('Article core content complete, status set to review', ['article_id' => $article->id]);
+
+            // Phases 9-14: Enhancement phases (non-blocking — article content is already saved)
+            // If any of these fail, the article still has its core content
+
             // Phase 9: Add internal links
-            if ($params['auto_internal_links'] ?? true) {
-                $phaseStart = microtime(true);
-                $contentHtml = $this->phase09_addInternalLinks($article->fresh());
-                $article->update(['content_html' => $contentHtml]);
-                $this->logPhase($article, 'internal_links', 'success', null, 0, 0, $this->elapsed($phaseStart));
+            try {
+                if ($params['auto_internal_links'] ?? true) {
+                    $phaseStart = microtime(true);
+                    $contentHtml = $this->phase09_addInternalLinks($article->fresh());
+                    $article->update(['content_html' => $contentHtml]);
+                    $this->logPhase($article, 'internal_links', 'success', null, 0, 0, $this->elapsed($phaseStart));
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Phase 9 (internal links) failed, continuing', ['error' => $e->getMessage(), 'article_id' => $article->id]);
             }
 
             // Phase 10: Add external links
-            $phaseStart = microtime(true);
-            $contentHtml = $this->phase10_addExternalLinks($article->fresh(), $research['sources']);
-            $article->update(['content_html' => $contentHtml]);
-            $this->logPhase($article, 'external_links', 'success', null, 0, 0, $this->elapsed($phaseStart));
+            try {
+                $phaseStart = microtime(true);
+                $contentHtml = $this->phase10_addExternalLinks($article->fresh(), $research['sources']);
+                $article->update(['content_html' => $contentHtml]);
+                $this->logPhase($article, 'external_links', 'success', null, 0, 0, $this->elapsed($phaseStart));
+            } catch (\Throwable $e) {
+                Log::warning('Phase 10 (external links) failed, continuing', ['error' => $e->getMessage(), 'article_id' => $article->id]);
+            }
 
             // Phase 11: Add affiliate links
-            if ($params['auto_affiliate_links'] ?? true) {
-                $phaseStart = microtime(true);
-                $contentHtml = $this->phase11_addAffiliateLinks($article->fresh());
-                $article->update(['content_html' => $contentHtml]);
-                $this->logPhase($article, 'affiliate_links', 'success', null, 0, 0, $this->elapsed($phaseStart));
+            try {
+                if ($params['auto_affiliate_links'] ?? true) {
+                    $phaseStart = microtime(true);
+                    $contentHtml = $this->phase11_addAffiliateLinks($article->fresh());
+                    $article->update(['content_html' => $contentHtml]);
+                    $this->logPhase($article, 'affiliate_links', 'success', null, 0, 0, $this->elapsed($phaseStart));
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Phase 11 (affiliate links) failed, continuing', ['error' => $e->getMessage(), 'article_id' => $article->id]);
             }
 
             // Phase 12: Add images
-            $phaseStart = microtime(true);
-            $this->phase12_addImages($article->fresh(), $params['image_source'] ?? 'unsplash');
-            $this->logPhase($article, 'images', 'success', null, 0, 0, $this->elapsed($phaseStart));
+            try {
+                $phaseStart = microtime(true);
+                $this->phase12_addImages($article->fresh(), $params['image_source'] ?? 'unsplash');
+                $this->logPhase($article, 'images', 'success', null, 0, 0, $this->elapsed($phaseStart));
+            } catch (\Throwable $e) {
+                Log::warning('Phase 12 (images) failed, continuing', ['error' => $e->getMessage(), 'article_id' => $article->id]);
+            }
 
             // Ensure featured_image_url is set from images relation if not already
             $article->refresh();
@@ -261,20 +285,21 @@ class ArticleGenerationService
                 }
             }
 
-            // Phase 13: Generate slugs
-            $phaseStart = microtime(true);
-            $this->phase13_generateSlugs($article->fresh());
-            $this->logPhase($article, 'slugs', 'success', null, 0, 0, $this->elapsed($phaseStart));
+            // Phase 13: Generate slugs + canonical
+            try {
+                $phaseStart = microtime(true);
+                $this->phase13_generateSlugs($article->fresh());
+                $this->logPhase($article, 'slugs', 'success', null, 0, 0, $this->elapsed($phaseStart));
 
-            // Generate canonical URL
-            $article->refresh();
-            $siteUrl = config('services.blog.site_url', config('services.site.url', 'https://sos-expat.com'));
-            $canonical = rtrim($siteUrl, '/') . '/' . $article->language . '/articles/' . $article->slug;
-            $article->update(['canonical_url' => $canonical]);
+                $article->refresh();
+                $siteUrl = config('services.blog.site_url', config('services.site.url', 'https://sos-expat.com'));
+                $canonical = rtrim($siteUrl, '/') . '/' . $article->language . '/articles/' . $article->slug;
+                $article->update(['canonical_url' => $canonical]);
+            } catch (\Throwable $e) {
+                Log::warning('Phase 13 (slugs) failed, continuing', ['error' => $e->getMessage(), 'article_id' => $article->id]);
+            }
 
-            // Content is ready — mark as review BEFORE quality analysis
-            // so that if phase 14 fails, we still have a usable article
-            $article->update(['status' => 'review']);
+            // Status already set to 'review' after phase 8
 
             // Phase 14: Calculate quality (non-blocking — article is already in review)
             $phaseStart = microtime(true);
