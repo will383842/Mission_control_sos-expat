@@ -160,6 +160,24 @@ class QaFromQuestionsService
                 }
             }
 
+            // 1b. Extract LSI keywords from research
+            $lsiKeywords = [];
+            if (!empty($researchContext)) {
+                try {
+                    $lsiResult = $this->openAi->complete(
+                        "Extrais 10-15 mots-clés sémantiques (LSI) de ce texte de recherche. Ce sont des termes que Google s'attend à trouver dans une réponse complète sur ce sujet. Retourne en JSON: {\"lsi_keywords\": [\"mot1\", \"mot2\", ...]}",
+                        mb_substr($researchContext, 0, 3000),
+                        ['temperature' => 0.3, 'max_tokens' => 300, 'json_mode' => true]
+                    );
+                    if ($lsiResult['success']) {
+                        $lsiData = json_decode($lsiResult['content'], true);
+                        $lsiKeywords = $lsiData['lsi_keywords'] ?? [];
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('QaFromQuestions: LSI extraction failed (non-blocking)', ['error' => $e->getMessage()]);
+                }
+            }
+
             // 2. Generate answer via GPT-4o
             $answerData = $this->generateAnswer($title, $country, $language, $researchContext);
 
@@ -175,7 +193,8 @@ class QaFromQuestionsService
             $year = date('Y');
             $metaResult = $this->openAi->complete(
                 "Generate SEO meta tags for a Q&A page. Language: {$language}. "
-                . "Return JSON: {meta_title: string (max 60 chars, include keyword + {$year}), meta_description: string (140-160 chars)}",
+                . "Return JSON: {meta_title: string (max 60 chars), meta_description: string (140-160 chars)}\n\n"
+                . "Meta title : max 60 caractères, DOIT contenir le sujet principal + année {$year}. Format: \"{Sujet} {$year} : Réponse d'Expert | SOS-Expat\"",
                 "Question: {$title}\nAnswer summary: {$answerData['answer_short']}",
                 [
                     'model' => 'gpt-4o-mini',
@@ -194,9 +213,10 @@ class QaFromQuestionsService
                 $metaDescription = mb_substr($parsedMeta['meta_description'] ?? $answerData['answer_short'], 0, 160);
             }
 
-            // 4. Generate slug
+            // 4. Generate slug + canonical URL
             $slug = $this->slugService->generateSlug($title, $language);
             $slug = $this->slugService->ensureUnique($slug, $language, 'qa_entries');
+            $canonical = rtrim(config('services.blog.site_url', 'https://sos-expat.com'), '/') . '/' . $language . '/qa/' . $slug;
 
             // 5. Generate JSON-LD (relatedIds computed after, so generate after step 6)
 
@@ -225,6 +245,7 @@ class QaFromQuestionsService
                 'country' => $country,
                 'category' => $category ?? 'general',
                 'slug' => $slug,
+                'canonical_url' => $canonical,
                 'meta_title' => $metaTitle,
                 'meta_description' => $metaDescription,
                 'json_ld' => $jsonLd,
@@ -232,6 +253,7 @@ class QaFromQuestionsService
                 'seo_score' => 0,
                 'word_count' => $answerData['word_count'] ?? 0,
                 'source_type' => 'scraped',
+                'keywords_secondary' => !empty($lsiKeywords) ? $lsiKeywords : null,
                 'status' => 'draft',
                 'related_qa_ids' => $relatedIds,
                 'sources' => $sources,
@@ -327,6 +349,36 @@ class QaFromQuestionsService
                 }
             } catch (\Throwable $e) {
                 Log::warning('QaFromQuestions: internal links failed (non-blocking)', [
+                    'qa_entry_id' => $entry->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            // 12. External links from research sources
+            try {
+                if (!empty($answerData['sources'])) {
+                    $sourcesHtml = "\n<h2>Sources officielles</h2>\n<ul>\n";
+                    foreach (array_slice($answerData['sources'], 0, 3) as $sourceUrl) {
+                        $domain = parse_url($sourceUrl, PHP_URL_HOST) ?: $sourceUrl;
+                        $sourcesHtml .= '<li><a href="' . e($sourceUrl) . '" target="_blank" rel="noopener">' . e($domain) . '</a></li>' . "\n";
+                    }
+                    $sourcesHtml .= "</ul>\n";
+                    $entry->update(['answer_detailed_html' => ($entry->answer_detailed_html ?? '') . $sourcesHtml]);
+                }
+            } catch (\Throwable $e) {
+                Log::warning('QaFromQuestions: external links failed (non-blocking)', [
+                    'qa_entry_id' => $entry->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            // 13. Affiliate CTA link
+            try {
+                $siteUrl = config('services.site.url', 'https://sos-expat.com');
+                $cta = '<p class="cta-box"><strong>Besoin d\'une réponse personnalisée ?</strong> <a href="' . $siteUrl . '?utm_source=blog&utm_medium=qa&utm_campaign=' . ($entry->slug ?? '') . '">Consultez nos experts SOS-Expat</a></p>';
+                $entry->update(['answer_detailed_html' => ($entry->answer_detailed_html ?? '') . "\n" . $cta]);
+            } catch (\Throwable $e) {
+                Log::warning('QaFromQuestions: affiliate CTA failed (non-blocking)', [
                     'qa_entry_id' => $entry->id,
                     'error' => $e->getMessage(),
                 ]);

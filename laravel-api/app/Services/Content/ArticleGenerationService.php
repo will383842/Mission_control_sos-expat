@@ -112,6 +112,14 @@ class ArticleGenerationService
             }
             $this->logPhase($article, 'research', 'success', 'Found ' . count($research['facts']) . ' facts', 0, 0, $this->elapsed($phaseStart));
 
+            // Store LSI keywords (merge with existing secondary keywords)
+            $lsiKeywords = $research['lsi_keywords'] ?? [];
+            if (!empty($lsiKeywords)) {
+                $existingSecondary = $article->keywords_secondary ?? [];
+                $merged = array_unique(array_merge($existingSecondary, $lsiKeywords));
+                $article->update(['keywords_secondary' => $merged]);
+            }
+
             // Phase 3: Generate title
             $phaseStart = microtime(true);
             $title = $this->phase03_generateTitle(
@@ -136,6 +144,8 @@ class ArticleGenerationService
 
             // Phase 5: Generate content (the big one)
             $phaseStart = microtime(true);
+            // Pass LSI keywords to content generation
+            $params['lsi_keywords'] = $lsiKeywords;
             $contentHtml = $this->phase05_generateContent($title, $excerpt, $research['facts'], $params, $typeConfig);
             $article->update([
                 'content_html' => $contentHtml,
@@ -221,6 +231,12 @@ class ArticleGenerationService
             $phaseStart = microtime(true);
             $this->phase13_generateSlugs($article->fresh());
             $this->logPhase($article, 'slugs', 'success', null, 0, 0, $this->elapsed($phaseStart));
+
+            // Generate canonical URL
+            $article->refresh();
+            $siteUrl = config('services.blog.site_url', config('services.site.url', 'https://sos-expat.com'));
+            $canonical = rtrim($siteUrl, '/') . '/' . $article->language . '/articles/' . $article->slug;
+            $article->update(['canonical_url' => $canonical]);
 
             // Phase 14: Calculate quality
             $phaseStart = microtime(true);
@@ -342,9 +358,12 @@ class ArticleGenerationService
 
         $countryContext = $country ? " en {$country}" : '';
         $query = "Tu es un chercheur web. Recherche des informations factuelles, récentes et fiables sur le sujet suivant{$countryContext}: \"{$topic}\". "
-            . "Retourne: les faits clés, les statistiques, les sources fiables, les points importants à couvrir.";
+            . "Retourne: les faits clés, les statistiques, les sources fiables, les points importants à couvrir. "
+            . "Inclus aussi une liste de 10-15 mots-clés sémantiques (LSI) liés au sujet — des mots que Google s'attend à trouver dans un article complet sur ce thème.";
 
         $result = $this->perplexity->search($query, $language);
+
+        $lsiKeywords = [];
 
         if ($result['success'] && !empty($result['text'])) {
             // Parse facts from response
@@ -363,6 +382,21 @@ class ArticleGenerationService
                     'domain' => parse_url($citation, PHP_URL_HOST) ?? '',
                 ];
             }
+
+            // Extract LSI keywords from the research
+            try {
+                $lsiResult = $this->openAi->complete(
+                    "Extrais 10-15 mots-clés sémantiques (LSI) de ce texte de recherche. Ce sont des termes que Google s'attend à trouver dans un article complet sur le sujet. Retourne en JSON: {\"lsi_keywords\": [\"mot1\", \"mot2\", ...]}",
+                    mb_substr($result['text'], 0, 3000),
+                    ['temperature' => 0.3, 'max_tokens' => 300, 'json_mode' => true]
+                );
+                if ($lsiResult['success']) {
+                    $lsiData = json_decode($lsiResult['content'], true);
+                    $lsiKeywords = $lsiData['lsi_keywords'] ?? [];
+                }
+            } catch (\Throwable $e) {
+                Log::warning('ArticleGeneration: LSI extraction failed (non-blocking)', ['error' => $e->getMessage()]);
+            }
         }
 
         // Save sources to database
@@ -370,7 +404,7 @@ class ArticleGenerationService
             // We'll save them after the article is created — handled in generate()
         }
 
-        return ['facts' => $facts, 'sources' => $sources];
+        return ['facts' => $facts, 'sources' => $sources, 'lsi_keywords' => $lsiKeywords];
     }
 
     /**
@@ -568,6 +602,10 @@ class ArticleGenerationService
               . "- Mots-clés secondaires répartis naturellement\n"
               . "- Phrases variées: courtes et longues alternées\n"
               . "- Paragraphes de 3-5 lignes maximum\n\n"
+              . "RÈGLE H2 OBLIGATOIRE :\n"
+              . "- Le mot-clé principal DOIT apparaître dans au moins 2 titres H2 sur les 6-8\n"
+              . "- Variantes acceptées : synonymes, forme plurielle, reformulation naturelle\n"
+              . "- Exemples : si le mot-clé est \"visa Allemagne\", un H2 peut être \"Quel visa choisir pour l'Allemagne ?\" ou \"Les types de visa en Allemagne\"\n\n"
               . "IMPORTANT: Mentionne l'année " . date('Y') . " dans le premier paragraphe et dans les données chiffrées. Utilise des formulations 'En " . date('Y') . ",...'";
 
         $userPrompt = "Titre: {$title}\n\n"
@@ -582,6 +620,19 @@ class ArticleGenerationService
         $promptSuffix = $typeConfig['prompt_suffix'] ?? '';
         if (!empty($promptSuffix)) {
             $userPrompt .= "\n\nINSTRUCTIONS SUPPLEMENTAIRES DU TYPE DE CONTENU:\n" . $promptSuffix;
+        }
+
+        // Reinforce H2 keyword rule for template-based prompts too
+        $primaryKw = $keywords[0] ?? $params['topic'] ?? '';
+        if (!empty($primaryKw)) {
+            $userPrompt .= "\n\nRÈGLE H2 OBLIGATOIRE : Le mot-clé principal \"{$primaryKw}\" DOIT apparaître dans au moins 2 titres H2 sur les 6-8 (variantes/synonymes acceptés).";
+        }
+
+        // LSI keywords integration
+        $lsiKeywords = $params['lsi_keywords'] ?? [];
+        if (!empty($lsiKeywords)) {
+            $lsiList = implode(', ', array_slice($lsiKeywords, 0, 15));
+            $userPrompt .= "\n\nMOTS-CLÉS SÉMANTIQUES (LSI) à intégrer naturellement dans le texte :\n{$lsiList}\nCes mots doivent apparaître au moins 1 fois chacun dans l'article pour signaler à Google que l'article couvre le sujet en profondeur.";
         }
 
         $maxTokens = $typeConfig['max_tokens_content'] ?? match ($params['length'] ?? $typeConfig['length'] ?? 'long') {

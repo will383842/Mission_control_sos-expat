@@ -94,6 +94,24 @@ class ArticleFromQuestionsService
                 }
             }
 
+            // Extract LSI keywords from research
+            $lsiKeywords = [];
+            if (!empty($researchData)) {
+                try {
+                    $lsiResult = $this->openAi->complete(
+                        "Extrais 10-15 mots-clés sémantiques (LSI) de ce texte de recherche. Ce sont des termes que Google s'attend à trouver dans un article complet sur le sujet. Retourne en JSON: {\"lsi_keywords\": [\"mot1\", \"mot2\", ...]}",
+                        mb_substr($researchData, 0, 3000),
+                        ['temperature' => 0.3, 'max_tokens' => 300, 'json_mode' => true]
+                    );
+                    if ($lsiResult['success']) {
+                        $lsiData = json_decode($lsiResult['content'], true);
+                        $lsiKeywords = $lsiData['lsi_keywords'] ?? [];
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('ArticleFromQuestions: LSI extraction failed (non-blocking)', ['error' => $e->getMessage()]);
+                }
+            }
+
             // Phase 2: Generate article via GPT-4o
             $questionsContext = $h2Questions->map(function ($q) {
                 $views = $q->views ?? 0;
@@ -118,7 +136,8 @@ class ArticleFromQuestionsService
                 . "- FAQ: les questions restantes du cluster\n"
                 . "- Conclusion avec CTA vers SOS-Expat\n"
                 . "- Pas de <h1>, <html>, <head>, <body>\n\n"
-                . "Les H2-questions doivent être les VRAIES questions que les expatriés posent (données ci-dessous).\n\n"
+                . "Les H2-questions doivent être les VRAIES questions que les expatriés posent (données ci-dessous).\n"
+                . "Le mot-clé principal doit apparaître dans au moins 2 des H2-questions.\n\n"
                 . "Retourne en JSON:\n"
                 . "{\n"
                 . "  title: string (H1 SEO, max 70 chars),\n"
@@ -129,10 +148,17 @@ class ArticleFromQuestionsService
                 . "  faq: [{question: string, answer: string}]\n"
                 . "}";
 
+            $lsiBlock = '';
+            if (!empty($lsiKeywords)) {
+                $lsiList = implode(', ', array_slice($lsiKeywords, 0, 15));
+                $lsiBlock = "\n\nMOTS-CLÉS SÉMANTIQUES (LSI) à intégrer naturellement dans le texte :\n{$lsiList}\nCes mots doivent apparaître au moins 1 fois chacun dans l'article pour signaler à Google que l'article couvre le sujet en profondeur.";
+            }
+
             $userPrompt = "Pays: {$country}\nLangue: {$language}\nAnnée: {$year}\n\n"
                 . "Questions principales (H2):\n{$questionsContext}"
                 . $faqContext
-                . (!empty($researchData) ? "\n\nDonnées de recherche:\n" . mb_substr($researchData, 0, 4000) : '');
+                . (!empty($researchData) ? "\n\nDonnées de recherche:\n" . mb_substr($researchData, 0, 4000) : '')
+                . $lsiBlock;
 
             $aiResult = $this->openAi->complete(
                 $systemPrompt,
@@ -164,10 +190,15 @@ class ArticleFromQuestionsService
             $contentText = strip_tags($contentHtml);
             $wordCount = str_word_count($contentText);
 
+            // Generate canonical URL
+            $siteUrl = config('services.blog.site_url', config('services.site.url', 'https://sos-expat.com'));
+            $canonical = rtrim($siteUrl, '/') . '/' . $language . '/articles/' . $slug;
+
             $article = GeneratedArticle::create([
                 'uuid' => (string) Str::uuid(),
                 'title' => Str::limit($title, 250),
                 'slug' => $slug,
+                'canonical_url' => $canonical,
                 'content_html' => $contentHtml,
                 'content_text' => $contentText,
                 'excerpt' => mb_substr($parsed['excerpt'] ?? '', 0, 500),
@@ -181,6 +212,7 @@ class ArticleFromQuestionsService
                 'reading_time_minutes' => max(1, (int) ceil($wordCount / 250)),
                 'generation_model' => 'gpt-4o',
                 'generation_duration_seconds' => (int) (microtime(true) - $startTime),
+                'keywords_secondary' => !empty($lsiKeywords) ? $lsiKeywords : null,
                 'status' => 'draft',
             ]);
 

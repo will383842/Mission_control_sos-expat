@@ -72,6 +72,30 @@ class ComparativeGenerationService
 
             $this->logPhase($comparative, 'research', 'success', count($entities) . ' entities researched');
 
+            // Extract LSI keywords from combined research
+            $lsiKeywords = [];
+            $combinedResearch = implode("\n", array_map(fn ($d) => $d['text'] ?? '', $researchData));
+            if (!empty($combinedResearch)) {
+                try {
+                    $lsiResult = $this->openAi->complete(
+                        "Extrais 10-15 mots-clés sémantiques (LSI) de ce texte de recherche comparative. Ce sont des termes que Google s'attend à trouver dans un comparatif complet sur ce sujet. Retourne en JSON: {\"lsi_keywords\": [\"mot1\", \"mot2\", ...]}",
+                        mb_substr($combinedResearch, 0, 3000),
+                        ['temperature' => 0.3, 'max_tokens' => 300, 'json_mode' => true]
+                    );
+                    if ($lsiResult['success']) {
+                        $lsiData = json_decode($lsiResult['content'], true);
+                        $lsiKeywords = $lsiData['lsi_keywords'] ?? [];
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('ComparativeGeneration: LSI extraction failed (non-blocking)', ['error' => $e->getMessage()]);
+                }
+            }
+
+            // Store LSI keywords on comparative
+            if (!empty($lsiKeywords)) {
+                $comparative->update(['keywords_secondary' => $lsiKeywords]);
+            }
+
             // Phase 2: Generate comparison data (structured)
             $comparisonTable = $this->generateComparisonTable($entities, $researchData);
             $this->logPhase($comparative, 'comparison_table', 'success');
@@ -92,6 +116,31 @@ class ComparativeGenerationService
             $comparative->update(['content_html' => $contentHtml]);
             $this->logPhase($comparative, 'content', 'success');
 
+            // Phase 4b: Featured snippet paragraph
+            try {
+                $entityNames = is_array($entities) ? $entities : [];
+                $snippetResult = $this->openAi->complete(
+                    "Génère un paragraphe de définition de 40-60 mots comparant " . implode(' et ', $entityNames) . ". Format featured snippet Google. Commence par '" . ($entityNames[0] ?? '') . " et " . ($entityNames[1] ?? '') . " sont...' ou 'La comparaison entre...'",
+                    "Entités: " . implode(', ', $entityNames) . "\nPays: " . ($country ?? ''),
+                    ['temperature' => 0.5, 'max_tokens' => 200]
+                );
+                if ($snippetResult['success'] && !empty($snippetResult['content'])) {
+                    $snippet = '<p class="featured-snippet"><strong>' . e(trim($snippetResult['content'])) . '</strong></p>';
+                    $html = $comparative->content_html;
+                    $pos = strpos($html, '</h2>');
+                    if ($pos !== false) {
+                        $html = substr($html, 0, $pos + 5) . "\n" . $snippet . "\n" . substr($html, $pos + 5);
+                        $comparative->update(['content_html' => $html]);
+                    }
+                }
+                $this->logPhase($comparative, 'featured_snippet', 'success');
+            } catch (\Throwable $e) {
+                Log::warning('ComparativeGeneration: featured snippet failed (non-blocking)', [
+                    'comparative_id' => $comparative->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
             // Phase 5: Generate meta tags
             $meta = $this->generateMeta($comparative->title, $entities, $language);
             $comparative->update([
@@ -101,15 +150,28 @@ class ComparativeGenerationService
             ]);
             $this->logPhase($comparative, 'meta', 'success');
 
-            // Phase 6: Generate JSON-LD
-            $jsonLdData = $this->jsonLd->generateComparativeSchema($comparative->fresh());
+            // Phase 6: Generate JSON-LD with BreadcrumbList
+            $compSchema = $this->jsonLd->generateComparativeSchema($comparative->fresh());
+            $breadcrumb = $this->jsonLd->generateBreadcrumbSchema(
+                $language,
+                'comparatifs',
+                $comparative->title
+            );
+            $jsonLdData = [
+                '@context' => 'https://schema.org',
+                '@graph' => [
+                    $compSchema,
+                    $breadcrumb,
+                ],
+            ];
             $comparative->update(['json_ld' => $jsonLdData]);
             $this->logPhase($comparative, 'json_ld', 'success');
 
             // Phase 7: Generate slug and calculate quality
             $slug = $this->slugService->generateSlug($comparative->title, $language);
             $slug = $this->slugService->ensureUnique($slug, $language, 'comparatives', $comparative->id);
-            $comparative->update(['slug' => $slug]);
+            $canonical = rtrim(config('services.blog.site_url', 'https://sos-expat.com'), '/') . '/' . ($comparative->language ?? 'fr') . '/comparatifs/' . $slug;
+            $comparative->update(['slug' => $slug, 'canonical_url' => $canonical]);
 
             $seoResult = $this->seoAnalysis->analyze($comparative->fresh());
             $comparative->update([
@@ -302,11 +364,22 @@ class ComparativeGenerationService
             . "- Les sections pros/cons sont fournies (intègre-les)\n"
             . "- Analyse détaillée de chaque entité (1-2 paragraphes chacune)\n"
             . "- Verdict final avec recommandation\n\n"
-            . "Utilise des balises HTML: <h2>, <h3>, <p>, <strong>, <em>. Pas de <h1>.";
+            . "Utilise des balises HTML: <h2>, <h3>, <p>, <strong>, <em>. Pas de <h1>.\n\n"
+            . "Les entités comparées doivent apparaître dans les H2. Exemple : \"Avantages de {entity1}\" au lieu de \"Avantages de la première option\".\n"
+            . "Intègre naturellement les noms des entités comparées avec une densité de 1-2% chacun dans le texte.";
+
+        // Access LSI keywords from comparative (stored during research phase)
+        $lsiKeywords = $comparative->keywords_secondary ?? [];
+        $lsiBlock = '';
+        if (!empty($lsiKeywords)) {
+            $lsiList = implode(', ', array_slice($lsiKeywords, 0, 15));
+            $lsiBlock = "\n\nMOTS-CLÉS SÉMANTIQUES (LSI) à intégrer naturellement dans le texte :\n{$lsiList}\nCes mots doivent apparaître au moins 1 fois chacun dans l'article pour signaler à Google que l'article couvre le sujet en profondeur.";
+        }
 
         $userPrompt = "Titre: {$title}\nEntités: " . implode(', ', $entities)
             . "\n\nTableau de comparaison à intégrer:\n{$tableHtml}"
             . "\n\nSections pros/cons à intégrer:\n{$prosConsHtml}"
+            . $lsiBlock
             . "\n\nRédige l'article complet.";
 
         $typeConfig = ContentTypeConfig::get('comparative');
@@ -394,10 +467,22 @@ class ComparativeGenerationService
     private function generateMeta(string $title, array $entities, string $language): array
     {
         $entitiesStr = implode(' vs ', $entities);
+        $year = date('Y');
 
         $systemPrompt = "Génère des métadonnées SEO pour un comparatif. Langue: {$language}.\n"
-            . "Retourne en JSON: {\"meta_title\": \"...\", \"meta_description\": \"...\", \"excerpt\": \"...\"}\n"
-            . "meta_title: max 60 chars. meta_description: 140-160 chars. excerpt: 2-3 phrases.";
+            . "Retourne en JSON: {\"meta_title\": \"...\", \"meta_description\": \"...\", \"excerpt\": \"...\"}\n\n"
+            . "RÈGLES META TITLE :\n"
+            . "- EXACTEMENT 50-60 caractères\n"
+            . "- Les noms des entités comparées DOIVENT apparaître\n"
+            . "- Inclure l'année {$year}\n"
+            . "- Format: \"{Entity1} vs {Entity2} : Comparatif {$year}\"\n"
+            . "- Power word: Comparatif, Guide, Analyse\n\n"
+            . "RÈGLES META DESCRIPTION :\n"
+            . "- 140-155 caractères\n"
+            . "- Commencer par un verbe d'action : \"Comparez\", \"Découvrez\", \"Analysez\"\n"
+            . "- Mentionner les entités comparées\n"
+            . "- Finir par un CTA : \"guide complet\", \"analyse détaillée\"\n\n"
+            . "excerpt: 2-3 phrases.";
 
         $result = $this->openAi->complete($systemPrompt,
             "Titre: {$title}\nEntités: {$entitiesStr}", [

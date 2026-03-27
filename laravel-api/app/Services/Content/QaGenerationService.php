@@ -201,9 +201,11 @@ class QaGenerationService
             }
 
             // Generate meta tags
+            $year = date('Y');
             $metaResult = $this->openAi->complete(
                 "Generate SEO meta tags for a Q&A page. Language: {$language}. "
-                . "Return JSON: {meta_title: string (max 60 chars), meta_description: string (140-160 chars)}",
+                . "Return JSON: {meta_title: string (max 60 chars), meta_description: string (140-160 chars)}\n\n"
+                . "Meta title : max 60 caractères, DOIT contenir le sujet principal + année {$year}. Format: \"{Sujet} {$year} : Réponse d'Expert | SOS-Expat\"",
                 "Question: {$question}\nAnswer summary: {$answerData['answer_short']}",
                 [
                     'model' => 'gpt-4o-mini',
@@ -222,9 +224,10 @@ class QaGenerationService
                 $metaDescription = $parsedMeta['meta_description'] ?? $answerData['answer_short'];
             }
 
-            // Generate slug
+            // Generate slug + canonical URL
             $slug = $this->slugService->generateSlug($question, $language);
             $slug = $this->slugService->ensureUnique($slug, $language, 'qa_entries');
+            $canonical = rtrim(config('services.blog.site_url', 'https://sos-expat.com'), '/') . '/' . $language . '/qa/' . $slug;
 
             // Find related Q&A (exclude current entry after creation)
             $relatedIds = QaEntry::where('country', $country)
@@ -250,6 +253,7 @@ class QaGenerationService
                 'country' => $country,
                 'category' => $category,
                 'slug' => $slug,
+                'canonical_url' => $canonical,
                 'meta_title' => mb_substr($metaTitle, 0, 60),
                 'meta_description' => mb_substr($metaDescription, 0, 160),
                 'json_ld' => $jsonLd,
@@ -351,6 +355,37 @@ class QaGenerationService
                 }
             } catch (\Throwable $e) {
                 Log::warning('QaGeneration: internal links failed (non-blocking)', [
+                    'qa_entry_id' => $entry->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            // External links from research sources
+            try {
+                $entrySources = $answerData['sources'] ?? [];
+                if (!empty($entrySources)) {
+                    $sourcesHtml = "\n<h2>Sources officielles</h2>\n<ul>\n";
+                    foreach (array_slice($entrySources, 0, 3) as $sourceUrl) {
+                        $domain = parse_url($sourceUrl, PHP_URL_HOST) ?: $sourceUrl;
+                        $sourcesHtml .= '<li><a href="' . e($sourceUrl) . '" target="_blank" rel="noopener">' . e($domain) . '</a></li>' . "\n";
+                    }
+                    $sourcesHtml .= "</ul>\n";
+                    $entry->update(['answer_detailed_html' => ($entry->answer_detailed_html ?? '') . $sourcesHtml]);
+                }
+            } catch (\Throwable $e) {
+                Log::warning('QaGeneration: external links failed (non-blocking)', [
+                    'qa_entry_id' => $entry->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            // Affiliate CTA link
+            try {
+                $siteUrl = config('services.site.url', 'https://sos-expat.com');
+                $cta = '<p class="cta-box"><strong>Besoin d\'une réponse personnalisée ?</strong> <a href="' . $siteUrl . '?utm_source=blog&utm_medium=qa&utm_campaign=' . ($entry->slug ?? '') . '">Consultez nos experts SOS-Expat</a></p>';
+                $entry->update(['answer_detailed_html' => ($entry->answer_detailed_html ?? '') . "\n" . $cta]);
+            } catch (\Throwable $e) {
+                Log::warning('QaGeneration: affiliate CTA failed (non-blocking)', [
                     'qa_entry_id' => $entry->id,
                     'error' => $e->getMessage(),
                 ]);
