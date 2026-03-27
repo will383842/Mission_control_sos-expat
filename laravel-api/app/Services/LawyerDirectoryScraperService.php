@@ -9,8 +9,8 @@ use Illuminate\Support\Str;
 
 class LawyerDirectoryScraperService
 {
-    private const MIN_DELAY = 3;
-    private const MAX_DELAY = 8;
+    private const MIN_DELAY = 1.5;
+    private const MAX_DELAY = 3;
     private const TIMEOUT = 20;
     private const MAX_REQUESTS_PER_DOMAIN = 20; // per minute
 
@@ -116,10 +116,10 @@ class LawyerDirectoryScraperService
             }
         }
 
-        // Every 100 requests, take a longer break (30-60s)
+        // Every 200 requests, take a short break (15-25s)
         $this->requestCounter++;
-        if ($this->requestCounter % 100 === 0) {
-            $pause = mt_rand(30, 60);
+        if ($this->requestCounter % 200 === 0) {
+            $pause = mt_rand(15, 25);
             Log::info('LawyerScraper: cooldown pause', ['requests' => $this->requestCounter, 'pause' => $pause]);
             sleep($pause);
         }
