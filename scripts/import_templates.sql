@@ -1,4 +1,17 @@
 -- Total templates to insert: 243
+-- Ensure all categories exist BEFORE inserting templates (foreign key constraint)
+INSERT INTO generation_source_categories (slug, name, description, icon, sort_order) VALUES
+  ('fiches-pays',       'Fiches Pays',       'Guide pilier par pays : tout savoir avant de partir ou sur place. 1 fiche par pays, agregation multi-theme.', 'globe', 1),
+  ('fiches-pratiques',  'Fiches Pratiques',   'Guides pratiques individuels par pays et theme (visa, sante, logement, etc.)',                               'file-text', 2),
+  ('faq',               'FAQ',               'Questions populaires extraites des forums pour generer des articles FAQ',                                     'help-circle', 3),
+  ('comparatifs',       'Comparatifs',       'Donnees Numbeo, CFE et statistiques pour articles comparatifs',                                               'bar-chart', 4),
+  ('longues-traines',   'Longues Traines',   'Opportunites SEO non couvertes detectees par analyse de content gaps',                                        'search', 5),
+  ('audiences',         'Audiences',         'Contenu par profil : retraites, familles, digital nomads, etudiants, entrepreneurs, pvtistes',                'users', 6),
+  ('urgences',          'Urgences',          'Articles sur les arnaques, vols, accidents, urgences medicales par pays',                                      'alert-triangle', 7),
+  ('titres-variables',  'Titres Variables',  'Templates de titres avec variables {pays}, {annee} pour generation en masse',                                 'type', 8),
+  ('temoignages',       'Temoignages',       'Recits et temoignages (templates) : experiences reelles d expatries, voyageurs, avec SOS-Expat',              'book-open', 9)
+ON CONFLICT (slug) DO NOTHING;
+
 -- Delete old manual templates first
 DELETE FROM generation_source_items WHERE source_type = 'template';
 
@@ -246,7 +259,4 @@ INSERT INTO generation_source_items (category_slug, source_type, title, theme, s
 INSERT INTO generation_source_items (category_slug, source_type, title, theme, sub_category, language, quality_score, is_cleaned, processing_status, data_json) VALUES ('temoignages', 'template', 'Femme Seule Agressee en {pays} : Comment J''ai Obtenu Justice', 'general', 'tpl_tem', 'fr', 95, true, 'ready', '{"variables": ["pays"], "seo_keyword": "temoignage femme agressee {pays}", "seo_secondary": "agression femme {pays}, aide victime", "intent": "Preuve sociale", "audience": "Voyageuses/Toutes", "languages": "FR + EN", "template_id": "TPL_TEM", "slug_url": "temoignage-femme-{pays-slug}"}');
 INSERT INTO generation_source_items (category_slug, source_type, title, theme, sub_category, language, quality_score, is_cleaned, processing_status, data_json) VALUES ('temoignages', 'template', 'Catastrophe Naturelle en {pays} : Comment SOS-Expat a Organise Mon Evacuation', 'general', 'tpl_tem', 'fr', 95, true, 'ready', '{"variables": ["pays"], "seo_keyword": "temoignage catastrophe {pays}", "seo_secondary": "evacuation {pays}, aide urgence catastrophe", "intent": "Preuve sociale", "audience": "TOUTES", "languages": "FR + EN", "template_id": "TPL_TEM", "slug_url": "temoignage-catastrophe-{pays-slug}"}');
 
--- Ajouter la catégorie Témoignages si elle n'existe pas
-INSERT INTO generation_source_categories (slug, name, description, icon, sort_order) VALUES
-  ('temoignages', 'Temoignages', 'Recits et temoignages (templates) : experiences reelles d expatries, voyageurs, avec SOS-Expat', 'book-open', 10)
-ON CONFLICT (slug) DO NOTHING;
+-- (Categories are now created at the top of this file)

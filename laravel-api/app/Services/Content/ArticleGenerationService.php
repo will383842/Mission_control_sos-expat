@@ -258,10 +258,22 @@ class ArticleGenerationService
             $canonical = rtrim($siteUrl, '/') . '/' . $article->language . '/articles/' . $article->slug;
             $article->update(['canonical_url' => $canonical]);
 
-            // Phase 14: Calculate quality
+            // Content is ready — mark as review BEFORE quality analysis
+            // so that if phase 14 fails, we still have a usable article
+            $article->update(['status' => 'review']);
+
+            // Phase 14: Calculate quality (non-blocking — article is already in review)
             $phaseStart = microtime(true);
-            $this->phase14_calculateQuality($article->fresh());
-            $this->logPhase($article, 'quality', 'success', null, 0, 0, $this->elapsed($phaseStart));
+            try {
+                $this->phase14_calculateQuality($article->fresh());
+                $this->logPhase($article, 'quality', 'success', null, 0, 0, $this->elapsed($phaseStart));
+            } catch (\Throwable $e) {
+                Log::warning('Phase 14: quality calculation failed (non-blocking)', [
+                    'article_id' => $article->id,
+                    'error' => $e->getMessage(),
+                ]);
+                $this->logPhase($article, 'quality', 'warning', $e->getMessage(), 0, 0, $this->elapsed($phaseStart));
+            }
 
             // Plagiarism check
             $dedup = app(DeduplicationService::class);
@@ -281,8 +293,7 @@ class ArticleGenerationService
             // Phase 15: Translations are now handled via TranslationBatchService (manual)
             // Kept as no-op for backward compatibility — use /translations/start API instead.
 
-            // Mark as review or draft
-            $article->update(['status' => 'review']);
+            // Status already set to 'review' before phase 14
 
             // Update cluster if generated from one
             if (!empty($params['cluster_id'])) {
@@ -691,7 +702,13 @@ class ArticleGenerationService
         ]);
 
         if ($result['success']) {
-            return trim($result['content']);
+            $content = trim($result['content']);
+
+            // Strip markdown code fences that GPT sometimes wraps HTML in
+            $content = preg_replace('/^```(?:html)?\s*\n?/i', '', $content);
+            $content = preg_replace('/\n?```\s*$/i', '', $content);
+
+            return trim($content);
         }
 
         throw new \RuntimeException('Content generation failed: ' . ($result['error'] ?? 'Unknown error'));

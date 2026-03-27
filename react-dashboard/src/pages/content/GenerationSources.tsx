@@ -52,6 +52,7 @@ interface OverallStats {
 const ICONS: Record<string, string> = {
   globe: '🌍', 'bar-chart': '📊', 'message-circle': '💬', type: '✏️',
   'help-circle': '❓', 'file-text': '📄', search: '🔍', 'alert-triangle': '⚠️', users: '👥',
+  'book-open': '📖',
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -66,6 +67,9 @@ const THEME_LABELS: Record<string, string> = {
   general: 'General', autre: 'Autre', 'question-directe': 'Question directe',
   'sujet-discussion': 'Discussion', retraites: 'Retraites', familles: 'Familles',
   'digital-nomads': 'Digital Nomads', entrepreneurs: 'Entrepreneurs', pvtistes: 'PVTistes',
+  etudiants: 'Etudiants', 'multi-theme': 'Multi-theme (pillar)',
+  arnaques: 'Arnaques', vols: 'Vols', accidents: 'Accidents', agressions: 'Agressions',
+  'securite-generale': 'Securite generale', urgences: 'Urgences',
 };
 
 function fmt(n: number): string { return n.toLocaleString('fr-FR'); }
@@ -262,6 +266,9 @@ export default function GenerationSources() {
                         {item.source_type === 'template' && item.data_json && (
                           <span className="ml-1 text-xs text-amber-400">[{(item.data_json as {variables?: string[]}).variables?.join(', ')}]</span>
                         )}
+                        {item.source_type === 'pillar' && (
+                          <span className="ml-1 text-xs bg-emerald-500/20 text-emerald-400 px-1 rounded">pillar</span>
+                        )}
                       </td>
                       <td className="py-1.5 px-2 text-gray-300 text-xs">{item.country || '-'}</td>
                       <td className="py-1.5 px-2 text-xs">
@@ -370,6 +377,35 @@ export default function GenerationSources() {
 
                     {!detail.source.content_text && detail.source.url && (
                       <div className="text-gray-500 text-sm italic">Pas de contenu texte stocke. <a href={detail.source.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Voir sur le site source →</a></div>
+                    )}
+                  </div>
+                )}
+
+                {/* Pillar summary: categories covered, total words, etc. */}
+                {detail.item.source_type === 'pillar' && detail.item.data_json && (
+                  <div className="space-y-2">
+                    <hr className="border-gray-700" />
+                    <h4 className="text-white font-semibold text-sm">Fiche Pays — Couverture</h4>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      {(detail.item.data_json as Record<string, unknown>).categories_count != null && (
+                        <div><span className="text-gray-500">Themes couverts:</span> <span className="text-emerald-400 font-bold">{String((detail.item.data_json as Record<string, unknown>).categories_count)}</span></div>
+                      )}
+                      {(detail.item.data_json as Record<string, unknown>).sources_count != null && (
+                        <div><span className="text-gray-500">Articles sources:</span> <span className="text-white">{String((detail.item.data_json as Record<string, unknown>).sources_count)}</span></div>
+                      )}
+                      {(detail.item.data_json as Record<string, unknown>).total_source_words != null && (
+                        <div><span className="text-gray-500">Mots total sources:</span> <span className="text-white">{fmt(Number((detail.item.data_json as Record<string, unknown>).total_source_words))}</span></div>
+                      )}
+                      {(detail.item.data_json as Record<string, unknown>).continent && (
+                        <div><span className="text-gray-500">Continent:</span> <span className="text-white">{String((detail.item.data_json as Record<string, unknown>).continent)}</span></div>
+                      )}
+                    </div>
+                    {Array.isArray((detail.item.data_json as Record<string, unknown>).categories_covered) && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {((detail.item.data_json as Record<string, unknown>).categories_covered as string[]).map((cat: string) => (
+                          <span key={cat} className="px-1.5 py-0.5 bg-blue-500/10 text-blue-400 rounded text-xs">{THEME_LABELS[cat] || cat}</span>
+                        ))}
+                      </div>
                     )}
                   </div>
                 )}
