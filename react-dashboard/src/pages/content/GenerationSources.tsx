@@ -113,7 +113,7 @@ export default function GenerationSources() {
       if (filterSearch) params.set('search', filterSearch);
       const res = await api.get(`/generation-sources/${slug}/items?${params}`);
       setCatData(res.data);
-    } catch { /* ignore */ }
+    } catch (err) { console.error('Failed to load category:', slug, err); }
     setCatLoading(false);
   }, [filterCleaned, filterTheme, filterCountry, filterSubCat, filterSearch]);
 

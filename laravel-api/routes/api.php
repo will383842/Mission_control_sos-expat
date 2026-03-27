@@ -330,7 +330,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('generation-sources')->middleware('role:admin')->group(function () {
         Route::get('/categories', [\App\Http\Controllers\GenerationSourceController::class, 'categories']);
         Route::get('/stats', [\App\Http\Controllers\GenerationSourceController::class, 'stats']);
-        Route::get('/items/{id}', [\App\Http\Controllers\GenerationSourceController::class, 'itemDetail']);
+        Route::get('/items/{id}', [\App\Http\Controllers\GenerationSourceController::class, 'itemDetail'])->where('id', '[0-9]+');
         Route::get('/{categorySlug}/items', [\App\Http\Controllers\GenerationSourceController::class, 'categoryItems']);
     });
 
