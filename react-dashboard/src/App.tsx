@@ -34,6 +34,7 @@ import CountryProfileDetail from './pages/content/CountryProfileDetail';
 import CityProfiles from './pages/content/CityProfiles';
 import CityProfileDetail from './pages/content/CityProfileDetail';
 import ContentContacts from './pages/content/ContentContacts';
+import JournalistContacts from './pages/contacts/JournalistContacts';
 import ContentQuestions from './pages/content/ContentQuestions';
 import ProspectionHub from './pages/prospection/ProspectionHub';
 import ProspectionOverview from './pages/prospection/ProspectionOverview';
@@ -153,6 +154,7 @@ export default function App() {
             <Route path="content/country-directory" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><CountryDirectoryPage /></React.Suspense></AdminRoute>} />
             <Route path="content/lawyers" element={<AdminRoute><LawyerDirectory /></AdminRoute>} />
             <Route path="content/contacts" element={<AdminRoute><ContentContacts /></AdminRoute>} />
+            <Route path="contacts/journalistes" element={<AdminRoute><JournalistContacts /></AdminRoute>} />
             <Route path="content/questions" element={<AdminRoute><ContentQuestions /></AdminRoute>} />
             <Route path="content/affiliates" element={<AdminRoute><AffiliateLinks /></AdminRoute>} />
             <Route path="content/data-cleanup" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><DataCleanupDashboard /></React.Suspense></AdminRoute>} />

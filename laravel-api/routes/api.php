@@ -18,6 +18,7 @@ use App\Http\Controllers\GenerationController;
 use App\Http\Controllers\KeywordTrackingController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\MediaController;
+use App\Http\Controllers\JournalistController;
 use App\Http\Controllers\PressController;
 use App\Http\Controllers\PublishingController;
 use App\Http\Controllers\QaEntryController;
@@ -461,6 +462,19 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::delete('/dossiers/{dossier}/items/{item}', [PressController::class, 'dossierRemoveItem']);
             Route::put('/dossiers/{dossier}/reorder', [PressController::class, 'dossierReorderItems']);
             Route::get('/dossiers/{dossier}/export-pdf', [PressController::class, 'dossierExportPdf']);
+        });
+
+        // Journalists / Press Contacts Scraper
+        Route::prefix('journalists')->group(function () {
+            Route::get('/stats', [JournalistController::class, 'stats']);
+            Route::get('/contacts', [JournalistController::class, 'contacts']);
+            Route::post('/contacts', [JournalistController::class, 'storeContact']);
+            Route::put('/contacts/{id}', [JournalistController::class, 'updateContact']);
+            Route::delete('/contacts/{id}', [JournalistController::class, 'deleteContact']);
+            Route::get('/contacts/export', [JournalistController::class, 'exportContacts']);
+            Route::get('/publications', [JournalistController::class, 'publications']);
+            Route::post('/publications', [JournalistController::class, 'storePublication']);
+            Route::post('/publications/scrape', [JournalistController::class, 'scrapePublications']);
         });
 
         // Campaigns

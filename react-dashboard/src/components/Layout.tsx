@@ -210,6 +210,9 @@ export default function Layout() {
                 <NavLink to="/influenceurs" className={subNavClass} onClick={handleNavClick}>
                   Liste des contacts
                 </NavLink>
+                <NavLink to="/contacts/journalistes" className={subNavClass} onClick={handleNavClick}>
+                  Journalistes & Presse
+                </NavLink>
                 <NavLink to="/a-relancer" className={subNavClass} onClick={handleNavClick}>
                   <span className="flex items-center gap-2">
                     Relances
