@@ -205,15 +205,76 @@ export default function Layout() {
           ) : (
             /* ═══ Admin / Manager / Member nav ═══ */
             <>
-              {/* 1. Dashboard */}
+              {/* Dashboard */}
               <NavLink to="/" end className={navClass} onClick={handleNavClick}>
                 <span>📊</span> Dashboard
               </NavLink>
 
-              {/* ── Gérer ── */}
+              {/* ════════════════════════════════════
+                  1. ALIMENTER — sourcer les données
+                  ════════════════════════════════════ */}
+              {isAdmin && <NavSeparator label="Alimenter" />}
+
+              {isAdmin && (
+                <NavGroup
+                  label="Sourcing"
+                  icon="🔍"
+                  isOpen={openGroups.scraping}
+                  onToggle={() => toggleGroup('scraping')}
+                >
+                  <NavLink to="/scraping/dashboard" className={subNavClass} onClick={handleNavClick}>
+                    📡 Vue d'ensemble
+                  </NavLink>
+
+                  <p className="px-3 pt-3 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-600">Contacts</p>
+                  <NavLink to="/contacts/journalistes" className={subNavClass} onClick={handleNavClick}>
+                    🗞️ Journalistes & Presse
+                  </NavLink>
+                  <NavLink to="/directories" className={subNavClass} onClick={handleNavClick}>
+                    📚 Annuaires web
+                  </NavLink>
+                  <NavLink to="/content/lawyers" className={subNavClass} onClick={handleNavClick}>
+                    ⚖️ Avocats
+                  </NavLink>
+                  <NavLink to="/content/businesses" className={subNavClass} onClick={handleNavClick}>
+                    🏢 Entreprises
+                  </NavLink>
+
+                  <p className="px-3 pt-3 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-600">Données contenu</p>
+                  <NavLink to="/content/sources" className={subNavClass} onClick={handleNavClick}>
+                    🗂️ Sources de génération
+                  </NavLink>
+                  <NavLink to="/content/sites" className={subNavClass} onClick={handleNavClick}>
+                    🌐 Sites web
+                  </NavLink>
+                  <NavLink to="/content/countries" className={subNavClass} onClick={handleNavClick}>
+                    🌍 Fiches Pays
+                  </NavLink>
+                  <NavLink to="/content/cities" className={subNavClass} onClick={handleNavClick}>
+                    🏙️ Fiches Villes
+                  </NavLink>
+                  <NavLink to="/content/questions" className={subNavClass} onClick={handleNavClick}>
+                    💬 Q&A Forum
+                  </NavLink>
+                  <NavLink to="/content/affiliates" className={subNavClass} onClick={handleNavClick}>
+                    🔗 Liens Affiliés
+                  </NavLink>
+                  <NavLink to="/content/country-directory" className={subNavClass} onClick={handleNavClick}>
+                    🗺️ Annuaire Pays
+                  </NavLink>
+
+                  <p className="px-3 pt-3 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-600">Config</p>
+                  <NavLink to="/admin/scraper" className={subNavClass} onClick={handleNavClick}>
+                    ⚙️ Configuration scraper
+                  </NavLink>
+                </NavGroup>
+              )}
+
+              {/* ════════════════════════════════════
+                  2. GÉRER — CRM contacts
+                  ════════════════════════════════════ */}
               <NavSeparator label="Gérer" />
 
-              {/* 2. Contacts (group) */}
               <NavGroup
                 label="Contacts"
                 icon="👥"
@@ -254,76 +315,15 @@ export default function Layout() {
                 </NavLink>
               </NavGroup>
 
-              {/* ── Sourcer ── */}
-              {isAdmin && <NavSeparator label="Sourcer" />}
-
-              {/* 3. Sourcing (group) - admin only */}
-              {isAdmin && (
-                <NavGroup
-                  label="Sourcing"
-                  icon="🔍"
-                  isOpen={openGroups.scraping}
-                  onToggle={() => toggleGroup('scraping')}
-                >
-                  <NavLink to="/scraping/dashboard" className={subNavClass} onClick={handleNavClick}>
-                    📡 Vue d'ensemble
-                  </NavLink>
-
-                  {/* ── Acquisition contacts ── */}
-                  <p className="px-3 pt-3 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-600">Contacts</p>
-                  <NavLink to="/contacts/journalistes" className={subNavClass} onClick={handleNavClick}>
-                    🗞️ Journalistes & Presse
-                  </NavLink>
-                  <NavLink to="/directories" className={subNavClass} onClick={handleNavClick}>
-                    📚 Annuaires web
-                  </NavLink>
-                  <NavLink to="/content/lawyers" className={subNavClass} onClick={handleNavClick}>
-                    ⚖️ Avocats
-                  </NavLink>
-                  <NavLink to="/content/businesses" className={subNavClass} onClick={handleNavClick}>
-                    🏢 Entreprises
-                  </NavLink>
-
-                  {/* ── Sources de contenu ── */}
-                  <p className="px-3 pt-3 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-600">Données contenu</p>
-                  <NavLink to="/content/sources" className={subNavClass} onClick={handleNavClick}>
-                    🗂️ Sources de génération
-                  </NavLink>
-                  <NavLink to="/content/sites" className={subNavClass} onClick={handleNavClick}>
-                    🌐 Sites web
-                  </NavLink>
-                  <NavLink to="/content/countries" className={subNavClass} onClick={handleNavClick}>
-                    🌍 Fiches Pays
-                  </NavLink>
-                  <NavLink to="/content/cities" className={subNavClass} onClick={handleNavClick}>
-                    🏙️ Fiches Villes
-                  </NavLink>
-                  <NavLink to="/content/questions" className={subNavClass} onClick={handleNavClick}>
-                    💬 Q&A Forum
-                  </NavLink>
-                  <NavLink to="/content/affiliates" className={subNavClass} onClick={handleNavClick}>
-                    🔗 Liens Affiliés
-                  </NavLink>
-                  <NavLink to="/content/country-directory" className={subNavClass} onClick={handleNavClick}>
-                    🗺️ Annuaire Pays
-                  </NavLink>
-
-                  {/* ── Config ── */}
-                  <p className="px-3 pt-3 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-600">Config</p>
-                  <NavLink to="/admin/scraper" className={subNavClass} onClick={handleNavClick}>
-                    ⚙️ Configuration scraper
-                  </NavLink>
-                </NavGroup>
-              )}
-
-              {/* ── Engager ── */}
+              {/* ════════════════════════════════════
+                  3. ENGAGER — cibler et contacter
+                  ════════════════════════════════════ */}
               {(canAccessAI || isAdmin) && <NavSeparator label="Engager" />}
 
-              {/* 4. Acquisition (group) - admin/manager */}
               {canAccessAI && (
                 <NavGroup
                   label="Acquisition"
-                  icon="🚀"
+                  icon="🎯"
                   isOpen={openGroups.acquisition}
                   onToggle={() => toggleGroup('acquisition')}
                 >
@@ -343,7 +343,6 @@ export default function Layout() {
                 </NavGroup>
               )}
 
-              {/* 5. Prospection (group) - admin only */}
               {isAdmin && (
                 <NavGroup
                   label="Prospection"
@@ -372,10 +371,11 @@ export default function Layout() {
                 </NavGroup>
               )}
 
-              {/* ── Créer ── */}
+              {/* ════════════════════════════════════
+                  4. CRÉER — produire du contenu
+                  ════════════════════════════════════ */}
               {isAdmin && <NavSeparator label="Créer" />}
 
-              {/* ✍️ Content Generator — groupe unifié */}
               {isAdmin && (
                 <NavGroup
                   label="Content Generator"
@@ -383,7 +383,6 @@ export default function Layout() {
                   isOpen={openGroups.contentEngine}
                   onToggle={() => toggleGroup('contentEngine')}
                 >
-                  {/* ── Piloter ── */}
                   <p className="px-3 pt-2 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-600">Piloter</p>
                   <NavLink to="/content/command-center" className={subNavClass} onClick={handleNavClick}>
                     ⚡ Command Center
@@ -392,7 +391,6 @@ export default function Layout() {
                     📊 Vue d'ensemble
                   </NavLink>
 
-                  {/* ── Créer du contenu ── */}
                   <p className="px-3 pt-3 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-600">Contenu</p>
                   <NavLink to="/content/articles" className={subNavClass} onClick={handleNavClick}>
                     📝 Articles
@@ -419,7 +417,6 @@ export default function Layout() {
                     📊 Sondages
                   </NavLink>
 
-                  {/* ── Optimiser & Publier ── */}
                   <p className="px-3 pt-3 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-600">Optimiser & Publier</p>
                   <NavLink to="/content/quality" className={subNavClass} onClick={handleNavClick}>
                     ✅ Qualité
@@ -448,10 +445,11 @@ export default function Layout() {
                 </NavGroup>
               )}
 
-              {/* ── Config ── */}
-              {isAdmin && <NavSeparator label="Config" />}
+              {/* ════════════════════════════════════
+                  5. CONFIGURER — paramètres & équipe
+                  ════════════════════════════════════ */}
+              {isAdmin && <NavSeparator label="Configurer" />}
 
-              {/* 6. Paramètres (group) - admin only */}
               {isAdmin && (
                 <NavGroup
                   label="Paramètres"
@@ -469,10 +467,10 @@ export default function Layout() {
                     Prompts Content
                   </NavLink>
                   <NavLink to="/admin/presets" className={subNavClass} onClick={handleNavClick}>
-                    Presets generation
+                    Presets génération
                   </NavLink>
                   <NavLink to="/equipe" className={subNavClass} onClick={handleNavClick}>
-                    Equipe & Objectifs
+                    Équipe & Objectifs
                   </NavLink>
                   <NavLink to="/journal" className={subNavClass} onClick={handleNavClick}>
                     Journal
