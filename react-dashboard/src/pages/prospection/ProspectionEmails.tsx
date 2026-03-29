@@ -292,7 +292,7 @@ export default function ProspectionEmails() {
               <div className="px-5 py-3 border-b border-border bg-surface2/30 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-3">
                   <span className="text-xs bg-violet/20 text-violet-light px-2 py-0.5 rounded">{email.influenceur?.contact_type}</span>
-                  <Link to={`/influenceurs/${email.influenceur?.id}`} className="text-white text-sm font-medium hover:text-violet-light transition-colors">
+                  <Link to={`/contacts/${email.influenceur?.id}`} className="text-white text-sm font-medium hover:text-violet-light transition-colors">
                     {email.influenceur?.name}
                   </Link>
                   <span className="text-muted text-xs">{email.influenceur?.country}</span>
@@ -385,7 +385,7 @@ export default function ProspectionEmails() {
                   {filteredSequences.map(seq => (
                     <tr key={seq.id} className="border-b border-border/50 hover:bg-surface2/50 transition-colors">
                       <td className="px-4 py-3">
-                        <Link to={`/influenceurs/${seq.influenceur?.id}`} className="hover:text-violet-light transition-colors">
+                        <Link to={`/contacts/${seq.influenceur?.id}`} className="hover:text-violet-light transition-colors">
                           <div className="text-white text-xs font-medium">{seq.influenceur?.name}</div>
                           <div className="text-[10px] text-cyan">{seq.influenceur?.email}</div>
                         </Link>

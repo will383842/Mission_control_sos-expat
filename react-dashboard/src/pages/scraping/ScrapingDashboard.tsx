@@ -336,7 +336,7 @@ export default function ScrapingDashboard() {
                 color: 'border-violet/30 hover:bg-violet/10',
               },
               {
-                to: '/influenceurs',
+                to: '/contacts',
                 icon: '👥',
                 label: 'CRM Principal',
                 desc: 'Écoles, associations, influenceurs, consulats, blogs, communautés expat… (3 663 contacts)',

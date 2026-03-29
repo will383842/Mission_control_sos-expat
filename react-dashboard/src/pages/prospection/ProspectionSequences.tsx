@@ -159,7 +159,7 @@ export default function ProspectionSequences() {
                     <tr className={`border-b border-border/50 hover:bg-surface2/50 cursor-pointer transition-colors ${isExpanded ? 'bg-surface2/30' : ''}`}
                       onClick={() => setExpandedId(isExpanded ? null : seq.id)}>
                       <td className="px-4 py-3">
-                        <Link to={`/influenceurs/${seq.influenceur?.id}`} className="hover:text-violet-light transition-colors"
+                        <Link to={`/contacts/${seq.influenceur?.id}`} className="hover:text-violet-light transition-colors"
                           onClick={e => e.stopPropagation()}>
                           <div className="text-white text-xs font-medium">{seq.influenceur?.name}</div>
                           <div className="text-[10px] text-cyan">{seq.influenceur?.email}</div>
@@ -270,7 +270,7 @@ export default function ProspectionSequences() {
                                   <p className="text-[10px] text-red-400 font-medium">{stopCfg.icon} {stopCfg.label}</p>
                                 </div>
                               )}
-                              <Link to={`/influenceurs/${seq.influenceur?.id}`}
+                              <Link to={`/contacts/${seq.influenceur?.id}`}
                                 className="block text-xs text-violet hover:text-violet-light transition-colors">
                                 Voir la fiche contact &rarr;
                               </Link>

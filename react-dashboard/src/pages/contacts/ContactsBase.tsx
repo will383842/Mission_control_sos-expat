@@ -45,7 +45,7 @@ const TIERS = [
 
 const SOURCES = [
   { id: 'all',           label: 'Toutes sources' },
-  { id: 'influenceurs',  label: 'CRM principal (écoles, assoc, influenceurs…)' },
+  { id: 'influenceurs',  label: 'CRM principal (contacts unifiés)' },
   { id: 'lawyers',       label: 'Avocats' },
   { id: 'press',         label: 'Journalistes' },
   { id: 'businesses',    label: 'Entreprises expat' },
@@ -401,7 +401,7 @@ export default function ContactsBase() {
           <div className="flex gap-3 items-center">
             <select value={dedupSource} onChange={e => setDedupSource(e.target.value)}
               className="bg-surface2 border border-border rounded-lg px-3 py-2 text-white text-sm">
-              <option value="influenceurs">CRM principal (influenceurs)</option>
+              <option value="influenceurs">CRM principal (contacts unifiés)</option>
               <option value="lawyers">Avocats</option>
               <option value="press">Journalistes</option>
             </select>

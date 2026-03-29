@@ -96,27 +96,27 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
 
     // ============================================================
-    // INFLUENCEURS (Core CRM — ex-Tracker + Mission Control fusion)
+    // CONTACTS (Core CRM — table unifiée influenceurs)
     // ============================================================
-    Route::get('/influenceurs/reminders-pending', [InfluenceurController::class, 'remindersPending']);
-    Route::get('/influenceurs/exports/csv', [ExportController::class, 'csv'])->middleware(['role:admin', 'throttle:10,1']);
-    Route::get('/influenceurs/exports/excel', [ExportController::class, 'excel'])->middleware(['role:admin', 'throttle:10,1']);
+    Route::get('/contacts/reminders-pending', [InfluenceurController::class, 'remindersPending']);
+    Route::get('/contacts/exports/csv', [ExportController::class, 'csv'])->middleware(['role:admin', 'throttle:10,1']);
+    Route::get('/contacts/exports/excel', [ExportController::class, 'excel'])->middleware(['role:admin', 'throttle:10,1']);
 
-    Route::get('/influenceurs', [InfluenceurController::class, 'index']);
-    Route::post('/influenceurs', [InfluenceurController::class, 'store']);
-    Route::get('/influenceurs/{influenceur}', [InfluenceurController::class, 'show']);
-    Route::put('/influenceurs/{influenceur}', [InfluenceurController::class, 'update']);
-    Route::post('/influenceurs/{influenceur}/rescrape', [InfluenceurController::class, 'rescrape']);
-    Route::delete('/influenceurs/{influenceur}', [InfluenceurController::class, 'destroy']);
+    Route::get('/contacts', [InfluenceurController::class, 'index']);
+    Route::post('/contacts', [InfluenceurController::class, 'store']);
+    Route::get('/contacts/{influenceur}', [InfluenceurController::class, 'show']);
+    Route::put('/contacts/{influenceur}', [InfluenceurController::class, 'update']);
+    Route::post('/contacts/{influenceur}/rescrape', [InfluenceurController::class, 'rescrape']);
+    Route::delete('/contacts/{influenceur}', [InfluenceurController::class, 'destroy']);
 
-    // Contacts / Timeline
-    Route::get('/influenceurs/{influenceur}/contacts', [ContactController::class, 'index']);
-    Route::post('/influenceurs/{influenceur}/contacts', [ContactController::class, 'store']);
-    Route::put('/influenceurs/{influenceur}/contacts/{contact}', [ContactController::class, 'update']);
-    Route::delete('/influenceurs/{influenceur}/contacts/{contact}', [ContactController::class, 'destroy']);
+    // Timeline d'interactions
+    Route::get('/contacts/{influenceur}/timeline', [ContactController::class, 'index']);
+    Route::post('/contacts/{influenceur}/timeline', [ContactController::class, 'store']);
+    Route::put('/contacts/{influenceur}/timeline/{contact}', [ContactController::class, 'update']);
+    Route::delete('/contacts/{influenceur}/timeline/{contact}', [ContactController::class, 'destroy']);
 
-    // Outreach messages for specific influenceur
-    Route::get('/influenceurs/{influenceur}/outreach', [EmailTemplateController::class, 'generateForInfluenceur']);
+    // Outreach pour un contact
+    Route::get('/contacts/{influenceur}/outreach', [EmailTemplateController::class, 'generateForInfluenceur']);
 
     // Rappels
     Route::get('/reminders', [ReminderController::class, 'index']);

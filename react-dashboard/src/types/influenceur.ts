@@ -1,31 +1,42 @@
 // ============================================================
-// TYPES — Synchronized with Laravel backend (fusion)
+// TYPES — Synchronisés avec le backend Laravel
 // ============================================================
 
-// Contact types are now dynamic (managed in DB via admin console).
-// Using string allows new types (consulat, erasmus, etc.) without frontend changes.
+// Contact types dynamiques (gérés en DB via admin console).
 export type ContactType = string;
 
-// 14 pipeline statuses (was 6)
+// 5 catégories regroupant les types de contacts
+export type ContactCategory =
+  | 'institutionnel'
+  | 'medias_influence'
+  | 'services_b2b'
+  | 'communautes'
+  | 'digital'
+  | 'autre';
+
+// Personne physique ou organisation
+export type ContactKind = 'individual' | 'organization';
+
+// 14 statuts pipeline
 export type PipelineStatus =
   | 'new' | 'prospect' | 'contacted1' | 'contacted2' | 'contacted3'
   | 'contacted' | 'negotiating' | 'replied' | 'meeting'
   | 'active' | 'signed' | 'refused' | 'inactive' | 'lost';
 
-// Keep backward compat alias
+// Alias backward compat
 export type Status = PipelineStatus;
 
-// 11 platforms (was 10)
+// 11 plateformes sociales
 export type Platform =
   | 'instagram' | 'tiktok' | 'youtube' | 'linkedin'
   | 'x' | 'facebook' | 'pinterest' | 'podcast' | 'blog' | 'newsletter' | 'website';
 
-// 12 channels (was 6)
+// 12 canaux de communication
 export type ContactChannel =
   | 'email' | 'instagram' | 'linkedin' | 'whatsapp' | 'phone'
   | 'tiktok' | 'youtube' | 'facebook' | 'x' | 'telegram' | 'contact_form' | 'other';
 
-// 8 interaction results (was 5)
+// 8 résultats d'interaction
 export type ContactResult =
   | 'sent' | 'opened' | 'clicked' | 'replied' | 'refused' | 'registered' | 'no_answer' | 'bounced';
 
@@ -83,25 +94,51 @@ export interface Reminder {
 
 export interface Influenceur {
   id: number;
+
+  // Classification
   contact_type: ContactType;
+  category: ContactCategory | null;
+  contact_kind: ContactKind;
+
+  // Identité
   name: string;
+  first_name: string | null;
+  last_name: string | null;
   company: string | null;
   position: string | null;
+
+  // Social
   handle: string | null;
   avatar_url: string | null;
   platforms: Platform[];
   primary_platform: Platform;
   followers: number | null;
   followers_secondary: Record<string, number> | null;
+
+  // Géographie
   niche: string | null;
   country: string | null;
   language: string | null;
   timezone: string | null;
+
+  // Contact principal
   email: string | null;
+  has_email: boolean;
   phone: string | null;
+  has_phone: boolean;
+
+  // URLs
   profile_url: string | null;
   profile_url_domain: string | null;
   website_url: string | null;
+  linkedin_url: string | null;
+  twitter_url: string | null;
+  facebook_url: string | null;
+  instagram_url: string | null;
+  tiktok_url: string | null;
+  youtube_url: string | null;
+
+  // Pipeline CRM
   status: PipelineStatus;
   deal_value_cents: number;
   deal_probability: number;
@@ -116,16 +153,28 @@ export interface Influenceur {
   tags: string[] | null;
   score: number;
   source: string | null;
-  // Scraped data
+
+  // Qualité CRM
+  is_verified: boolean;
+  unsubscribed: boolean;
+  unsubscribed_at: string | null;
+  bounce_count: number;
+  data_completeness: number; // 0–100
+
+  // Scraping
   scraper_status: 'completed' | 'failed' | 'pending' | 'skipped' | null;
   scraped_at: string | null;
   scraped_emails: string[] | null;
   scraped_phones: string[] | null;
   scraped_social: Record<string, string> | null;
   scraped_addresses: string[] | null;
+
+  // Méta
   created_by: number;
   created_at: string;
   updated_at: string;
+
+  // Relations chargées à la demande
   contacts?: Contact[];
   pending_reminder?: Reminder | null;
   days_elapsed?: number;
@@ -138,14 +187,37 @@ export interface PaginatedInfluenceurs {
   has_more: boolean;
 }
 
+// ============================================================
+// FILTRES — Tous les filtres disponibles
+// ============================================================
+
 export interface InfluenceurFilters {
+  // Classification
   contact_type?: ContactType;
+  category?: ContactCategory;
+  contact_kind?: ContactKind;
+
+  // Pipeline
   status?: PipelineStatus;
   platform?: Platform;
   assigned_to?: number;
   has_reminder?: boolean;
+
+  // Géographie
   country?: string;
   language?: string;
+
+  // Qualité contact
+  has_email?: boolean;
+  has_phone?: boolean;
+  is_verified?: boolean;
+  unsubscribed?: boolean;
+  completeness_min?: number;
+
+  // Origine
+  source?: string;
+
+  // Recherche texte
   search?: string;
 }
 
@@ -157,6 +229,7 @@ export interface StatsData {
   total: number;
   byStatus: Record<string, number>;
   byContactType?: Record<string, number>;
+  byCategory?: Record<string, number>;
   responseRate: number;
   conversionRate: number;
   newThisMonth: number;
@@ -167,6 +240,15 @@ export interface StatsData {
   teamActivity: { user_id: number; count: number; user: Pick<TeamMember, 'id' | 'name'> }[];
   funnel: { stage: string; count: number }[];
   recentActivity: ActivityLogEntry[];
+}
+
+export interface ContactsSummary {
+  total: number;
+  with_email: number;
+  with_phone: number;
+  verified: number;
+  by_category: Record<string, number>;
+  avg_completeness: number;
 }
 
 export interface ActivityLogEntry {
@@ -223,7 +305,7 @@ export interface ParsedContact {
   notes: string | null;
   source: string;
   web_source: string | null;
-  reliability_score: number;        // 1-5 (5 = fully verified)
+  reliability_score: number;
   reliability_reason: string | null;
   has_email: boolean;
   has_phone: boolean;
@@ -308,7 +390,7 @@ export interface JournalWeekDay {
 }
 
 // ============================================================
-// OBJECTIVES & REMINDERS (existing, kept)
+// OBJECTIVES & REMINDERS
 // ============================================================
 
 export interface ReminderWithInfluenceur extends Reminder {
@@ -376,7 +458,7 @@ export interface CoverageData {
 }
 
 // ============================================================
-// PROGRESS (per country / contact_type / language)
+// PROGRESS (par pays / contact_type / langue)
 // ============================================================
 
 export interface ProgressRow {

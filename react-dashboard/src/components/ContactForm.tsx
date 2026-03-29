@@ -25,7 +25,7 @@ export default function ContactForm({ influenceurId, onSaved, onCancel }: Props)
     setError('');
     setLoading(true);
     try {
-      await api.post(`/influenceurs/${influenceurId}/contacts`, form);
+      await api.post(`/contacts/${influenceurId}/timeline`, form);
       onSaved();
     } catch {
       setError('Erreur lors de l\'enregistrement.');
@@ -77,7 +77,7 @@ export default function ContactForm({ influenceurId, onSaved, onCancel }: Props)
 
       <div>
         <label className="block text-xs text-muted mb-1.5">Réponse reçue</label>
-        <textarea value={form.reply} onChange={e => setForm(p => ({ ...p, reply: e.target.value }))} rows={2} className={`${inputClass} resize-none`} placeholder="Réponse de l'influenceur..." />
+        <textarea value={form.reply} onChange={e => setForm(p => ({ ...p, reply: e.target.value }))} rows={2} className={`${inputClass} resize-none`} placeholder="Réponse du contact..." />
       </div>
 
       <div>

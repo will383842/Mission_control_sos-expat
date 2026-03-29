@@ -25,7 +25,7 @@ export default function ProspectionContacts() {
       if (countryFilter) params.country = countryFilter;
       // Only show contacts with verified email (eligible for outreach)
       params.has_email = 'true';
-      const { data } = await api.get('/influenceurs', { params });
+      const { data } = await api.get('/contacts', { params });
       setContacts(data.data || []);
       setTotal(data.total || data.data?.length || 0);
     } catch { /* ignore */ }
@@ -70,7 +70,7 @@ export default function ProspectionContacts() {
               {contacts.map(c => (
                 <tr key={c.id} className="border-b border-border/50 hover:bg-surface2">
                   <td className="px-4 py-3">
-                    <Link to={`/influenceurs/${c.id}`} className="text-white text-xs font-medium hover:text-violet-light">{c.name}</Link>
+                    <Link to={`/contacts/${c.id}`} className="text-white text-xs font-medium hover:text-violet-light">{c.name}</Link>
                   </td>
                   <td className="px-4 py-3 text-xs text-muted">{c.contact_type}</td>
                   <td className="px-4 py-3 text-xs text-muted">{c.country}</td>

@@ -26,7 +26,7 @@ export default function ARelancer() {
       <div className="mb-6">
         <h2 className="font-title text-2xl font-bold text-white">À relancer</h2>
         <p className="text-muted text-sm mt-1">
-          {reminders.length} influenceur{reminders.length !== 1 ? 's' : ''} en attente de relance
+          {reminders.length} contact{reminders.length !== 1 ? 's' : ''} en attente de relance
         </p>
       </div>
 
@@ -34,7 +34,7 @@ export default function ARelancer() {
         <div className="bg-surface border border-border rounded-xl p-12 text-center">
           <p className="text-4xl mb-3">✅</p>
           <p className="text-white font-medium">Aucun rappel en attente</p>
-          <p className="text-muted text-sm mt-1">Tous les influenceurs sont à jour.</p>
+          <p className="text-muted text-sm mt-1">Tous les contacts sont à jour.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -44,7 +44,7 @@ export default function ARelancer() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <Link
-                      to={`/influenceurs/${r.influenceur_id}`}
+                      to={`/contacts/${r.influenceur_id}`}
                       className="font-medium text-white hover:text-violet-light transition-colors"
                     >
                       {r.influenceur?.name}
@@ -75,7 +75,7 @@ export default function ARelancer() {
 
                 <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
                   <Link
-                    to={`/influenceurs/${r.influenceur_id}`}
+                    to={`/contacts/${r.influenceur_id}`}
                     className="px-3 py-1.5 bg-violet/20 hover:bg-violet/30 text-violet-light text-sm rounded-lg transition-colors"
                   >
                     Ajouter relance

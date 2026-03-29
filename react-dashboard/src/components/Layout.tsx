@@ -64,7 +64,7 @@ export default function Layout() {
 
   // Helper: determine which groups should be open for a given path
   const getGroupsForPath = (path: string) => ({
-    contacts: path.startsWith('/influenceurs') || path === '/a-relancer' || path === '/contacts/base',
+    contacts: path.startsWith('/contacts') || path === '/a-relancer' || path.startsWith('/influenceurs'),
     acquisition: path.startsWith('/admin/campaigns') || path === '/ai-research' || path === '/admin/avancement',
     scraping: path === '/directories' || path === '/contacts/journalistes' || path === '/admin/scraper' || path.startsWith('/content/sites') || path.startsWith('/content/businesses') || path.startsWith('/content/lawyers') || path.startsWith('/content/country-directory') || path.startsWith('/scraping'),
     contentEngine: path.startsWith('/content') || path.startsWith('/seo') || path === '/publishing' || path === '/media' || path === '/costs' || path === '/translations',
@@ -171,7 +171,7 @@ export default function Layout() {
               <NavLink to="/" end className={navClass} onClick={handleNavClick}>
                 <span>📊</span> Mon Tableau
               </NavLink>
-              <NavLink to="/influenceurs" className={navClass} onClick={handleNavClick}>
+              <NavLink to="/contacts" className={navClass} onClick={handleNavClick}>
                 <span>👥</span> Contacts
               </NavLink>
               <NavLink to="/a-relancer" className={navClass} onClick={handleNavClick}>
@@ -201,21 +201,36 @@ export default function Layout() {
                 isOpen={openGroups.contacts}
                 onToggle={() => toggleGroup('contacts')}
               >
-                <NavLink to="/contacts/base" className={subNavClass} onClick={handleNavClick}>
-                  🗂️ Base unifiée & triage
+                <NavLink to="/contacts" className={subNavClass} onClick={handleNavClick}>
+                  👥 Tous les contacts
                 </NavLink>
-                <NavLink to="/influenceurs" className={subNavClass} onClick={handleNavClick}>
-                  CRM principal
+                <NavLink to="/contacts?category=institutionnel" className={subNavClass} onClick={handleNavClick}>
+                  🏛️ Institutionnel
+                </NavLink>
+                <NavLink to="/contacts?category=medias_influence" className={subNavClass} onClick={handleNavClick}>
+                  📺 Médias & Influence
+                </NavLink>
+                <NavLink to="/contacts?category=services_b2b" className={subNavClass} onClick={handleNavClick}>
+                  💼 Services B2B
+                </NavLink>
+                <NavLink to="/contacts?category=communautes" className={subNavClass} onClick={handleNavClick}>
+                  🌍 Communautés
+                </NavLink>
+                <NavLink to="/contacts?category=digital" className={subNavClass} onClick={handleNavClick}>
+                  🔗 Digital & SEO
                 </NavLink>
                 <NavLink to="/a-relancer" className={subNavClass} onClick={handleNavClick}>
                   <span className="flex items-center gap-2">
-                    Relances
+                    🔔 Relances
                     {reminders.length > 0 && (
                       <span className="bg-amber text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
                         {reminders.length}
                       </span>
                     )}
                   </span>
+                </NavLink>
+                <NavLink to="/contacts/base" className={subNavClass} onClick={handleNavClick}>
+                  🗂️ Triage & Doublons
                 </NavLink>
               </NavGroup>
 

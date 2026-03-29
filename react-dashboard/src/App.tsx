@@ -4,8 +4,8 @@ import { AuthContext, useAuthProvider } from './hooks/useAuth';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import ResearcherDashboard from './pages/ResearcherDashboard';
-import Influenceurs from './pages/Influenceurs';
-import InfluenceurDetail from './pages/InfluenceurDetail';
+import Contacts from './pages/Contacts';
+import ContactDetail from './pages/ContactDetail';
 import ARelancer from './pages/ARelancer';
 import Equipe from './pages/Equipe';
 import AdminAiPrompts from './pages/AdminAiPrompts';
@@ -133,9 +133,12 @@ export default function App() {
             <Route index element={<IndexRoute />} />
             <Route path="mon-tableau" element={<ResearcherDashboard />} />
 
-            {/* Core CRM */}
-            <Route path="influenceurs" element={<Influenceurs />} />
-            <Route path="influenceurs/:id" element={<InfluenceurDetail />} />
+            {/* Core CRM — Contacts */}
+            <Route path="contacts" element={<Contacts />} />
+            <Route path="contacts/:id" element={<ContactDetail />} />
+            {/* Redirections legacy */}
+            <Route path="influenceurs" element={<Navigate to="/contacts" replace />} />
+            <Route path="influenceurs/:id" element={<Navigate to="/contacts" replace />} />
             <Route path="a-relancer" element={<ARelancer />} />
 
             {/* Acquisition */}

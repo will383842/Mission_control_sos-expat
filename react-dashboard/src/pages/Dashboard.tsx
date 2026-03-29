@@ -761,7 +761,7 @@ export default function Dashboard() {
                 return (
                   <Link
                     key={r.id}
-                    to={`/influenceurs/${r.influenceur_id}`}
+                    to={`/contacts/${r.influenceur_id}`}
                     className="flex items-center gap-3 p-3 rounded-lg bg-surface2 hover:bg-surface2/80 transition-colors group"
                   >
                     <div
@@ -813,7 +813,7 @@ export default function Dashboard() {
                         <>
                           {' '}
                           <Link
-                            to={`/influenceurs/${log.influenceur_id}`}
+                            to={`/contacts/${log.influenceur_id}`}
                             className="text-violet-light hover:underline font-medium"
                           >
                             {log.influenceur.name}

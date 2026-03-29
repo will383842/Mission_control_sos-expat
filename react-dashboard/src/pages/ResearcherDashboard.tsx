@@ -71,7 +71,7 @@ export default function ResearcherDashboard() {
       .finally(() => setProgressLoading(false));
 
     // Fetch recent influenceurs
-    api.get<{ data: Influenceur[] }>('/influenceurs', { params: { limit: 10 } })
+    api.get<{ data: Influenceur[] }>('/contacts', { params: { limit: 10 } })
       .then(({ data }) => setRecentInfluenceurs(data.data ?? data as unknown as Influenceur[]))
       .catch(() => {})
       .finally(() => setRecentLoading(false));
@@ -151,7 +151,7 @@ export default function ResearcherDashboard() {
                 <span className={`text-4xl font-bold font-title ${heroTextColor}`}>{globalCurrent}</span>
                 <span className="text-muted text-xl"> / {globalTarget}</span>
               </p>
-              <p className="text-muted text-sm">influenceurs valides au total</p>
+              <p className="text-muted text-sm">contacts valides au total</p>
               {objectives.length > 0 && (
                 <p className="text-xs text-gray-500">
                   {objectives.length} objectif{objectives.length !== 1 ? 's' : ''} actif{objectives.length !== 1 ? 's' : ''}
@@ -254,7 +254,7 @@ export default function ResearcherDashboard() {
       {/* Section 3: Criteres de validation */}
       <div className="bg-surface border border-border rounded-xl p-5">
         <h3 className="font-title font-semibold text-white mb-3">Criteres de validation</h3>
-        <p className="text-xs text-muted mb-3">Un influenceur est considere comme "valide" lorsqu'il remplit ces conditions :</p>
+        <p className="text-xs text-muted mb-3">Un contact est considéré comme "valide" lorsqu'il remplit ces conditions :</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="flex items-center gap-3 bg-surface2 rounded-lg p-3">
             <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
@@ -271,7 +271,7 @@ export default function ResearcherDashboard() {
             </div>
             <div>
               <p className="text-sm text-white font-medium">Nom complet</p>
-              <p className="text-xs text-muted">Le nom de l'influenceur doit etre renseigne</p>
+              <p className="text-xs text-muted">Le nom du contact doit être renseigné</p>
             </div>
           </div>
           <div className="flex items-center gap-3 bg-surface2 rounded-lg p-3">
@@ -299,7 +299,7 @@ export default function ResearcherDashboard() {
       <div className="bg-surface border border-border rounded-xl overflow-hidden">
         <div className="px-5 py-4 border-b border-border flex items-center justify-between">
           <h3 className="font-title font-semibold text-white">Mes derniers ajouts</h3>
-          <Link to="/influenceurs" className="text-xs text-violet hover:text-violet-light transition-colors">
+          <Link to="/contacts" className="text-xs text-violet hover:text-violet-light transition-colors">
             Voir tout &rarr;
           </Link>
         </div>
@@ -310,7 +310,7 @@ export default function ResearcherDashboard() {
           </div>
         ) : recentInfluenceurs.length === 0 ? (
           <div className="p-8 text-center text-muted text-sm">
-            Aucun influenceur ajoute pour le moment. Commencez par en creer un !
+            Aucun contact ajouté pour le moment. Commencez par en créer un !
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -329,7 +329,7 @@ export default function ResearcherDashboard() {
                     <tr key={inf.id} className="border-b border-border last:border-0 hover:bg-surface2 transition-colors">
                       <td className="px-4 py-3">
                         <Link
-                          to={`/influenceurs/${inf.id}`}
+                          to={`/contacts/${inf.id}`}
                           className="text-sm font-medium text-white hover:text-violet-light transition-colors whitespace-nowrap"
                         >
                           {inf.name}

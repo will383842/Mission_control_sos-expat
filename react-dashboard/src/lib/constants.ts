@@ -1,4 +1,4 @@
-import type { ContactType, PipelineStatus } from '../types/influenceur';
+import type { ContactType, ContactCategory, PipelineStatus } from '../types/influenceur';
 import { countriesData, type CountryData } from '../data/countries-full';
 
 // ============================================================
@@ -101,6 +101,107 @@ const FALLBACK_TYPE: ContactTypeConfig = {
 
 export function getContactType(type: ContactType): ContactTypeConfig {
   return CONTACT_TYPE_MAP[type] ?? { ...FALLBACK_TYPE, value: type, label: type };
+}
+
+// ============================================================
+// CATÉGORIES DE CONTACTS — 5 groupes principaux
+// ============================================================
+
+export interface CategoryConfig {
+  value: ContactCategory;
+  label: string;
+  icon: string;
+  color: string;
+  bg: string;
+  text: string;
+  border: string;
+  types: ContactType[];
+}
+
+export const CONTACT_CATEGORIES: CategoryConfig[] = [
+  {
+    value: 'institutionnel',
+    label: 'Institutionnel',
+    icon: '🏛️',
+    color: '#6366F1',
+    bg: 'bg-indigo-500/20',
+    text: 'text-indigo-400',
+    border: 'border-indigo-500/40',
+    types: ['consulat', 'association', 'ecole', 'institut_culturel', 'chambre_commerce'],
+  },
+  {
+    value: 'medias_influence',
+    label: 'Médias & Influence',
+    icon: '📺',
+    color: '#E11D48',
+    bg: 'bg-rose-500/20',
+    text: 'text-rose-400',
+    border: 'border-rose-500/40',
+    types: ['presse', 'blog', 'podcast_radio', 'influenceur'],
+  },
+  {
+    value: 'services_b2b',
+    label: 'Services B2B',
+    icon: '💼',
+    color: '#8B5CF6',
+    bg: 'bg-violet-500/20',
+    text: 'text-violet-400',
+    border: 'border-violet-500/40',
+    types: ['avocat', 'immobilier', 'assurance', 'banque_fintech', 'traducteur', 'agence_voyage', 'emploi'],
+  },
+  {
+    value: 'communautes',
+    label: 'Communautés',
+    icon: '🌍',
+    color: '#10B981',
+    bg: 'bg-emerald-500/20',
+    text: 'text-emerald-400',
+    border: 'border-emerald-500/40',
+    types: ['communaute_expat', 'groupe_whatsapp_telegram', 'coworking_coliving', 'logement', 'lieu_communautaire'],
+  },
+  {
+    value: 'digital',
+    label: 'Digital & SEO',
+    icon: '🔗',
+    color: '#F59E0B',
+    bg: 'bg-amber-500/20',
+    text: 'text-amber-400',
+    border: 'border-amber-500/40',
+    types: ['backlink', 'annuaire', 'plateforme_nomad', 'partenaire'],
+  },
+];
+
+export const CATEGORY_MAP: Record<string, CategoryConfig> = Object.fromEntries(
+  CONTACT_CATEGORIES.map(c => [c.value, c])
+);
+
+/** Retourne la config de catégorie pour un contact_type donné. */
+export function getCategoryForType(type: ContactType): CategoryConfig {
+  const cat = CONTACT_CATEGORIES.find(c => c.types.includes(type));
+  return cat ?? {
+    value: 'autre',
+    label: 'Autre',
+    icon: '📁',
+    color: '#6B7280',
+    bg: 'bg-gray-500/20',
+    text: 'text-gray-400',
+    border: 'border-gray-500/40',
+    types: [],
+  };
+}
+
+/** Retourne la config d'une catégorie par sa valeur. */
+export function getCategory(category: ContactCategory | string | null): CategoryConfig {
+  return CATEGORY_MAP[category ?? ''] ?? {
+    value: 'autre' as ContactCategory,
+    label: 'Autre',
+    icon: '📁',
+    color: '#6B7280',
+    bg: 'bg-gray-500/20',
+    text: 'text-gray-400',
+    border: 'border-gray-500/40',
+    types: [],
+  };
 }
 
 // ============================================================

@@ -37,7 +37,7 @@ export function useTemplates() {
 
   const generateForContact = useCallback(async (influenceurId: number, step = 1): Promise<OutreachMessage | null> => {
     try {
-      const { data } = await api.get<OutreachMessage>(`/influenceurs/${influenceurId}/outreach`, { params: { step } });
+      const { data } = await api.get<OutreachMessage>(`/contacts/${influenceurId}/outreach`, { params: { step } });
       return data;
     } catch { return null; }
   }, []);

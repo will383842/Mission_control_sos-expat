@@ -15,22 +15,34 @@ use Illuminate\Http\Request;
 
 class InfluenceurController extends Controller
 {
+    // =========================================================================
+    // INDEX — Liste avec filtres complets + pagination curseur
+    // =========================================================================
+
     public function index(Request $request)
     {
         $query = Influenceur::with(['assignedToUser:id,name', 'pendingReminder']);
 
-        // Researcher scoping: only see own influenceurs
+        // --- Restriction chercheur : ne voit que ses propres contacts ---
         if ($request->user()->isResearcher()) {
             $query->where('created_by', $request->user()->id);
-            // Auto-filter by assigned contact_types
             if (!empty($request->user()->contact_types)) {
                 $query->whereIn('contact_type', $request->user()->contact_types);
             }
         }
 
+        // --- Filtres de classification ---
         if ($request->contact_type) {
             $query->where('contact_type', $request->contact_type);
         }
+        if ($request->category) {
+            $query->where('category', $request->category);
+        }
+        if ($request->contact_kind) {
+            $query->where('contact_kind', $request->contact_kind);
+        }
+
+        // --- Filtres CRM ---
         if ($request->status) {
             $query->where('status', $request->status);
         }
@@ -43,17 +55,45 @@ class InfluenceurController extends Controller
         if ($request->has_reminder) {
             $query->whereHas('pendingReminder');
         }
+
+        // --- Filtres géographiques ---
         if ($request->country) {
             $query->where('country', $request->country);
         }
         if ($request->language) {
             $query->where('language', $request->language);
         }
+
+        // --- Filtres de qualité contact ---
+        if ($request->filled('has_email')) {
+            $query->where('has_email', filter_var($request->has_email, FILTER_VALIDATE_BOOLEAN));
+        }
+        if ($request->filled('has_phone')) {
+            $query->where('has_phone', filter_var($request->has_phone, FILTER_VALIDATE_BOOLEAN));
+        }
+        if ($request->filled('is_verified')) {
+            $query->where('is_verified', filter_var($request->is_verified, FILTER_VALIDATE_BOOLEAN));
+        }
+        if ($request->filled('unsubscribed')) {
+            $query->where('unsubscribed', filter_var($request->unsubscribed, FILTER_VALIDATE_BOOLEAN));
+        }
+        if ($request->completeness_min) {
+            $query->where('data_completeness', '>=', (int) $request->completeness_min);
+        }
+        if ($request->source) {
+            $query->where('source', $request->source);
+        }
+
+        // --- Recherche full-text (nom, email, téléphone, entreprise, handle) ---
         if ($request->search) {
             $s = $request->search;
             $query->where(function ($q) use ($s) {
-                $q->where('name', 'like', "%{$s}%")
-                  ->orWhere('handle', 'like', "%{$s}%");
+                $q->where('name', 'ILIKE', "%{$s}%")
+                  ->orWhere('email', 'ILIKE', "%{$s}%")
+                  ->orWhere('phone', 'ILIKE', "%{$s}%")
+                  ->orWhere('company', 'ILIKE', "%{$s}%")
+                  ->orWhere('handle', 'ILIKE', "%{$s}%")
+                  ->orWhere('website_url', 'ILIKE', "%{$s}%");
             });
         }
 
@@ -68,11 +108,17 @@ class InfluenceurController extends Controller
         ]);
     }
 
+    // =========================================================================
+    // STORE — Création d'un contact
+    // =========================================================================
+
     public function store(Request $request)
     {
         $data = $request->validate([
             'contact_type'         => 'sometimes|in:' . implode(',', \App\Models\ContactTypeModel::validValues()),
             'name'                 => 'required|string|max:255',
+            'first_name'           => 'nullable|string|max:100',
+            'last_name'            => 'nullable|string|max:100',
             'company'              => 'nullable|string|max:255',
             'position'             => 'nullable|string|max:255',
             'handle'               => 'nullable|string|max:255',
@@ -90,6 +136,12 @@ class InfluenceurController extends Controller
             'phone'                => 'nullable|string|max:50',
             'profile_url'          => 'nullable|string|max:500',
             'website_url'          => 'nullable|string|max:500',
+            'linkedin_url'         => 'nullable|url|max:500',
+            'twitter_url'          => 'nullable|url|max:500',
+            'facebook_url'         => 'nullable|url|max:500',
+            'instagram_url'        => 'nullable|url|max:500',
+            'tiktok_url'           => 'nullable|url|max:500',
+            'youtube_url'          => 'nullable|url|max:500',
             'status'               => 'sometimes|in:' . implode(',', PipelineStatus::values()),
             'deal_value_cents'     => 'nullable|integer|min:0',
             'deal_probability'     => 'nullable|integer|min:0|max:100',
@@ -108,7 +160,7 @@ class InfluenceurController extends Controller
 
         $data['created_by'] = $request->user()->id;
 
-        // Researcher can only create contacts of their assigned types
+        // Restriction chercheur : types assignés uniquement
         $user = $request->user();
         if ($user->isResearcher() && !empty($user->contact_types)) {
             $contactType = $data['contact_type'] ?? 'influenceur';
@@ -117,7 +169,7 @@ class InfluenceurController extends Controller
             }
         }
 
-        // === INTERCEPT: Redirect directory URLs to directories table ===
+        // Interception : URLs d'annuaires → table directories
         $urlToCheck = $data['profile_url'] ?? $data['website_url'] ?? null;
         if (BlockedDomainService::isScrapableDirectory($urlToCheck)) {
             $domain = Directory::extractDomain($urlToCheck);
@@ -155,19 +207,19 @@ class InfluenceurController extends Controller
             ], 409);
         }
 
-        // Extract and store normalized profile URL domain
+        // Normalisation du domaine de profil
         if (!empty($data['profile_url'])) {
             $data['profile_url_domain'] = self::normalizeProfileUrl($data['profile_url']);
         }
 
-        // Duplicate check on profile_url_domain
+        // Détection de doublon sur profile_url_domain
         $duplicateWarning = null;
         if (!empty($data['profile_url_domain'])) {
             $existing = Influenceur::where('profile_url_domain', $data['profile_url_domain'])->first();
             if ($existing && !$forceDuplicate) {
                 return response()->json([
                     'warning'             => 'duplicate_detected',
-                    'message'             => "Un influenceur avec un profil similaire existe déjà : {$existing->name} (ID {$existing->id}).",
+                    'message'             => "Un contact avec un profil similaire existe déjà : {$existing->name} (ID {$existing->id}).",
                     'existing_id'         => $existing->id,
                     'existing_name'       => $existing->name,
                     'profile_url_domain'  => $data['profile_url_domain'],
@@ -188,7 +240,7 @@ class InfluenceurController extends Controller
             'user_id'         => $request->user()->id,
             'influenceur_id'  => $influenceur->id,
             'action'          => 'created',
-            'details'         => ['name' => $influenceur->name],
+            'details'         => ['name' => $influenceur->name, 'type' => $influenceur->contact_type],
         ]);
 
         $response = $influenceur->load('assignedToUser:id,name')->toArray();
@@ -196,19 +248,20 @@ class InfluenceurController extends Controller
             $response['duplicate_warning'] = $duplicateWarning;
         }
 
-        // Check if valid for objective counting
-        $isValid = !empty($influenceur->profile_url)
+        $response['is_valid_for_objective'] = !empty($influenceur->profile_url)
             && !empty($influenceur->name)
             && !empty($influenceur->profile_url_domain)
-            && (!empty($influenceur->email) || !empty($influenceur->phone));
-        $response['is_valid_for_objective'] = $isValid;
+            && ($influenceur->has_email || $influenceur->has_phone);
 
         return response()->json($response, 201);
     }
 
+    // =========================================================================
+    // SHOW — Détail d'un contact
+    // =========================================================================
+
     public function show(Request $request, Influenceur $influenceur)
     {
-        // Researcher can only see own influenceurs
         if ($request->user()->isResearcher() && $influenceur->created_by !== $request->user()->id) {
             return response()->json(['message' => 'Accès refusé.'], 403);
         }
@@ -221,9 +274,12 @@ class InfluenceurController extends Controller
         ]));
     }
 
+    // =========================================================================
+    // UPDATE — Mise à jour d'un contact
+    // =========================================================================
+
     public function update(Request $request, Influenceur $influenceur)
     {
-        // Researcher can only update own influenceurs
         if ($request->user()->isResearcher() && $influenceur->created_by !== $request->user()->id) {
             return response()->json(['message' => 'Accès refusé.'], 403);
         }
@@ -231,6 +287,8 @@ class InfluenceurController extends Controller
         $data = $request->validate([
             'contact_type'        => 'sometimes|in:' . implode(',', \App\Models\ContactTypeModel::validValues()),
             'name'                => 'sometimes|string|max:255',
+            'first_name'          => 'nullable|string|max:100',
+            'last_name'           => 'nullable|string|max:100',
             'company'             => 'nullable|string|max:255',
             'position'            => 'nullable|string|max:255',
             'handle'              => 'nullable|string|max:255',
@@ -248,6 +306,12 @@ class InfluenceurController extends Controller
             'phone'               => 'nullable|string|max:50',
             'profile_url'         => 'nullable|string|max:500',
             'website_url'         => 'nullable|string|max:500',
+            'linkedin_url'        => 'nullable|url|max:500',
+            'twitter_url'         => 'nullable|url|max:500',
+            'facebook_url'        => 'nullable|url|max:500',
+            'instagram_url'       => 'nullable|url|max:500',
+            'tiktok_url'          => 'nullable|url|max:500',
+            'youtube_url'         => 'nullable|url|max:500',
             'status'              => 'sometimes|in:' . implode(',', PipelineStatus::values()),
             'deal_value_cents'    => 'nullable|integer|min:0',
             'deal_probability'    => 'nullable|integer|min:0|max:100',
@@ -259,9 +323,9 @@ class InfluenceurController extends Controller
             'tags'                => 'nullable|array',
             'score'               => 'nullable|integer|min:0|max:1000',
             'source'              => 'nullable|string|max:100',
+            'is_verified'         => 'sometimes|boolean',
         ]);
 
-        // Re-extract domain if profile_url changed
         if (isset($data['profile_url'])) {
             $data['profile_url_domain'] = !empty($data['profile_url'])
                 ? self::normalizeProfileUrl($data['profile_url'])
@@ -292,9 +356,12 @@ class InfluenceurController extends Controller
         return response()->json($influenceur->load('assignedToUser:id,name'));
     }
 
+    // =========================================================================
+    // DESTROY
+    // =========================================================================
+
     public function destroy(Request $request, Influenceur $influenceur)
     {
-        // Admin can delete any, researcher can only delete own, member denied
         $role = $request->user()->role;
         if ($role === 'member') {
             return response()->json(['message' => 'Accès refusé.'], 403);
@@ -315,9 +382,12 @@ class InfluenceurController extends Controller
         return response()->json(null, 204);
     }
 
+    // =========================================================================
+    // RESCRAPE
+    // =========================================================================
+
     public function rescrape(Request $request, Influenceur $influenceur)
     {
-        // Researcher can only rescrape own influenceurs
         if ($request->user()->isResearcher() && $influenceur->created_by !== $request->user()->id) {
             return response()->json(['message' => 'Accès refusé.'], 403);
         }
@@ -343,12 +413,15 @@ class InfluenceurController extends Controller
         ]));
     }
 
+    // =========================================================================
+    // REMINDERS PENDING
+    // =========================================================================
+
     public function remindersPending(Request $request)
     {
         $query = Influenceur::with(['pendingReminder', 'assignedToUser:id,name'])
             ->whereHas('pendingReminder');
 
-        // Researcher scoping
         if ($request->user()->isResearcher()) {
             $query->where('created_by', $request->user()->id);
         }
@@ -367,9 +440,13 @@ class InfluenceurController extends Controller
         return response()->json($influenceurs);
     }
 
+    // =========================================================================
+    // NORMALISATION D'URL DE PROFIL
+    // =========================================================================
+
     /**
-     * Smart URL normalization: extract the profile/channel URL from video/post URLs.
-     * Used for duplicate detection and objective validation.
+     * Normalise une URL de profil pour la déduplication.
+     * Extrait le "profil de base" en supprimant chemins de posts/vidéos.
      */
     public static function normalizeProfileUrl(?string $url): ?string
     {
@@ -377,20 +454,19 @@ class InfluenceurController extends Controller
             return null;
         }
 
-        // Remove protocol, www, trailing slash, query params, fragments
         $url = preg_replace('#^https?://(www\.)?#', '', $url);
         $url = rtrim($url, '/');
         $url = preg_replace('#\?.*$#', '', $url);
         $url = preg_replace('#\#.*$#', '', $url);
 
-        // TikTok: keep only @username
+        // TikTok : garder seulement @username
         if (str_contains($url, 'tiktok.com/')) {
             if (preg_match('#tiktok\.com/(@[^/]+)#', $url, $m)) {
                 return 'tiktok.com/' . $m[1];
             }
         }
 
-        // YouTube: keep channel/username, strip video paths
+        // YouTube : garder channel/username, supprimer chemins vidéos
         if (str_contains($url, 'youtube.com/') || str_contains($url, 'youtu.be/')) {
             if (preg_match('#youtube\.com/(@[^/]+)#', $url, $m)) {
                 return 'youtube.com/' . $m[1];
@@ -401,22 +477,20 @@ class InfluenceurController extends Controller
             if (preg_match('#youtube\.com/(c/[^/]+)#', $url, $m)) {
                 return 'youtube.com/' . $m[1];
             }
-            // watch?v= or youtu.be/xxx — can't extract channel, keep as-is
             return $url;
         }
 
-        // Instagram: keep username only
+        // Instagram : username seulement
         if (str_contains($url, 'instagram.com/')) {
             if (preg_match('#instagram\.com/([a-zA-Z0-9_.]+)#', $url, $m)) {
                 $username = $m[1];
-                // Skip non-profile paths
                 if (!in_array($username, ['p', 'reel', 'reels', 'stories', 'explore', 'tv'])) {
                     return 'instagram.com/' . $username;
                 }
             }
         }
 
-        // LinkedIn: keep profile path
+        // LinkedIn
         if (str_contains($url, 'linkedin.com/')) {
             if (preg_match('#linkedin\.com/(in/[^/]+)#', $url, $m)) {
                 return 'linkedin.com/' . $m[1];
@@ -426,7 +500,7 @@ class InfluenceurController extends Controller
             }
         }
 
-        // Facebook: keep profile/page path
+        // Facebook
         if (str_contains($url, 'facebook.com/')) {
             if (preg_match('#facebook\.com/([a-zA-Z0-9.]+)#', $url, $m)) {
                 $name = $m[1];
@@ -446,13 +520,10 @@ class InfluenceurController extends Controller
             }
         }
 
-        // Default: return cleaned URL
         return $url;
     }
 
-    /**
-     * Legacy alias — calls normalizeProfileUrl.
-     */
+    /** Alias legacy. */
     public static function normalizeUrlDomain(?string $url): ?string
     {
         return self::normalizeProfileUrl($url);

@@ -12,7 +12,7 @@ interface Props {
 export default function InfluenceurCard({ influenceur }: Props) {
   return (
     <Link
-      to={`/influenceurs/${influenceur.id}`}
+      to={`/contacts/${influenceur.id}`}
       className="bg-surface border border-border rounded-2xl p-5 hover:border-violet/40 hover:bg-surface2 transition-all block group overflow-hidden"
     >
       <div className="flex items-start gap-3">
