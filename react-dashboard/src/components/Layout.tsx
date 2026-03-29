@@ -109,6 +109,7 @@ const LS_GROUPS    = 'mc_nav_groups';
 const LS_SUBGROUPS = 'mc_nav_subgroups';
 
 const DEFAULT_SUBGROUPS: Record<string, boolean> = {
+  sourcing_ia       : true,
   sourcing_contacts : true,
   sourcing_content  : true,
   sourcing_config   : true,
@@ -137,8 +138,8 @@ export default function Layout() {
   // Helper: determine which groups should be open for a given path
   const getGroupsForPath = (path: string) => ({
     contacts: path.startsWith('/contacts') || path === '/a-relancer' || path.startsWith('/influenceurs'),
-    acquisition: path.startsWith('/admin/campaigns') || path === '/ai-research' || path === '/admin/avancement',
-    scraping: path === '/directories' || path === '/contacts/journalistes' || path === '/admin/scraper' || path.startsWith('/content/sites') || path.startsWith('/content/businesses') || path.startsWith('/content/lawyers') || path.startsWith('/content/country-directory') || path.startsWith('/scraping') || path.startsWith('/content/sources') || path.startsWith('/content/countries') || path.startsWith('/content/cities') || path.startsWith('/content/questions') || path.startsWith('/content/affiliates'),
+    acquisition: false,
+    scraping: path === '/directories' || path === '/contacts/journalistes' || path === '/admin/scraper' || path.startsWith('/content/sites') || path.startsWith('/content/businesses') || path.startsWith('/content/lawyers') || path.startsWith('/content/country-directory') || path.startsWith('/scraping') || path.startsWith('/content/sources') || path.startsWith('/content/countries') || path.startsWith('/content/cities') || path.startsWith('/content/questions') || path.startsWith('/content/affiliates') || path.startsWith('/admin/campaigns') || path === '/ai-research' || path === '/admin/avancement',
     contentEngine: (path.startsWith('/content') && !path.startsWith('/content/sources') && !path.startsWith('/content/countries') && !path.startsWith('/content/cities') && !path.startsWith('/content/questions') && !path.startsWith('/content/affiliates') && !path.startsWith('/content/sites') && !path.startsWith('/content/lawyers') && !path.startsWith('/content/businesses') && !path.startsWith('/content/country-directory')) || path.startsWith('/seo') || path === '/publishing' || path === '/media' || path === '/costs' || path === '/translations',
     prospection: path.startsWith('/prospection') || path === '/outreach',
     parametres: path.startsWith('/admin/types') || path.startsWith('/admin/prompts') || path.startsWith('/admin/prompt-templates') || path.startsWith('/admin/presets') || path === '/equipe' || path === '/journal',
@@ -305,6 +306,24 @@ export default function Layout() {
                     📡 Vue d'ensemble
                   </NavLink>
 
+                  <NavSubGroup label="IA & Automatisation" isOpen={openSubGroups.sourcing_ia} onToggle={() => toggleSubGroup('sourcing_ia')}>
+                    {canAccessAI && (
+                      <NavLink to="/ai-research" className={subNavClass} onClick={handleNavClick}>
+                        🧠 Recherche IA
+                      </NavLink>
+                    )}
+                    {isAdmin && (
+                      <>
+                        <NavLink to="/admin/campaigns" className={subNavClass} onClick={handleNavClick}>
+                          🤖 Campagnes auto
+                        </NavLink>
+                        <NavLink to="/admin/avancement" className={subNavClass} onClick={handleNavClick}>
+                          📈 Couverture
+                        </NavLink>
+                      </>
+                    )}
+                  </NavSubGroup>
+
                   <NavSubGroup label="Contacts" isOpen={openSubGroups.sourcing_contacts} onToggle={() => toggleSubGroup('sourcing_contacts')}>
                     <NavLink to="/contacts/journalistes" className={subNavClass} onClick={handleNavClick}>
                       🗞️ Journalistes & Presse
@@ -398,32 +417,9 @@ export default function Layout() {
               </NavGroup>
 
               {/* ════════════════════════════════════
-                  3. ENGAGER — cibler et contacter
+                  3. CONTACTER — outreach & prospection
                   ════════════════════════════════════ */}
-              {(canAccessAI || isAdmin) && <NavSeparator label="Engager" />}
-
-              {canAccessAI && (
-                <NavGroup
-                  label="Acquisition"
-                  icon="🎯"
-                  isOpen={openGroups.acquisition}
-                  onToggle={() => toggleGroup('acquisition')}
-                >
-                  {isAdmin && (
-                    <NavLink to="/admin/campaigns" className={subNavClass} onClick={handleNavClick}>
-                      🤖 Campagnes auto
-                    </NavLink>
-                  )}
-                  <NavLink to="/ai-research" className={subNavClass} onClick={handleNavClick}>
-                    🧠 Recherche IA
-                  </NavLink>
-                  {isAdmin && (
-                    <NavLink to="/admin/avancement" className={subNavClass} onClick={handleNavClick}>
-                      📈 Couverture
-                    </NavLink>
-                  )}
-                </NavGroup>
-              )}
+              {isAdmin && <NavSeparator label="Contacter" />}
 
               {isAdmin && (
                 <NavGroup
