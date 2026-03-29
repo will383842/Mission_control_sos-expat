@@ -355,10 +355,27 @@ Route::middleware('auth:sanctum')->group(function () {
     // COUNTRY DIRECTORY (Annuaire pays — liens officiels expatries)
     // ============================================================
     Route::prefix('country-directory')->middleware('role:admin')->group(function () {
-        Route::get('/countries', [\App\Http\Controllers\CountryDirectoryController::class, 'countries']);
-        Route::get('/stats', [\App\Http\Controllers\CountryDirectoryController::class, 'stats']);
-        Route::get('/country/{countryCode}', [\App\Http\Controllers\CountryDirectoryController::class, 'country']);
-        Route::get('/export-blog', [\App\Http\Controllers\CountryDirectoryController::class, 'exportForBlog']);
+        // Lecture
+        Route::get('/countries',              [\App\Http\Controllers\CountryDirectoryController::class, 'countries']);
+        Route::get('/nationalities',          [\App\Http\Controllers\CountryDirectoryController::class, 'nationalities']);
+        Route::get('/stats',                  [\App\Http\Controllers\CountryDirectoryController::class, 'stats']);
+        Route::get('/country/{countryCode}',  [\App\Http\Controllers\CountryDirectoryController::class, 'country']);
+        Route::get('/embassies',              [\App\Http\Controllers\CountryDirectoryController::class, 'embassies']);
+        Route::get('/export-blog',            [\App\Http\Controllers\CountryDirectoryController::class, 'exportForBlog']);
+        // CRUD
+        Route::post('/',         [\App\Http\Controllers\CountryDirectoryController::class, 'store']);
+        Route::put('/{id}',      [\App\Http\Controllers\CountryDirectoryController::class, 'update']);
+        Route::delete('/{id}',   [\App\Http\Controllers\CountryDirectoryController::class, 'destroy']);
+
+        // Imports (lancement depuis la console admin)
+        Route::prefix('imports')->group(function () {
+            Route::get('/sources',    [\App\Http\Controllers\AnnuaireImportController::class, 'sources']);
+            Route::get('/',           [\App\Http\Controllers\AnnuaireImportController::class, 'index']);
+            Route::post('/',          [\App\Http\Controllers\AnnuaireImportController::class, 'create']);
+            Route::get('/{id}',       [\App\Http\Controllers\AnnuaireImportController::class, 'show']);
+            Route::post('/{id}/cancel',[\App\Http\Controllers\AnnuaireImportController::class, 'cancel']);
+            Route::delete('/{id}',    [\App\Http\Controllers\AnnuaireImportController::class, 'destroy']);
+        });
     });
 
     // ============================================================

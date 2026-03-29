@@ -95,7 +95,7 @@ services:
       dockerfile: deploy/Dockerfile.api
     container_name: inf-queue
     restart: unless-stopped
-    command: ["php", "artisan", "queue:work", "redis", "--queue=default", "--sleep=3", "--tries=3", "--max-time=3600"]
+    command: ["php", "artisan", "queue:work", "redis", "--queue=default", "--sleep=3", "--tries=1", "--timeout=28800"]
     mem_limit: 512m
     memswap_limit: 512m
     env_file:
