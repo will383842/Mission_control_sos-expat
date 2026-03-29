@@ -139,7 +139,7 @@ export default function Layout() {
   const getGroupsForPath = (path: string) => ({
     contacts: path.startsWith('/contacts') || path === '/a-relancer' || path.startsWith('/influenceurs'),
     acquisition: false,
-    scraping: path === '/directories' || path === '/contacts/journalistes' || path === '/admin/scraper' || path.startsWith('/content/sites') || path.startsWith('/content/businesses') || path.startsWith('/content/lawyers') || path.startsWith('/content/country-directory') || path.startsWith('/scraping') || path.startsWith('/content/sources') || path.startsWith('/content/countries') || path.startsWith('/content/cities') || path.startsWith('/content/questions') || path.startsWith('/content/affiliates') || path.startsWith('/admin/campaigns') || path === '/ai-research' || path === '/admin/avancement',
+    scraping: path === '/directories' || path === '/contacts/journalistes' || path === '/admin/scraper' || path.startsWith('/content/sites') || path.startsWith('/content/businesses') || path.startsWith('/content/lawyers') || path.startsWith('/content/country-directory') || path.startsWith('/scraping') || path.startsWith('/content/sources') || path.startsWith('/content/countries') || path.startsWith('/content/cities') || path.startsWith('/content/questions') || path.startsWith('/content/affiliates') || path.startsWith('/admin/campaigns') || path === '/ai-research' || path === '/admin/avancement' || path.startsWith('/content/contacts') || path.startsWith('/content/links'),
     contentEngine: (path.startsWith('/content') && !path.startsWith('/content/sources') && !path.startsWith('/content/countries') && !path.startsWith('/content/cities') && !path.startsWith('/content/questions') && !path.startsWith('/content/affiliates') && !path.startsWith('/content/sites') && !path.startsWith('/content/lawyers') && !path.startsWith('/content/businesses') && !path.startsWith('/content/country-directory')) || path.startsWith('/seo') || path === '/publishing' || path === '/media' || path === '/costs' || path === '/translations',
     prospection: path.startsWith('/prospection') || path === '/outreach',
     parametres: path.startsWith('/admin/types') || path.startsWith('/admin/prompts') || path.startsWith('/admin/prompt-templates') || path.startsWith('/admin/presets') || path === '/equipe' || path === '/journal',
@@ -337,6 +337,12 @@ export default function Layout() {
                     <NavLink to="/content/businesses" className={subNavClass} onClick={handleNavClick}>
                       🏢 Entreprises
                     </NavLink>
+                    <NavLink to="/content/contacts" className={subNavClass} onClick={handleNavClick}>
+                      🌐 Contacts web
+                    </NavLink>
+                    <NavLink to="/content/country-directory" className={subNavClass} onClick={handleNavClick}>
+                      🗺️ Annuaire Pays
+                    </NavLink>
                   </NavSubGroup>
 
                   <NavSubGroup label="Données contenu" isOpen={openSubGroups.sourcing_content} onToggle={() => toggleSubGroup('sourcing_content')}>
@@ -345,6 +351,9 @@ export default function Layout() {
                     </NavLink>
                     <NavLink to="/content/sites" className={subNavClass} onClick={handleNavClick}>
                       🌐 Sites web
+                    </NavLink>
+                    <NavLink to="/content/links" className={subNavClass} onClick={handleNavClick}>
+                      🔗 Liens extraits
                     </NavLink>
                     <NavLink to="/content/countries" className={subNavClass} onClick={handleNavClick}>
                       🌍 Fiches Pays
@@ -357,9 +366,6 @@ export default function Layout() {
                     </NavLink>
                     <NavLink to="/content/affiliates" className={subNavClass} onClick={handleNavClick}>
                       🔗 Liens Affiliés
-                    </NavLink>
-                    <NavLink to="/content/country-directory" className={subNavClass} onClick={handleNavClick}>
-                      🗺️ Annuaire Pays
                     </NavLink>
                   </NavSubGroup>
 
