@@ -29,6 +29,7 @@ import BusinessDirectory from './pages/content/BusinessDirectory';
 import LawyerDirectory from './pages/content/LawyerDirectory';
 import ContentSites from './pages/content/ContentSites';
 import AffiliateLinks from './pages/content/AffiliateLinks';
+import AffiliateDashboard from './pages/affiliates/AffiliateDashboard';
 import CountryProfiles from './pages/content/CountryProfiles';
 import CountryProfileDetail from './pages/content/CountryProfileDetail';
 import CityProfiles from './pages/content/CityProfiles';
@@ -168,6 +169,7 @@ export default function App() {
             <Route path="scraping/dashboard" element={<AdminRoute><ScrapingDashboard /></AdminRoute>} />
             <Route path="content/questions" element={<AdminRoute><ContentQuestions /></AdminRoute>} />
             <Route path="content/affiliates" element={<AdminRoute><AffiliateLinks /></AdminRoute>} />
+            <Route path="affiliates" element={<AdminRoute><AffiliateDashboard /></AdminRoute>} />
             <Route path="content/data-cleanup" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><DataCleanupDashboard /></React.Suspense></AdminRoute>} />
             <Route path="content/command-center" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><ContentCommandCenter /></React.Suspense></AdminRoute>} />
             <Route path="content/sources" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><GenerationSources /></React.Suspense></AdminRoute>} />

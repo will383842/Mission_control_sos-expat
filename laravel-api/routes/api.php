@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AffiliateProgramController;
 use App\Http\Controllers\AiResearchController;
 use App\Http\Controllers\AutoCampaignController;
 use App\Http\Controllers\AuthController;
@@ -658,6 +659,18 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/quality-monitoring', [DailyScheduleController::class, 'getQualityMonitoring']);
         Route::post('/articles/{id}/reject', [DailyScheduleController::class, 'rejectArticle']);
         Route::post('/articles/{id}/approve', [DailyScheduleController::class, 'approveArticle']);
+    });
+
+    // ── Affiliés ─────────────────────────────────────────────────────────────
+    Route::prefix('affiliates')->group(function () {
+        Route::get('/stats',                                    [AffiliateProgramController::class, 'globalStats']);
+        Route::get('/',                                         [AffiliateProgramController::class, 'index']);
+        Route::post('/',                                        [AffiliateProgramController::class, 'store']);
+        Route::get('/{affiliateProgram}',                       [AffiliateProgramController::class, 'show']);
+        Route::put('/{affiliateProgram}',                       [AffiliateProgramController::class, 'update']);
+        Route::delete('/{affiliateProgram}',                    [AffiliateProgramController::class, 'destroy']);
+        Route::get('/{affiliateProgram}/earnings',              [AffiliateProgramController::class, 'getEarnings']);
+        Route::post('/{affiliateProgram}/earnings',             [AffiliateProgramController::class, 'addEarning']);
     });
 
     // ── Sondages ────────────────────────────────────────────────────────────

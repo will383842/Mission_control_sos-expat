@@ -142,6 +142,7 @@ export default function Layout() {
     scraping: path === '/directories' || path === '/contacts/journalistes' || path === '/admin/scraper' || path.startsWith('/content/sites') || path.startsWith('/content/businesses') || path.startsWith('/content/lawyers') || path.startsWith('/content/country-directory') || path.startsWith('/scraping') || path.startsWith('/content/sources') || path.startsWith('/content/countries') || path.startsWith('/content/cities') || path.startsWith('/content/questions') || path.startsWith('/content/affiliates') || path.startsWith('/admin/campaigns') || path === '/ai-research' || path === '/admin/avancement' || path.startsWith('/content/contacts') || path.startsWith('/content/links'),
     contentEngine: (path.startsWith('/content') && !path.startsWith('/content/sources') && !path.startsWith('/content/countries') && !path.startsWith('/content/cities') && !path.startsWith('/content/questions') && !path.startsWith('/content/affiliates') && !path.startsWith('/content/sites') && !path.startsWith('/content/lawyers') && !path.startsWith('/content/businesses') && !path.startsWith('/content/country-directory')) || path.startsWith('/seo') || path === '/publishing' || path === '/media' || path === '/costs' || path === '/translations',
     prospection: path.startsWith('/prospection') || path === '/outreach',
+    monetiser: path.startsWith('/affiliates'),
     parametres: path.startsWith('/admin/types') || path.startsWith('/admin/prompts') || path.startsWith('/admin/prompt-templates') || path.startsWith('/admin/presets') || path === '/equipe' || path === '/journal',
   });
 
@@ -165,6 +166,7 @@ export default function Layout() {
         scraping    : prev.scraping     || needed.scraping,
         contentEngine: prev.contentEngine || needed.contentEngine,
         prospection : prev.prospection  || needed.prospection,
+        monetiser   : prev.monetiser    || needed.monetiser,
         parametres  : prev.parametres   || needed.parametres,
       };
       try { localStorage.setItem(LS_GROUPS, JSON.stringify(next)); } catch { /* ignore */ }
@@ -557,7 +559,28 @@ export default function Layout() {
               )}
 
               {/* ════════════════════════════════════
-                  5. CONFIGURER — paramètres & équipe
+                  5. MONÉTISER — affiliation & revenus
+                  ════════════════════════════════════ */}
+              {isAdmin && <NavSeparator label="Monétiser" />}
+
+              {isAdmin && (
+                <NavGroup
+                  label="Affiliés"
+                  icon="💸"
+                  isOpen={openGroups.monetiser}
+                  onToggle={() => toggleGroup('monetiser')}
+                >
+                  <NavLink to="/affiliates" end className={subNavClass} onClick={handleNavClick}>
+                    🗺️ Cartographie & revenus
+                  </NavLink>
+                  <NavLink to="/content/affiliates" className={subNavClass} onClick={handleNavClick}>
+                    🔗 Liens détectés (scraping)
+                  </NavLink>
+                </NavGroup>
+              )}
+
+              {/* ════════════════════════════════════
+                  6. CONFIGURER — paramètres & équipe
                   ════════════════════════════════════ */}
               {isAdmin && <NavSeparator label="Configurer" />}
 

@@ -25,5 +25,6 @@ class DatabaseSeeder extends Seeder
         $this->call(PromptTemplateSeeder::class);
         $this->call(GenerationPresetSeeder::class);
         $this->call(PublishingEndpointSeeder::class);
+        $this->call(AffiliateProgramSeeder::class);
     }
 }

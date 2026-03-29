@@ -58,6 +58,9 @@ jobs:
             docker exec inf-app php artisan db:seed --class=GenerationPresetSeeder --force
             docker exec inf-app php artisan db:seed --class=PublishingEndpointSeeder --force
 
+            # Seed affiliate programs (insertOrIgnore — safe to re-run)
+            docker exec inf-app php artisan db:seed --class=AffiliateProgramSeeder --force
+
             # Verify deployment
             docker exec inf-app php artisan about || true
 
