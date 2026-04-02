@@ -76,7 +76,7 @@ export default function FilterSidebar({ onFilterChange, onClose }: Props) {
   const hasFilters = Object.keys(filters).length > 0 || search;
 
   return (
-    <aside className={`${onClose ? 'fixed inset-0 z-50 bg-surface overflow-auto' : 'w-56 flex-shrink-0 bg-surface border-r border-border overflow-auto hidden md:block'} p-4`}>
+    <aside className={`${onClose ? 'fixed inset-0 z-50 bg-surface overflow-y-auto' : 'w-56 flex-shrink-0 bg-surface border-r border-border overflow-y-auto hidden md:block'} p-4`}>
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-title text-sm font-semibold text-white">Filtres</h3>
         <div className="flex items-center gap-2">
