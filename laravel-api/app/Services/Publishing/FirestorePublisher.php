@@ -19,6 +19,12 @@ class FirestorePublisher
             throw new \RuntimeException('Firebase project_id not configured');
         }
 
+        // Protect reserved SOS Expat collections — never overwrite app data from Mission Control
+        $reserved = ['app_faq', 'faqs', 'users', 'sos_profiles', 'help_articles'];
+        if (in_array($collection, $reserved)) {
+            throw new \RuntimeException("FirestorePublisher: cannot publish to reserved collection '{$collection}'. Use 'blog_articles' or a dedicated collection.");
+        }
+
         // Build the document data from the content model
         $data = [
             'fields' => $this->toFirestoreFields([
