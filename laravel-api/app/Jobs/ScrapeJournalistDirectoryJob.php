@@ -16,11 +16,13 @@ class ScrapeJournalistDirectoryJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int    $timeout    = 600; // 10 min max per directory
-    public int    $tries      = 2;
-    public string $queue      = 'scraper';
+    public int $timeout = 600; // 10 min max per directory
+    public int $tries   = 2;
 
-    public function __construct(private string $sourceSlug) {}
+    public function __construct(private string $sourceSlug)
+    {
+        $this->onQueue('scraper');
+    }
 
     public function middleware(): array
     {
