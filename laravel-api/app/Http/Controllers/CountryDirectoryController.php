@@ -16,7 +16,7 @@ class CountryDirectoryController extends Controller
      */
     public function countries(): JsonResponse
     {
-        $data = Cache::remember('directory:countries', 3600, function () {
+        $data = Cache::remember('directory:countries', 60, function () {
             return CountryDirectory::query()
                 ->where('is_active', true)
                 ->where('country_code', '!=', 'XX')
@@ -43,7 +43,7 @@ class CountryDirectoryController extends Controller
      */
     public function nationalities(): JsonResponse
     {
-        $data = Cache::remember('directory:nationalities', 3600, function () {
+        $data = Cache::remember('directory:nationalities', 60, function () {
             return CountryDirectory::query()
                 ->where('is_active', true)
                 ->whereNotNull('nationality_code')
@@ -134,7 +134,7 @@ class CountryDirectoryController extends Controller
      */
     public function stats(): JsonResponse
     {
-        $data = Cache::remember('directory:stats', 3600, function () {
+        $data = Cache::remember('directory:stats', 60, function () {
             return [
                 'total_entries'       => CountryDirectory::where('is_active', true)->count(),
                 'countries'           => CountryDirectory::where('is_active', true)->where('country_code', '!=', 'XX')->distinct('country_code')->count('country_code'),

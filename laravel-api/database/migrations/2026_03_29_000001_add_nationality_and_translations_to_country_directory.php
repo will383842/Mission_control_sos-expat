@@ -19,27 +19,51 @@ use Illuminate\Support\Facades\Schema;
  */
 return new class extends Migration
 {
+    private function indexExists(string $table, string $indexName): bool
+    {
+        return collect(DB::select(
+            "SELECT INDEX_NAME as indexname FROM INFORMATION_SCHEMA.STATISTICS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? GROUP BY INDEX_NAME",
+            [$table]
+        ))->pluck('indexname')->contains($indexName);
+    }
+
     public function up(): void
     {
-        Schema::table('country_directory', function (Blueprint $table) {
-            // Supprimer l'ancien index unique (country_code, url) — on va le remplacer
-            $table->dropUnique('country_directory_unique_link');
+        // Drop old unique index if it exists (safely)
+        if ($this->indexExists('country_directory', 'country_directory_unique_link')) {
+            DB::statement('ALTER TABLE country_directory DROP INDEX country_directory_unique_link');
+        }
 
+        Schema::table('country_directory', function (Blueprint $table) {
             // Nationalité de l'expatrié (quelle ambassade cherche-t-il ?)
-            $table->char('nationality_code', 2)->nullable()->after('country_code')->index();
-            $table->string('nationality_name', 100)->nullable()->after('nationality_code');
+            if (!Schema::hasColumn('country_directory', 'nationality_code')) {
+                $table->char('nationality_code', 2)->nullable()->after('country_code')->index();
+            }
+            if (!Schema::hasColumn('country_directory', 'nationality_name')) {
+                $table->string('nationality_name', 100)->nullable()->after('nationality_code');
+            }
 
             // Traductions multilingues : {"en":{"title":"...","description":"..."},"es":{...}}
-            $table->json('translations')->nullable()->after('description')
-                ->comment('Traductions du titre et description par langue ISO 639-1');
+            if (!Schema::hasColumn('country_directory', 'translations')) {
+                $table->json('translations')->nullable()->after('description');
+            }
         });
 
-        // Nouvel index unique : (country_code, COALESCE(nationality_code,''), url)
-        // COALESCE permet de traiter NULL comme '' → pas de doublons sur liens sans nationalité
-        DB::statement(
-            "CREATE UNIQUE INDEX country_directory_unique_link
-             ON country_directory (country_code, COALESCE(nationality_code, ''), url)"
-        );
+        // MySQL/MariaDB ne supporte pas les index fonctionnels (COALESCE dans index).
+        // On crée un index standard sur (country_code, nationality_code, url).
+        $existingIndexes = collect(DB::select(
+            "SELECT INDEX_NAME as indexname FROM INFORMATION_SCHEMA.STATISTICS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'country_directory'
+             GROUP BY INDEX_NAME"
+        ))->pluck('indexname')->toArray();
+
+        if (!$this->indexExists('country_directory', 'country_directory_unique_link')) {
+            // MySQL doesn't support functional indexes (COALESCE); use a prefix on url to stay within key length limit
+            DB::statement(
+                "ALTER TABLE country_directory ADD INDEX country_directory_unique_link (country_code, nationality_code, url(100))"
+            );
+        }
 
         // Marquer les ambassades existantes (data.gouv.fr) comme françaises
         DB::statement(
@@ -51,15 +75,31 @@ return new class extends Migration
 
     public function down(): void
     {
-        DB::statement('DROP INDEX IF EXISTS country_directory_unique_link');
+        try {
+            Schema::table('country_directory', function (Blueprint $table) {
+                $table->dropIndex('country_directory_unique_link');
+            });
+        } catch (\Throwable $e) {}
 
         Schema::table('country_directory', function (Blueprint $table) {
-            $table->dropColumn(['nationality_code', 'nationality_name', 'translations']);
+            $cols = [];
+            if (Schema::hasColumn('country_directory', 'nationality_code')) $cols[] = 'nationality_code';
+            if (Schema::hasColumn('country_directory', 'nationality_name'))  $cols[] = 'nationality_name';
+            if (Schema::hasColumn('country_directory', 'translations'))      $cols[] = 'translations';
+            if (!empty($cols)) $table->dropColumn($cols);
         });
 
         // Restaurer l'ancien index
-        Schema::table('country_directory', function (Blueprint $table) {
-            $table->unique(['country_code', 'url'], 'country_directory_unique_link');
-        });
+        $existingIndexes = collect(DB::select(
+            "SELECT INDEX_NAME as indexname FROM INFORMATION_SCHEMA.STATISTICS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'country_directory'
+             GROUP BY INDEX_NAME"
+        ))->pluck('indexname')->toArray();
+
+        if (!in_array('country_directory_unique_link', $existingIndexes)) {
+            Schema::table('country_directory', function (Blueprint $table) {
+                $table->unique(['country_code', 'url'], 'country_directory_unique_link');
+            });
+        }
     }
 };
