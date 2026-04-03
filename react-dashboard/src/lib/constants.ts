@@ -283,15 +283,19 @@ export function getCountryFlag(name: string): string {
 // ============================================================
 
 export const LANGUAGES = [
-  { code: 'fr', label: 'Français',  flag: '🇫🇷' },
-  { code: 'en', label: 'English',   flag: '🇬🇧' },
-  { code: 'de', label: 'Deutsch',   flag: '🇩🇪' },
-  { code: 'es', label: 'Español',   flag: '🇪🇸' },
-  { code: 'pt', label: 'Português', flag: '🇵🇹' },
-  { code: 'ar', label: 'العربية',     flag: '🇸🇦' },
-  { code: 'ru', label: 'Русский',   flag: '🇷🇺' },
+  { code: 'fr', label: 'Français',   flag: '🇫🇷' },
+  { code: 'en', label: 'English',    flag: '🇬🇧' },
+  { code: 'de', label: 'Deutsch',    flag: '🇩🇪' },
+  { code: 'es', label: 'Español',    flag: '🇪🇸' },
+  { code: 'pt', label: 'Português',  flag: '🇵🇹' },
+  { code: 'ar', label: 'العربية',    flag: '🇸🇦' },
+  { code: 'ru', label: 'Русский',    flag: '🇷🇺' },
   { code: 'zh', label: '中文',        flag: '🇨🇳' },
-  { code: 'hi', label: 'हिन्दी',       flag: '🇮🇳' },
+  { code: 'hi', label: 'हिन्दी',      flag: '🇮🇳' },
+  { code: 'it', label: 'Italiano',   flag: '🇮🇹' },
+  { code: 'nl', label: 'Nederlands', flag: '🇳🇱' },
+  { code: 'pl', label: 'Polski',     flag: '🇵🇱' },
+  { code: 'lt', label: 'Lietuvių',   flag: '🇱🇹' },
 ];
 
 export const LANGUAGE_MAP = Object.fromEntries(

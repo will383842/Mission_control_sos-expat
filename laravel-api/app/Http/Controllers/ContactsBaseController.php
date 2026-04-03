@@ -79,17 +79,6 @@ class ContactsBaseController extends Controller
                 FROM content_contacts
             ");
 
-            // content_contacts
-            $cc = DB::selectOne("
-                SELECT
-                    COUNT(*) as total,
-                    0 as tier1,
-                    COUNT(*) FILTER (WHERE email IS NOT NULL AND email != '') as tier2,
-                    0 as tier3,
-                    COUNT(*) FILTER (WHERE email IS NULL OR email = '') as tier4
-                FROM content_contacts
-            ");
-
             // country_directory
             $cd = DB::selectOne("
                 SELECT
@@ -311,15 +300,16 @@ class ContactsBaseController extends Controller
                 name, email, phone, website_url AS website,
                 country, language,
                 contact_type AS type,
-                COALESCE(category, CASE
+                CASE
+                    WHEN category IN ('presse','influenceurs') THEN 'medias_influence'
+                    WHEN category IS NOT NULL AND category NOT IN ('', 'autre') THEN category
                     WHEN contact_type IN ('consulat','association','ecole','institut_culturel','chambre_commerce') THEN 'institutionnel'
-                    WHEN contact_type IN ('presse','blog','podcast_radio') THEN 'presse'
-                    WHEN contact_type = 'influenceur' THEN 'influenceurs'
+                    WHEN contact_type IN ('presse','blog','podcast_radio','influenceur','youtubeur') THEN 'medias_influence'
                     WHEN contact_type IN ('avocat','immobilier','assurance','banque_fintech','traducteur','agence_voyage','emploi') THEN 'services_b2b'
                     WHEN contact_type IN ('communaute_expat','groupe_whatsapp_telegram','coworking_coliving','logement','lieu_communautaire') THEN 'communautes'
                     WHEN contact_type IN ('backlink','annuaire','plateforme_nomad','partenaire') THEN 'digital'
                     ELSE 'autre'
-                END) AS category,
+                END AS category,
                 status,
                 1 AS priority, 'influenceurs' AS source_table
             FROM influenceurs
@@ -331,7 +321,7 @@ class ContactsBaseController extends Controller
                 LOWER(email),
                 full_name, email, phone, NULL,
                 country, language,
-                'journaliste' AS type, 'presse' AS category,
+                'presse' AS type, 'medias_influence' AS category,
                 contact_status,
                 2, 'press_contacts'
             FROM press_contacts
@@ -353,9 +343,9 @@ class ContactsBaseController extends Controller
 
             SELECT
                 LOWER(contact_email),
-                name, contact_email, NULL, website,
-                country, NULL,
-                category AS type, 'services_b2b' AS category,
+                COALESCE(contact_name, name), contact_email, NULL, website,
+                country, language,
+                'partenaire' AS type, 'digital' AS category,
                 NULL,
                 4, 'content_businesses'
             FROM content_businesses
@@ -367,7 +357,7 @@ class ContactsBaseController extends Controller
                 LOWER(email),
                 name, email, phone, NULL,
                 country, NULL,
-                sector AS type, 'autre' AS category,
+                'partenaire' AS type, 'digital' AS category,
                 NULL,
                 5, 'content_contacts'
             FROM content_contacts
@@ -377,9 +367,25 @@ class ContactsBaseController extends Controller
 
             SELECT
                 LOWER(email),
-                name, email, phone, NULL,
-                country, language,
-                type AS type, 'institutionnel' AS category,
+                name, email, phone, url AS website,
+                country_name AS country, language,
+                COALESCE(
+                    CASE LOWER(category)
+                        WHEN 'consulat'         THEN 'consulat'
+                        WHEN 'ambassade'        THEN 'consulat'
+                        WHEN 'embassy'          THEN 'consulat'
+                        WHEN 'consulate'        THEN 'consulat'
+                        WHEN 'association'      THEN 'association'
+                        WHEN 'ecole'            THEN 'ecole'
+                        WHEN 'school'           THEN 'ecole'
+                        WHEN 'universite'       THEN 'ecole'
+                        WHEN 'chambre_commerce' THEN 'chambre_commerce'
+                        WHEN 'chambre'          THEN 'chambre_commerce'
+                        WHEN 'institut'         THEN 'institut_culturel'
+                        WHEN 'culturel'         THEN 'institut_culturel'
+                        ELSE 'association'
+                    END
+                ) AS type, 'institutionnel' AS category,
                 NULL,
                 6, 'country_directory'
             FROM country_directory
@@ -611,7 +617,7 @@ class ContactsBaseController extends Controller
 
         $rows = DB::select("
             SELECT id, full_name as name, email, phone, NULL as website, country, language,
-                   'journaliste' as type, contact_status as status,
+                   'presse' as type, contact_status as status,
                    email_smtp_valid::text as email_verified_status, NULL as score, 'press_contacts' as source_table
             FROM press_contacts WHERE {$whereStr}
             ORDER BY full_name ASC LIMIT {$limit} OFFSET {$offset}
@@ -639,7 +645,7 @@ class ContactsBaseController extends Controller
 
         $rows = DB::select("
             SELECT id, name, contact_email as email, NULL as phone, website, country, NULL as language,
-                   category as type, NULL as status, NULL as email_verified_status,
+                   'partenaire' as type, NULL as status, NULL as email_verified_status,
                    NULL as score, 'content_businesses' as source_table
             FROM content_businesses WHERE {$whereStr}
             ORDER BY name ASC LIMIT {$limit} OFFSET {$offset}
@@ -665,7 +671,7 @@ class ContactsBaseController extends Controller
 
         $rows = DB::select("
             SELECT id, name, email, phone, NULL as website, country, NULL as language,
-                   sector as type, NULL as status, NULL as email_verified_status,
+                   'partenaire' as type, NULL as status, NULL as email_verified_status,
                    NULL as score, 'content_contacts' as source_table
             FROM content_contacts WHERE {$whereStr}
             ORDER BY name ASC LIMIT {$limit} OFFSET {$offset}

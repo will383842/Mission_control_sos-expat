@@ -115,7 +115,7 @@ class ImportPipelineController extends Controller
                         'country'      => $r->country,
                         'language'     => $r->language,
                         'contact_type' => 'presse',
-                        'category'     => 'presse',
+                        'category'     => 'medias_influence',
                         'source'       => 'press_import',
                         'contact_kind' => 'individual',
                         'profile_url'  => $r->source_url,

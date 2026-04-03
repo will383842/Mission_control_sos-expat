@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import api from '../../api/client';
+import { CONTACT_CATEGORIES, CATEGORY_MAP, LANGUAGES as LANG_LIST, LANGUAGE_MAP } from '../../lib/constants';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -61,16 +62,7 @@ interface DuplicateFlag {
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
-
-const CATEGORIES: Record<string, { label: string; icon: string; color: string }> = {
-  institutionnel:    { label: 'Institutionnel',      icon: '🏛️', color: 'bg-slate-700 text-slate-300' },
-  presse:            { label: 'Presse & Médias',     icon: '🗞️', color: 'bg-blue-900/40 text-blue-300' },
-  influenceurs:      { label: 'Influenceurs',        icon: '✨', color: 'bg-pink-900/40 text-pink-300' },
-  services_b2b:      { label: 'Services B2B',        icon: '💼', color: 'bg-yellow-900/40 text-yellow-300' },
-  communautes:       { label: 'Communautés',         icon: '🌍', color: 'bg-green-900/40 text-green-300' },
-  digital:           { label: 'Digital & SEO',       icon: '🔗', color: 'bg-violet/20 text-violet-light' },
-  autre:             { label: 'Autre',               icon: '•',  color: 'bg-surface2 text-muted' },
-};
+// CATEGORIES et LANGUAGES importés depuis lib/constants.ts — source unique de vérité
 
 const TIERS = [
   { id: 0, label: 'Tous',              color: 'text-white',       bg: 'bg-surface2',          desc: 'Toutes les sources' },
@@ -90,21 +82,6 @@ const SOURCES = [
   { id: 'country_directory', label: 'Annuaire pays (consulats...)' },
 ];
 
-const LANGUAGES: Record<string, { label: string; flag: string }> = {
-  fr: { label: 'Français',   flag: '🇫🇷' },
-  en: { label: 'English',    flag: '🇬🇧' },
-  de: { label: 'Deutsch',    flag: '🇩🇪' },
-  es: { label: 'Español',    flag: '🇪🇸' },
-  pt: { label: 'Português',  flag: '🇵🇹' },
-  ar: { label: 'العربية',     flag: '🇸🇦' },
-  ru: { label: 'Русский',    flag: '🇷🇺' },
-  zh: { label: '中文',         flag: '🇨🇳' },
-  hi: { label: 'हिन्दी',       flag: '🇮🇳' },
-  lt: { label: 'Lietuvių',   flag: '🇱🇹' },
-  pl: { label: 'Polski',     flag: '🇵🇱' },
-  it: { label: 'Italiano',   flag: '🇮🇹' },
-  nl: { label: 'Nederlands', flag: '🇳🇱' },
-};
 
 const SOURCE_COLORS: Record<string, string> = {
   influenceurs:       'bg-violet/20 text-violet-light',
@@ -523,7 +500,7 @@ export default function ContactsBase() {
             <select value={uLanguage} onChange={e => { setULanguage(e.target.value); setUnifiedPage(1); }}
               className="bg-surface2 border border-border rounded-lg px-3 py-2 text-white text-sm">
               <option value="">Toutes les langues</option>
-              {Object.entries(LANGUAGES).map(([code, { label, flag }]) => (
+              {LANG_LIST.map(({ code, label, flag }) => (
                 <option key={code} value={code}>{flag} {label}</option>
               ))}
             </select>
@@ -535,8 +512,8 @@ export default function ContactsBase() {
             <select value={uCategory} onChange={e => { setUCategory(e.target.value); setUnifiedPage(1); }}
               className="bg-surface2 border border-border rounded-lg px-3 py-2 text-white text-sm">
               <option value="">Toutes catégories</option>
-              {Object.entries(CATEGORIES).filter(([k]) => k !== 'autre').map(([key, { label, icon }]) => (
-                <option key={key} value={key}>{icon} {label}</option>
+              {CONTACT_CATEGORIES.map(cat => (
+                <option key={cat.value} value={cat.value}>{cat.icon} {cat.label}</option>
               ))}
             </select>
 
@@ -588,9 +565,9 @@ export default function ContactsBase() {
                         </a>
                       </td>
                       <td className="px-4 py-2.5">
-                        {c.category && CATEGORIES[c.category] ? (
-                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${CATEGORIES[c.category].color}`}>
-                            {CATEGORIES[c.category].icon} {CATEGORIES[c.category].label}
+                        {c.category && CATEGORY_MAP[c.category] ? (
+                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${CATEGORY_MAP[c.category].bg} ${CATEGORY_MAP[c.category].text}`}>
+                            {CATEGORY_MAP[c.category].icon} {CATEGORY_MAP[c.category].label}
                           </span>
                         ) : <span className="text-muted/40 text-xs">—</span>}
                       </td>
@@ -603,8 +580,8 @@ export default function ContactsBase() {
                         </span>
                       </td>
                       <td className="px-4 py-2.5">
-                        {c.language && LANGUAGES[c.language] ? (
-                          <span title={LANGUAGES[c.language].label}>{LANGUAGES[c.language].flag} <span className="text-xs text-muted">{c.language.toUpperCase()}</span></span>
+                        {c.language && LANGUAGE_MAP[c.language] ? (
+                          <span title={LANGUAGE_MAP[c.language].label}>{LANGUAGE_MAP[c.language].flag} <span className="text-xs text-muted">{c.language.toUpperCase()}</span></span>
                         ) : c.language ? (
                           <span className="text-xs text-muted">{c.language.toUpperCase()}</span>
                         ) : <span className="text-muted/40 text-xs">—</span>}
@@ -733,7 +710,7 @@ export default function ContactsBase() {
             <select value={filterLanguage} onChange={e => { setFilterLanguage(e.target.value); setPage(1); }}
               className="bg-surface2 border border-border rounded-lg px-3 py-2 text-white text-sm">
               <option value="">Toutes les langues</option>
-              {Object.entries(LANGUAGES).map(([code, { label, flag }]) => (
+              {LANG_LIST.map(({ code, label, flag }) => (
                 <option key={code} value={code}>{flag} {label}</option>
               ))}
             </select>
