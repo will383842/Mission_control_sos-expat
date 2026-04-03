@@ -21,7 +21,7 @@ return new class extends Migration
             }
         });
 
-        $existingIndexes = collect(DB::select("SELECT indexname FROM pg_indexes WHERE tablename = 'activity_logs'"))->pluck('indexname')->toArray();
+        $existingIndexes = collect(DB::select("SELECT INDEX_NAME as indexname FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'activity_logs' GROUP BY INDEX_NAME"))->pluck('indexname')->toArray();
 
         if (!in_array('idx_activity_journal', $existingIndexes)) {
             Schema::table('activity_logs', function (Blueprint $table) {

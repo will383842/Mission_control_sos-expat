@@ -10,12 +10,14 @@ return new class extends Migration
     public function up(): void
     {
         // Convert role from enum to varchar (defensive)
-        DB::statement("ALTER TABLE users ALTER COLUMN role TYPE VARCHAR(20) USING role::VARCHAR");
-        DB::statement("ALTER TABLE users ALTER COLUMN role SET DEFAULT 'member'");
+        DB::statement("ALTER TABLE users MODIFY COLUMN role VARCHAR(20) NOT NULL DEFAULT 'member'");
 
         Schema::table('users', function (Blueprint $table) {
             if (!Schema::hasColumn('users', 'territories')) {
-                $table->json('territories')->nullable()->after('contact_types');
+                $col = $table->json('territories')->nullable();
+                if (Schema::hasColumn('users', 'contact_types')) {
+                    $col->after('contact_types');
+                }
             }
         });
     }

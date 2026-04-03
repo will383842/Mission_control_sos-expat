@@ -113,7 +113,7 @@ return new class extends Migration
                               OR (website_url IS NOT NULL AND website_url != '') THEN 15 ELSE 0 END +
                     CASE WHEN notes IS NOT NULL AND notes != ''         THEN  5 ELSE 0 END +
                     CASE WHEN score > 0                                 THEN  5 ELSE 0 END +
-                    CASE WHEN tags IS NOT NULL AND tags::text != '[]'   THEN  5 ELSE 0 END
+                    CASE WHEN tags IS NOT NULL AND CAST(tags AS CHAR) != '[]' THEN 5 ELSE 0 END
                 ))
         ");
     }

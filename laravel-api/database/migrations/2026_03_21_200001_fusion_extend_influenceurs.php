@@ -15,8 +15,7 @@ return new class extends Migration
     public function up(): void
     {
         // 1. Convert status from enum to varchar (allows flexible statuses)
-        DB::statement("ALTER TABLE influenceurs ALTER COLUMN status TYPE VARCHAR(50) USING status::VARCHAR");
-        DB::statement("ALTER TABLE influenceurs ALTER COLUMN status SET DEFAULT 'new'");
+        DB::statement("ALTER TABLE influenceurs MODIFY COLUMN status VARCHAR(50) NOT NULL DEFAULT 'new'");
 
         // 2. Ensure contact_type column exists (may already exist from migration 100001)
         if (!Schema::hasColumn('influenceurs', 'contact_type')) {
@@ -57,7 +56,7 @@ return new class extends Migration
         });
 
         // 4. Add composite indexes (defensive — check if they already exist)
-        $existingIndexes = collect(DB::select("SELECT indexname FROM pg_indexes WHERE tablename = 'influenceurs'"))->pluck('indexname')->toArray();
+        $existingIndexes = collect(DB::select("SELECT INDEX_NAME as indexname FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'influenceurs' GROUP BY INDEX_NAME"))->pluck('indexname')->toArray();
 
         Schema::table('influenceurs', function (Blueprint $table) use ($existingIndexes) {
             if (!in_array('idx_inf_type_country_status', $existingIndexes)) {

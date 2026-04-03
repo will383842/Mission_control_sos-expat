@@ -10,8 +10,8 @@ return new class extends Migration
     public function up(): void
     {
         // Convert channel and result from enum to varchar (defensive)
-        DB::statement("ALTER TABLE contacts ALTER COLUMN channel TYPE VARCHAR(50) USING channel::VARCHAR");
-        DB::statement("ALTER TABLE contacts ALTER COLUMN result TYPE VARCHAR(50) USING result::VARCHAR");
+        DB::statement("ALTER TABLE contacts MODIFY COLUMN channel VARCHAR(50) NOT NULL DEFAULT 'email'");
+        DB::statement("ALTER TABLE contacts MODIFY COLUMN result VARCHAR(50) NULL");
 
         Schema::table('contacts', function (Blueprint $table) {
             if (!Schema::hasColumn('contacts', 'direction')) {
@@ -31,7 +31,7 @@ return new class extends Migration
             }
         });
 
-        $existingIndexes = collect(DB::select("SELECT indexname FROM pg_indexes WHERE tablename = 'contacts'"))->pluck('indexname')->toArray();
+        $existingIndexes = collect(DB::select("SELECT INDEX_NAME as indexname FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'contacts' GROUP BY INDEX_NAME"))->pluck('indexname')->toArray();
 
         Schema::table('contacts', function (Blueprint $table) use ($existingIndexes) {
             if (!in_array('idx_contacts_inf_date', $existingIndexes)) {

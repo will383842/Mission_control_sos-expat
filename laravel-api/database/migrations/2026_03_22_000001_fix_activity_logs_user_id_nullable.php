@@ -7,11 +7,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        DB::statement('ALTER TABLE activity_logs ALTER COLUMN user_id DROP NOT NULL');
+        DB::statement('ALTER TABLE activity_logs MODIFY COLUMN user_id BIGINT UNSIGNED NULL');
     }
 
     public function down(): void
     {
-        DB::statement('ALTER TABLE activity_logs ALTER COLUMN user_id SET NOT NULL');
+        DB::statement('ALTER TABLE activity_logs MODIFY COLUMN user_id BIGINT UNSIGNED NOT NULL');
     }
 };
