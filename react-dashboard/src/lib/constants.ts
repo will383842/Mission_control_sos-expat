@@ -28,6 +28,7 @@ export const DEFAULT_CONTACT_TYPES: ContactTypeConfig[] = [
   { value: 'blog',                   label: 'Blogs & Créateurs',         icon: '📝', color: '#A855F7', bg: 'bg-purple-500/20',   text: 'text-purple-400' },
   { value: 'podcast_radio',          label: 'Podcasts & Radios',         icon: '🎙️', color: '#F97316', bg: 'bg-orange-500/20',   text: 'text-orange-400' },
   { value: 'influenceur',            label: 'Influenceurs',              icon: '✨', color: '#FFD60A', bg: 'bg-yellow-400/20',   text: 'text-yellow-300' },
+  { value: 'youtubeur',              label: 'YouTubeurs',                icon: '▶️', color: '#FF0000', bg: 'bg-red-600/20',      text: 'text-red-400' },
   // Services B2B
   { value: 'avocat',                 label: 'Avocats',                   icon: '⚖️', color: '#8B5CF6', bg: 'bg-violet-500/20',   text: 'text-violet-400' },
   { value: 'immobilier',             label: 'Immobilier & Relocation',   icon: '🏠', color: '#84CC16', bg: 'bg-lime-500/20',     text: 'text-lime-400' },
@@ -137,7 +138,7 @@ export const CONTACT_CATEGORIES: CategoryConfig[] = [
     bg: 'bg-rose-500/20',
     text: 'text-rose-400',
     border: 'border-rose-500/40',
-    types: ['presse', 'blog', 'podcast_radio', 'influenceur'],
+    types: ['presse', 'blog', 'podcast_radio', 'influenceur', 'youtubeur'],
   },
   {
     value: 'services_b2b',

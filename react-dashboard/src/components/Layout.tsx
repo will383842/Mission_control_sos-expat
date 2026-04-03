@@ -241,7 +241,7 @@ export default function Layout() {
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-60 bg-surface border-r border-border flex flex-col transform transition-transform duration-200 ease-in-out ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0 md:static md:flex-shrink-0`}
+        } md:translate-x-0 md:sticky md:top-0 md:h-screen md:flex-shrink-0`}
       >
         {/* Header */}
         <div className="p-5 border-b border-border flex items-center justify-between">
@@ -407,10 +407,17 @@ export default function Layout() {
                 </NavLink>
                 <NavLink
                   to="/contacts?category=medias_influence"
-                  className={subNavClass({ isActive: location.pathname === '/contacts' && location.search.includes('category=medias_influence') })}
+                  className={subNavClass({ isActive: location.pathname === '/contacts' && location.search.includes('category=medias_influence') && !location.search.includes('contact_type=youtubeur') })}
                   onClick={handleNavClick}
                 >
                   📺 Médias & Influence
+                </NavLink>
+                <NavLink
+                  to="/contacts?category=medias_influence&contact_type=youtubeur"
+                  className={subNavClass({ isActive: location.pathname === '/contacts' && location.search.includes('contact_type=youtubeur') })}
+                  onClick={handleNavClick}
+                >
+                  ▶️ YouTubeurs
                 </NavLink>
                 <NavLink
                   to="/contacts?category=services_b2b"
@@ -527,6 +534,12 @@ export default function Layout() {
                     <NavLink to="/content/sondages" className={subNavClass} onClick={handleNavClick}>
                       📊 Sondages
                     </NavLink>
+                    <NavLink to="/content/outils" className={subNavClass} onClick={handleNavClick}>
+                      🛠️ Outils promo
+                    </NavLink>
+                    <NavLink to="/content/outils-visiteurs" className={subNavClass} onClick={handleNavClick}>
+                      🌐 Outils Visiteurs
+                    </NavLink>
                   </NavSubGroup>
 
                   <NavSubGroup label="Optimiser & Publier" isOpen={openSubGroups.content_publish} onToggle={() => toggleSubGroup('content_publish')}>
@@ -627,6 +640,54 @@ export default function Layout() {
           )}
         </nav>
 
+        {/* Footer raccourcis rapides */}
+        {isAdmin && (
+          <div className="px-3 py-2 border-t border-border">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-600 mb-2 px-1">Raccourcis</p>
+            <div className="flex gap-1">
+              <NavLink
+                to="/directories"
+                title="Annuaires"
+                className={({ isActive }) =>
+                  `flex-1 flex flex-col items-center gap-1 py-2 rounded-lg text-xs transition-colors ${
+                    isActive ? 'bg-violet/20 text-violet-light' : 'text-muted hover:bg-white/5 hover:text-white'
+                  }`
+                }
+                onClick={handleNavClick}
+              >
+                <span className="text-lg">📁</span>
+                <span className="text-[10px] leading-none">Annuaires</span>
+              </NavLink>
+              <NavLink
+                to="/content/sondages"
+                title="Sondages"
+                className={({ isActive }) =>
+                  `flex-1 flex flex-col items-center gap-1 py-2 rounded-lg text-xs transition-colors ${
+                    isActive ? 'bg-violet/20 text-violet-light' : 'text-muted hover:bg-white/5 hover:text-white'
+                  }`
+                }
+                onClick={handleNavClick}
+              >
+                <span className="text-lg">📊</span>
+                <span className="text-[10px] leading-none">Sondages</span>
+              </NavLink>
+              <NavLink
+                to="/content/outils-visiteurs"
+                title="Outils Visiteurs"
+                className={({ isActive }) =>
+                  `flex-1 flex flex-col items-center gap-1 py-2 rounded-lg text-xs transition-colors ${
+                    isActive ? 'bg-violet/20 text-violet-light' : 'text-muted hover:bg-white/5 hover:text-white'
+                  }`
+                }
+                onClick={handleNavClick}
+              >
+                <span className="text-lg">🌐</span>
+                <span className="text-[10px] leading-none">Outils Visiteurs</span>
+              </NavLink>
+            </div>
+          </div>
+        )}
+
         {/* User footer */}
         <div className="p-3 border-t border-border">
           <div className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-white/5 transition-colors group">
@@ -653,7 +714,11 @@ export default function Layout() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-auto">
+      {/* NOTE: overflow-auto intentionally removed — it created a scroll container that
+          prevented native <select> dropdowns from opening in Chrome 120+ (dropdown
+          clipped by overflow context). Page-level scroll via body is used instead.
+          Sidebar uses md:sticky md:h-screen to remain visible on scroll. */}
+      <main className="flex-1 min-h-screen">
         <Outlet />
       </main>
     </div>

@@ -92,6 +92,42 @@ const ContentCommandCenter = React.lazy(() => import('./pages/content/ContentCom
 const CountryDirectoryPage = React.lazy(() => import('./pages/content/CountryDirectoryPage'));
 const SondagesList = React.lazy(() => import('./pages/content/SondagesList'));
 const SondagesResultats = React.lazy(() => import('./pages/content/SondagesResultats'));
+const PromoToolsAdmin = React.lazy(() => import('./pages/content/PromoToolsAdmin'));
+const OutilsVisiteursAdmin = React.lazy(() => import('./pages/content/OutilsVisiteursAdmin'));
+
+// ── Shared fallback ────────────────────────────────────────────────────────
+function LoadingFallback() {
+  return <div className="p-8 text-gray-400">Chargement...</div>;
+}
+
+// ── Error boundary ─────────────────────────────────────────────────────────
+interface ErrorBoundaryState { hasError: boolean; message: string }
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, ErrorBoundaryState> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, message: '' };
+  }
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, message: error.message };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center h-screen bg-bg gap-4 p-8">
+          <p className="text-red-400 text-lg font-semibold">Une erreur inattendue s'est produite.</p>
+          <p className="text-muted text-sm font-mono">{this.state.message}</p>
+          <button
+            onClick={() => { this.setState({ hasError: false, message: '' }); window.location.href = '/'; }}
+            className="px-4 py-2 bg-violet text-white rounded-lg text-sm"
+          >
+            Retour à l'accueil
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = React.useContext(AuthContext);
@@ -127,6 +163,7 @@ export default function App() {
   return (
     <AuthContext.Provider value={auth}>
       <BrowserRouter>
+        <ErrorBoundary>
         <ToastContainer />
         <Routes>
           <Route path="/login" element={<Login />} />
@@ -161,7 +198,7 @@ export default function App() {
             <Route path="content/sites" element={<AdminRoute><ContentSites /></AdminRoute>} />
             <Route path="content/links" element={<AdminRoute><ContentLinks /></AdminRoute>} />
             <Route path="content/businesses" element={<AdminRoute><BusinessDirectory /></AdminRoute>} />
-            <Route path="content/country-directory" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><CountryDirectoryPage /></React.Suspense></AdminRoute>} />
+            <Route path="content/country-directory" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><CountryDirectoryPage /></React.Suspense></AdminRoute>} />
             <Route path="content/lawyers" element={<AdminRoute><LawyerDirectory /></AdminRoute>} />
             <Route path="content/contacts" element={<AdminRoute><ContentContacts /></AdminRoute>} />
             <Route path="contacts/journalistes" element={<AdminRoute><JournalistContacts /></AdminRoute>} />
@@ -170,48 +207,50 @@ export default function App() {
             <Route path="content/questions" element={<AdminRoute><ContentQuestions /></AdminRoute>} />
             <Route path="content/affiliates" element={<AdminRoute><AffiliateLinks /></AdminRoute>} />
             <Route path="affiliates" element={<AdminRoute><AffiliateDashboard /></AdminRoute>} />
-            <Route path="content/data-cleanup" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><DataCleanupDashboard /></React.Suspense></AdminRoute>} />
-            <Route path="content/command-center" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><ContentCommandCenter /></React.Suspense></AdminRoute>} />
-            <Route path="content/sources" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><GenerationSources /></React.Suspense></AdminRoute>} />
-            <Route path="content/sources/:sourceType" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><SourceDetail /></React.Suspense></AdminRoute>} />
+            <Route path="content/data-cleanup" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><DataCleanupDashboard /></React.Suspense></AdminRoute>} />
+            <Route path="content/command-center" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ContentCommandCenter /></React.Suspense></AdminRoute>} />
+            <Route path="content/sources" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><GenerationSources /></React.Suspense></AdminRoute>} />
+            <Route path="content/sources/:sourceType" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><SourceDetail /></React.Suspense></AdminRoute>} />
             <Route path="content/countries" element={<AdminRoute><CountryProfiles /></AdminRoute>} />
             <Route path="content/country/:countrySlug" element={<AdminRoute><CountryProfileDetail /></AdminRoute>} />
             <Route path="content/cities" element={<AdminRoute><CityProfiles /></AdminRoute>} />
             <Route path="content/cities/:citySlug" element={<AdminRoute><CityProfileDetail /></AdminRoute>} />
 
             {/* Content Engine v2 (lazy loaded) */}
-            <Route path="content/overview" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><ContentOverview /></React.Suspense></AdminRoute>} />
-            <Route path="content/scheduler" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><DailyScheduler /></React.Suspense></AdminRoute>} />
-            <Route path="content/publication" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><PublicationControl /></React.Suspense></AdminRoute>} />
-            <Route path="content/quality" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><QualityMonitoring /></React.Suspense></AdminRoute>} />
-            <Route path="content/taxonomies" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><TaxonomyManager /></React.Suspense></AdminRoute>} />
-            <Route path="content/articles" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><ArticlesList /></React.Suspense></AdminRoute>} />
-            <Route path="content/articles/new" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><ArticleCreate /></React.Suspense></AdminRoute>} />
-            <Route path="content/articles/:id" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><ArticleDetail /></React.Suspense></AdminRoute>} />
-            <Route path="content/comparatives" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><ComparativesList /></React.Suspense></AdminRoute>} />
-            <Route path="content/comparatives/new" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><ComparativeCreate /></React.Suspense></AdminRoute>} />
-            <Route path="content/comparatives/:id" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><ComparativeDetail /></React.Suspense></AdminRoute>} />
-            <Route path="content/campaigns" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><CampaignsList /></React.Suspense></AdminRoute>} />
-            <Route path="content/campaigns/new" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><CampaignCreate /></React.Suspense></AdminRoute>} />
-            <Route path="content/campaigns/:id" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><CampaignDetail /></React.Suspense></AdminRoute>} />
+            <Route path="content/overview" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ContentOverview /></React.Suspense></AdminRoute>} />
+            <Route path="content/scheduler" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><DailyScheduler /></React.Suspense></AdminRoute>} />
+            <Route path="content/publication" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><PublicationControl /></React.Suspense></AdminRoute>} />
+            <Route path="content/quality" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><QualityMonitoring /></React.Suspense></AdminRoute>} />
+            <Route path="content/taxonomies" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><TaxonomyManager /></React.Suspense></AdminRoute>} />
+            <Route path="content/articles" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ArticlesList /></React.Suspense></AdminRoute>} />
+            <Route path="content/articles/new" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ArticleCreate /></React.Suspense></AdminRoute>} />
+            <Route path="content/articles/:id" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ArticleDetail /></React.Suspense></AdminRoute>} />
+            <Route path="content/comparatives" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ComparativesList /></React.Suspense></AdminRoute>} />
+            <Route path="content/comparatives/new" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ComparativeCreate /></React.Suspense></AdminRoute>} />
+            <Route path="content/comparatives/:id" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ComparativeDetail /></React.Suspense></AdminRoute>} />
+            <Route path="content/campaigns" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><CampaignsList /></React.Suspense></AdminRoute>} />
+            <Route path="content/campaigns/new" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><CampaignCreate /></React.Suspense></AdminRoute>} />
+            <Route path="content/campaigns/:id" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><CampaignDetail /></React.Suspense></AdminRoute>} />
 
             {/* Content Pipeline: Clusters, Q&A, Keywords, Translations */}
-            <Route path="content/clusters" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><ClustersList /></React.Suspense></AdminRoute>} />
-            <Route path="content/clusters/:id" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><ClusterDetail /></React.Suspense></AdminRoute>} />
-            <Route path="content/qa" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><QaList /></React.Suspense></AdminRoute>} />
-            <Route path="content/qa/:id" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><QaDetail /></React.Suspense></AdminRoute>} />
-            <Route path="content/question-clusters" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><QuestionClustersList /></React.Suspense></AdminRoute>} />
-            <Route path="content/question-clusters/:id" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><QuestionClusterDetail /></React.Suspense></AdminRoute>} />
-            <Route path="content/landings" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><LandingsList /></React.Suspense></AdminRoute>} />
-            <Route path="content/landings/new" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><LandingCreate /></React.Suspense></AdminRoute>} />
-            <Route path="content/landings/:id" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><LandingDetail /></React.Suspense></AdminRoute>} />
-            <Route path="content/press" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><PressList /></React.Suspense></AdminRoute>} />
-            <Route path="content/sondages" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><SondagesList /></React.Suspense></AdminRoute>} />
-            <Route path="content/sondages/resultats" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><SondagesResultats /></React.Suspense></AdminRoute>} />
-            <Route path="content/press/releases/:id" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><PressDetail /></React.Suspense></AdminRoute>} />
-            <Route path="content/press/dossiers/:id" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><DossierDetail /></React.Suspense></AdminRoute>} />
-            <Route path="seo/keywords" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><KeywordTracker /></React.Suspense></AdminRoute>} />
-            <Route path="translations" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><TranslationsDashboard /></React.Suspense></AdminRoute>} />
+            <Route path="content/clusters" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ClustersList /></React.Suspense></AdminRoute>} />
+            <Route path="content/clusters/:id" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ClusterDetail /></React.Suspense></AdminRoute>} />
+            <Route path="content/qa" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><QaList /></React.Suspense></AdminRoute>} />
+            <Route path="content/qa/:id" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><QaDetail /></React.Suspense></AdminRoute>} />
+            <Route path="content/question-clusters" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><QuestionClustersList /></React.Suspense></AdminRoute>} />
+            <Route path="content/question-clusters/:id" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><QuestionClusterDetail /></React.Suspense></AdminRoute>} />
+            <Route path="content/landings" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><LandingsList /></React.Suspense></AdminRoute>} />
+            <Route path="content/landings/new" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><LandingCreate /></React.Suspense></AdminRoute>} />
+            <Route path="content/landings/:id" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><LandingDetail /></React.Suspense></AdminRoute>} />
+            <Route path="content/press" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><PressList /></React.Suspense></AdminRoute>} />
+            <Route path="content/sondages" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><SondagesList /></React.Suspense></AdminRoute>} />
+            <Route path="content/sondages/resultats" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><SondagesResultats /></React.Suspense></AdminRoute>} />
+            <Route path="content/outils" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><PromoToolsAdmin /></React.Suspense></AdminRoute>} />
+            <Route path="content/outils-visiteurs" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><OutilsVisiteursAdmin /></React.Suspense></AdminRoute>} />
+            <Route path="content/press/releases/:id" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><PressDetail /></React.Suspense></AdminRoute>} />
+            <Route path="content/press/dossiers/:id" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><DossierDetail /></React.Suspense></AdminRoute>} />
+            <Route path="seo/keywords" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><KeywordTracker /></React.Suspense></AdminRoute>} />
+            <Route path="translations" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><TranslationsDashboard /></React.Suspense></AdminRoute>} />
 
             {/* Villes scrapees */}
             <Route path="content/:sourceSlug/cities" element={<AdminRoute><ContentCities /></AdminRoute>} />
@@ -219,13 +258,13 @@ export default function App() {
             {/* Content v1 catch-all routes (must come after specific content/* routes) */}
             <Route path="content/:sourceSlug" element={<AdminRoute><ContentSourcePage /></AdminRoute>} />
             <Route path="content/:sourceSlug/:countrySlug" element={<AdminRoute><ContentCountryPage /></AdminRoute>} />
-            <Route path="seo" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><SeoDashboard /></React.Suspense></AdminRoute>} />
-            <Route path="seo/internal-links" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><SeoInternalLinks /></React.Suspense></AdminRoute>} />
-            <Route path="publishing" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><PublishingDashboard /></React.Suspense></AdminRoute>} />
-            <Route path="costs" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><CostsDashboard /></React.Suspense></AdminRoute>} />
-            <Route path="media" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><MediaLibrary /></React.Suspense></AdminRoute>} />
-            <Route path="admin/prompt-templates" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><PromptTemplates /></React.Suspense></AdminRoute>} />
-            <Route path="admin/presets" element={<AdminRoute><React.Suspense fallback={<div className="p-8 text-gray-400">Chargement...</div>}><GenerationPresets /></React.Suspense></AdminRoute>} />
+            <Route path="seo" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><SeoDashboard /></React.Suspense></AdminRoute>} />
+            <Route path="seo/internal-links" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><SeoInternalLinks /></React.Suspense></AdminRoute>} />
+            <Route path="publishing" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><PublishingDashboard /></React.Suspense></AdminRoute>} />
+            <Route path="costs" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><CostsDashboard /></React.Suspense></AdminRoute>} />
+            <Route path="media" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><MediaLibrary /></React.Suspense></AdminRoute>} />
+            <Route path="admin/prompt-templates" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><PromptTemplates /></React.Suspense></AdminRoute>} />
+            <Route path="admin/presets" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><GenerationPresets /></React.Suspense></AdminRoute>} />
 
             {/* Tools */}
             <Route path="content-engine" element={<ContentEngine />} />
@@ -245,8 +284,18 @@ export default function App() {
             {/* Legacy redirects — old routes redirect to new locations */}
             <Route path="statistiques" element={<Navigate to="/" replace />} />
             <Route path="admin" element={<Navigate to="/" replace />} />
+
+            {/* 404 catch-all */}
+            <Route path="*" element={
+              <div className="flex flex-col items-center justify-center h-96 gap-3">
+                <p className="text-2xl font-bold text-text">404</p>
+                <p className="text-muted">Page introuvable</p>
+                <Navigate to="/" replace />
+              </div>
+            } />
           </Route>
         </Routes>
+        </ErrorBoundary>
       </BrowserRouter>
     </AuthContext.Provider>
   );

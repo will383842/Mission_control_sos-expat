@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { useToast } from '../../components/Toast';
+import { toast as _toast } from '../../components/Toast';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -143,7 +143,7 @@ async function apiFetch<T>(path: string, options?: RequestInit, token?: string):
 
 export default function AffiliateDashboard() {
   const { user } = useAuth();
-  const { showToast } = useToast();
+  const showToast = (msg: string, type: 'success' | 'error') => _toast(type, msg);
   const token = (user as any)?.token;
 
   const [programs, setPrograms] = useState<AffiliateProgram[]>([]);
