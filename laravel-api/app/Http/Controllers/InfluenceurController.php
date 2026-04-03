@@ -173,7 +173,7 @@ class InfluenceurController extends Controller
         $urlToCheck = $data['profile_url'] ?? $data['website_url'] ?? null;
         if (BlockedDomainService::isScrapableDirectory($urlToCheck)) {
             $domain = Directory::extractDomain($urlToCheck);
-            $contactType = $data['contact_type'] ?? 'school';
+            $contactType = $data['contact_type'] ?? 'ecole';
 
             $existingDir = Directory::where('domain', $domain)
                 ->where('category', $contactType)
