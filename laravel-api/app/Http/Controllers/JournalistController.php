@@ -197,6 +197,9 @@ class JournalistController extends Controller
         if ($country = $request->input('country')) {
             $q->where('country', 'ilike', "%{$country}%");
         }
+        if ($language = $request->input('language')) {
+            $q->where('language', $language);
+        }
         if ($request->boolean('with_email')) {
             $q->whereNotNull('email');
         }
@@ -306,6 +309,7 @@ class JournalistController extends Controller
 
         if ($mediaType = $request->input('media_type')) $q->where('media_type', $mediaType);
         if ($topic = $request->input('topic'))           $q->whereJsonContains('topics', $topic);
+        if ($language = $request->input('language'))     $q->where('language', $language);
         if ($request->boolean('with_email'))             $q->whereNotNull('email');
 
         $contacts = $q->orderBy('publication')->orderBy('full_name')->get();
@@ -314,13 +318,14 @@ class JournalistController extends Controller
         return response()->streamDownload(function () use ($contacts) {
             $h = fopen('php://output', 'w');
             fwrite($h, "\xEF\xBB\xBF");
-            fputcsv($h, ['Nom complet', 'Prénom', 'Nom', 'Email', 'Téléphone', 'Publication', 'Rôle', 'Rubrique', 'Type', 'Pays', 'Twitter', 'LinkedIn', 'Statut', 'Notes'], ';');
+            fputcsv($h, ['Nom complet', 'Prénom', 'Nom', 'Email', 'Téléphone', 'Publication', 'Rôle', 'Rubrique', 'Type', 'Langue', 'Pays', 'Twitter', 'LinkedIn', 'Statut', 'Notes'], ';');
             foreach ($contacts as $c) {
                 fputcsv($h, [
                     $c->full_name, $c->first_name ?? '', $c->last_name ?? '',
                     $c->email ?? '', $c->phone ?? '', $c->publication,
                     $c->role ?? '', $c->beat ?? '', $c->media_type,
-                    $c->country, $c->twitter ?? '', $c->linkedin ?? '',
+                    $c->language ?? '', $c->country,
+                    $c->twitter ?? '', $c->linkedin ?? '',
                     $c->contact_status, $c->notes ?? '',
                 ], ';');
             }

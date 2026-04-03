@@ -212,10 +212,28 @@ class InfluenceurController extends Controller
             $data['profile_url_domain'] = self::normalizeProfileUrl($data['profile_url']);
         }
 
-        // Détection de doublon sur profile_url_domain
+        // Détection de doublon sur email (priorité absolue)
         $duplicateWarning = null;
+        if (!empty($data['email']) && !$forceDuplicate) {
+            $existing = Influenceur::whereRaw('LOWER(email) = ?', [strtolower(trim($data['email']))])
+                ->whereNull('deleted_at')
+                ->first();
+            if ($existing) {
+                return response()->json([
+                    'warning'       => 'duplicate_email',
+                    'message'       => "Un contact avec cet email existe déjà : {$existing->name} (ID {$existing->id}).",
+                    'existing_id'   => $existing->id,
+                    'existing_name' => $existing->name,
+                    'existing_type' => $existing->contact_type,
+                    'email'         => $data['email'],
+                ], 409);
+            }
+        }
+
+        // Détection de doublon sur profile_url_domain
         if (!empty($data['profile_url_domain'])) {
-            $existing = Influenceur::where('profile_url_domain', $data['profile_url_domain'])->first();
+            $existing = Influenceur::where('profile_url_domain', $data['profile_url_domain'])
+                ->whereNull('deleted_at')->first();
             if ($existing && !$forceDuplicate) {
                 return response()->json([
                     'warning'             => 'duplicate_detected',
@@ -332,6 +350,23 @@ class InfluenceurController extends Controller
                 : null;
         }
 
+        // Vérification doublon email sur update (exclut le contact courant)
+        if (!empty($data['email'])) {
+            $emailConflict = Influenceur::whereRaw('LOWER(email) = ?', [strtolower(trim($data['email']))])
+                ->whereNull('deleted_at')
+                ->where('id', '!=', $influenceur->id)
+                ->first();
+            if ($emailConflict) {
+                return response()->json([
+                    'warning'       => 'duplicate_email',
+                    'message'       => "Cet email est déjà utilisé par : {$emailConflict->name} (ID {$emailConflict->id}).",
+                    'existing_id'   => $emailConflict->id,
+                    'existing_name' => $emailConflict->name,
+                    'existing_type' => $emailConflict->contact_type,
+                ], 409);
+            }
+        }
+
         $oldStatus = $influenceur->status;
 
         if (isset($data['status']) && $data['status'] === 'active'
@@ -416,6 +451,38 @@ class InfluenceurController extends Controller
     // =========================================================================
     // REMINDERS PENDING
     // =========================================================================
+
+    public function checkEmail(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $email = trim($request->input('email', ''));
+        $excludeId = $request->input('exclude_id'); // ID du contact en cours d'édition
+
+        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return response()->json(['exists' => false]);
+        }
+
+        $query = Influenceur::whereRaw('LOWER(email) = ?', [strtolower($email)])
+            ->whereNull('deleted_at');
+
+        if ($excludeId) {
+            $query->where('id', '!=', (int) $excludeId);
+        }
+
+        $existing = $query->select('id', 'name', 'contact_type', 'category', 'status')->first();
+
+        if (!$existing) {
+            return response()->json(['exists' => false]);
+        }
+
+        return response()->json([
+            'exists'        => true,
+            'id'            => $existing->id,
+            'name'          => $existing->name,
+            'contact_type'  => $existing->contact_type,
+            'category'      => $existing->category,
+            'status'        => $existing->status,
+        ]);
+    }
 
     public function remindersPending(Request $request)
     {

@@ -19,6 +19,7 @@ interface JournalistContact {
   twitter: string | null;
   linkedin: string | null;
   contact_status: string;
+  language: string | null;
   source_url: string | null;
   topics: string[] | null;
   notes: string | null;
@@ -77,6 +78,22 @@ const STATUS_COLORS: Record<string, string> = {
 
 const TOPICS = ['entrepreneuriat', 'voyage', 'expatriation', 'international', 'business', 'tech', 'lifestyle', 'startup'];
 
+const LANGUAGES: Record<string, { label: string; flag: string }> = {
+  fr: { label: 'Français',    flag: '🇫🇷' },
+  en: { label: 'English',     flag: '🇬🇧' },
+  de: { label: 'Deutsch',     flag: '🇩🇪' },
+  es: { label: 'Español',     flag: '🇪🇸' },
+  pt: { label: 'Português',   flag: '🇵🇹' },
+  ar: { label: 'العربية',      flag: '🇸🇦' },
+  ru: { label: 'Русский',     flag: '🇷🇺' },
+  zh: { label: '中文',          flag: '🇨🇳' },
+  hi: { label: 'हिन्दी',        flag: '🇮🇳' },
+  lt: { label: 'Lietuvių',    flag: '🇱🇹' },
+  pl: { label: 'Polski',      flag: '🇵🇱' },
+  it: { label: 'Italiano',    flag: '🇮🇹' },
+  nl: { label: 'Nederlands',  flag: '🇳🇱' },
+};
+
 const CATEGORIES: Record<string, { label: string; icon: string; color: string }> = {
   presse_nationale:      { label: 'Presse Nationale',        icon: '🗞️', color: 'text-slate-300' },
   magazine_generaliste:  { label: 'Magazines Généralistes',  icon: '📰', color: 'text-gray-300' },
@@ -112,6 +129,7 @@ export default function JournalistContacts() {
   const [filterMedia, setFilterMedia] = useState('');
   const [filterTopic, setFilterTopic] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [filterLanguage, setFilterLanguage] = useState('');
   const [withEmail, setWithEmail] = useState(false);
   const [exporting, setExporting] = useState(false);
 
@@ -158,6 +176,7 @@ export default function JournalistContacts() {
       if (filterMedia) params.media_type = filterMedia;
       if (filterTopic) params.topic = filterTopic;
       if (filterStatus) params.contact_status = filterStatus;
+      if (filterLanguage) params.language = filterLanguage;
       if (withEmail) params.with_email = '1';
       const res = await api.get('/content-gen/journalists/contacts', { params, signal: ctrl.signal });
       if (!ctrl.signal.aborted) {
@@ -170,7 +189,7 @@ export default function JournalistContacts() {
     } finally {
       if (!ctrl.signal.aborted) setLoading(false);
     }
-  }, [page, search, filterMedia, filterTopic, filterStatus, withEmail]);
+  }, [page, search, filterMedia, filterTopic, filterStatus, filterLanguage, withEmail]);
 
   const fetchPublications = useCallback(async () => {
     setPubLoading(true);
@@ -486,6 +505,14 @@ export default function JournalistContacts() {
               {Object.keys(STATUS_COLORS).map(s => <option key={s} value={s}>{s}</option>)}
             </select>
 
+            <select value={filterLanguage} onChange={(e) => { setFilterLanguage(e.target.value); setPage(1); }}
+              className="bg-surface2 border border-border rounded-lg px-3 py-2 text-white text-sm">
+              <option value="">Toutes les langues</option>
+              {Object.entries(LANGUAGES).map(([code, { label, flag }]) => (
+                <option key={code} value={code}>{flag} {label}</option>
+              ))}
+            </select>
+
             <button onClick={() => { setWithEmail(!withEmail); setPage(1); }}
               className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${withEmail ? 'bg-green-900/40 text-green-300' : 'bg-surface2 text-muted hover:text-white'}`}>
               Avec email
@@ -509,6 +536,7 @@ export default function JournalistContacts() {
                     <th className="px-4 py-3 text-muted font-medium">Rôle / Rubrique</th>
                     <th className="px-4 py-3 text-muted font-medium">Email / Tel</th>
                     <th className="px-4 py-3 text-muted font-medium">Type</th>
+                    <th className="px-4 py-3 text-muted font-medium">Langue</th>
                     <th className="px-4 py-3 text-muted font-medium">Statut</th>
                     <th className="px-4 py-3 text-muted font-medium">Liens</th>
                   </tr>
@@ -544,6 +572,15 @@ export default function JournalistContacts() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
+                        {c.language && LANGUAGES[c.language] ? (
+                          <span className="text-sm" title={LANGUAGES[c.language].label}>
+                            {LANGUAGES[c.language].flag} <span className="text-xs text-muted">{c.language.toUpperCase()}</span>
+                          </span>
+                        ) : (
+                          <span className="text-muted/40 text-xs">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
                         <span className={`px-2 py-0.5 rounded text-[10px] font-medium capitalize ${STATUS_COLORS[c.contact_status] || 'bg-surface2 text-muted'}`}>
                           {c.contact_status}
                         </span>
@@ -569,7 +606,7 @@ export default function JournalistContacts() {
                   ))}
                   {contacts.length === 0 && !loading && (
                     <tr>
-                      <td colSpan={7} className="px-4 py-12 text-center text-muted">
+                      <td colSpan={8} className="px-4 py-12 text-center text-muted">
                         Aucun journaliste — lancez le scraping depuis l'onglet Publications
                       </td>
                     </tr>

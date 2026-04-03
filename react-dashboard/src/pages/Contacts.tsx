@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useContext } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../api/client';
 import { useContacts } from '../hooks/useContacts';
 import ContactsTable from '../components/ContactsTable';
@@ -44,18 +45,32 @@ interface ContactsSummary {
 export default function Contacts() {
   const { contacts, loading, error, hasMore, load, loadMore, createContact } = useContacts();
   const { user } = useContext(AuthContext);
+  const [searchParams] = useSearchParams();
 
   const [showCreate, setShowCreate] = useState(false);
   const [createForm, setCreateForm] = useState<CreateForm>(EMPTY_FORM);
   const [createError, setCreateError] = useState('');
   const [creating, setCreating] = useState(false);
+  const [emailCheck, setEmailCheck] = useState<{ exists: boolean; id?: number; name?: string; contact_type?: string } | null>(null);
+  const [emailCheckLoading, setEmailCheckLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [summary, setSummary] = useState<ContactsSummary | null>(null);
   const [activeCategory, setActiveCategory] = useState<ContactCategory | null>(null);
   const [currentFilters, setCurrentFilters] = useState<InfluenceurFilters>({});
   const loaderRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { load(); }, []);
+  // Lire ?category= et ?contact_type= depuis l'URL et filtrer automatiquement
+  useEffect(() => {
+    const cat = searchParams.get('category') as ContactCategory | null;
+    const contactType = searchParams.get('contact_type') ?? undefined;
+    setActiveCategory(cat);
+    const filters: InfluenceurFilters = {
+      ...(cat ? { category: cat } : {}),
+      ...(contactType ? { contact_type: contactType } : {}),
+    };
+    setCurrentFilters(filters);
+    load(filters);
+  }, [searchParams]);
 
   // Charger le résumé stats
   useEffect(() => {
@@ -110,6 +125,19 @@ export default function Contacts() {
     const newFilters: InfluenceurFilters = { ...currentFilters, category: cat ?? undefined, contact_type: undefined };
     setCurrentFilters(newFilters);
     load(newFilters);
+  };
+
+  const handleEmailBlur = async (email: string) => {
+    if (!email || !email.includes('@')) { setEmailCheck(null); return; }
+    setEmailCheckLoading(true);
+    try {
+      const res = await api.get('/contacts/check-email', { params: { email } });
+      setEmailCheck(res.data);
+    } catch {
+      setEmailCheck(null);
+    } finally {
+      setEmailCheckLoading(false);
+    }
   };
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -347,7 +375,20 @@ export default function Contacts() {
             <div>
               <label className="block text-xs text-muted mb-1">Email</label>
               <input type="email" value={createForm.email} placeholder="contact@..."
-                onChange={e => setCreateForm(p => ({ ...p, email: e.target.value }))} className={inp} />
+                onChange={e => { setCreateForm(p => ({ ...p, email: e.target.value })); setEmailCheck(null); }}
+                onBlur={e => handleEmailBlur(e.target.value)}
+                className={`${inp} ${emailCheck?.exists ? 'border-amber-500/60' : ''}`} />
+              {emailCheckLoading && <p className="text-xs text-muted mt-1">Vérification...</p>}
+              {emailCheck?.exists && (
+                <p className="text-xs text-amber-400 mt-1">
+                  ⚠ Existe déjà :{' '}
+                  <a href={`/contacts/${emailCheck.id}`} target="_blank" rel="noopener noreferrer"
+                    className="underline hover:text-amber-300">
+                    {emailCheck.name}
+                  </a>
+                  {' '}({emailCheck.contact_type})
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-xs text-muted mb-1">Téléphone</label>

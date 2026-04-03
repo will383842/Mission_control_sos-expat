@@ -20,6 +20,7 @@ use App\Http\Controllers\KeywordTrackingController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\ContactsBaseController;
+use App\Http\Controllers\ImportPipelineController;
 use App\Http\Controllers\ScrapingDashboardController;
 use App\Http\Controllers\JournalistController;
 use App\Http\Controllers\PressController;
@@ -110,6 +111,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // CONTACTS (Core CRM — table unifiée influenceurs)
     // ============================================================
     Route::get('/contacts/reminders-pending', [InfluenceurController::class, 'remindersPending']);
+    Route::get('/contacts/check-email', [InfluenceurController::class, 'checkEmail']);
     Route::get('/contacts/exports/csv', [ExportController::class, 'csv'])->middleware(['role:admin', 'throttle:10,1']);
     Route::get('/contacts/exports/excel', [ExportController::class, 'excel'])->middleware(['role:admin', 'throttle:10,1']);
 
@@ -511,9 +513,17 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 
         // Contacts Base Unifiée (toutes sources)
+        Route::prefix('import-pipeline')->group(function () {
+            Route::get('/stats', [ImportPipelineController::class, 'stats']);
+            Route::post('/import/{source}', [ImportPipelineController::class, 'importSource']);
+            Route::post('/import-all', [ImportPipelineController::class, 'importAll']);
+        });
+
         Route::prefix('contacts-base')->group(function () {
             Route::get('/stats', [ContactsBaseController::class, 'stats']);
             Route::get('/contacts', [ContactsBaseController::class, 'contacts']);
+            Route::get('/unified', [ContactsBaseController::class, 'unified']);
+            Route::get('/unified/export', [ContactsBaseController::class, 'unifiedExport']);
             Route::get('/duplicates', [ContactsBaseController::class, 'duplicates']);
             Route::post('/deduplicate', [ContactsBaseController::class, 'deduplicateAuto']);
         });
