@@ -74,8 +74,6 @@ const PromptTemplates = React.lazy(() => import('./pages/content/PromptTemplates
 const GenerationPresets = React.lazy(() => import('./pages/content/GenerationPresets'));
 const ClustersList = React.lazy(() => import('./pages/content/ClustersList'));
 const ClusterDetail = React.lazy(() => import('./pages/content/ClusterDetail'));
-const QaList = React.lazy(() => import('./pages/content/QaList'));
-const QaDetail = React.lazy(() => import('./pages/content/QaDetail'));
 const KeywordTracker = React.lazy(() => import('./pages/content/KeywordTracker'));
 const TranslationsDashboard = React.lazy(() => import('./pages/content/TranslationsDashboard'));
 const DailyScheduler = React.lazy(() => import('./pages/content/DailyScheduler'));
@@ -265,8 +263,6 @@ export default function App() {
             {/* Content Pipeline: Clusters, Q&A, Keywords, Translations */}
             <Route path="content/clusters" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ClustersList /></React.Suspense></AdminRoute>} />
             <Route path="content/clusters/:id" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ClusterDetail /></React.Suspense></AdminRoute>} />
-            <Route path="content/qa" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><QaList /></React.Suspense></AdminRoute>} />
-            <Route path="content/qa/:id" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><QaDetail /></React.Suspense></AdminRoute>} />
             <Route path="content/question-clusters" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><QuestionClustersList /></React.Suspense></AdminRoute>} />
             <Route path="content/generate-qr" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><GenerateQr /></React.Suspense></AdminRoute>} />
             <Route path="content/question-clusters/:id" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><QuestionClusterDetail /></React.Suspense></AdminRoute>} />
