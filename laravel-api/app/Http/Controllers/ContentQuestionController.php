@@ -64,7 +64,7 @@ class ContentQuestionController extends Controller
     {
         $question = ContentQuestion::findOrFail($id);
         $validated = $request->validate([
-            'article_status' => 'required|in:new,planned,writing,published,skipped',
+            'article_status' => 'required|in:new,planned,writing,published,skipped,opportunity,covered',
             'article_notes'  => 'nullable|string|max:2000',
         ]);
         $question->update($validated);

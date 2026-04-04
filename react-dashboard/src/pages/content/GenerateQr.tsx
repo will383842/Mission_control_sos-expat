@@ -21,14 +21,15 @@ interface Question {
 }
 
 const STATUS_BADGE: Record<string, string> = {
-  new:       'bg-blue-500/20 text-blue-400',
-  writing:   'bg-amber/20 text-amber animate-pulse',
-  published: 'bg-success/20 text-success',
-  skipped:   'bg-muted/20 text-muted',
+  opportunity: 'bg-blue-500/20 text-blue-400',
+  writing:     'bg-amber/20 text-amber animate-pulse',
+  published:   'bg-success/20 text-success',
+  skipped:     'bg-muted/20 text-muted',
+  covered:     'bg-gray-500/20 text-gray-400',
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  new: 'Disponible', writing: 'En cours…', published: 'Publiée', skipped: 'Ignorée',
+  opportunity: 'Disponible', writing: 'En cours…', published: 'Publiée', skipped: 'Ignorée', covered: 'Traitée',
 };
 
 const CATEGORIES = [
@@ -62,7 +63,7 @@ export default function GenerateQr() {
   const [questions, setQuestions]     = useState<Question[]>([]);
   const [qLoading, setQLoading]       = useState(false);
   const [qSearch, setQSearch]         = useState('');
-  const [qStatus, setQStatus]         = useState('new');
+  const [qStatus, setQStatus]         = useState('opportunity');
   const [qPage, setQPage]             = useState(1);
   const [qTotal, setQTotal]           = useState(0);
   const [editingId, setEditingId]     = useState<number | null>(null);
@@ -396,10 +397,11 @@ export default function GenerateQr() {
             <select value={qStatus} onChange={e => { setQStatus(e.target.value); setQPage(1); }}
               className={inputClass}>
               <option value="">Tous</option>
-              <option value="new">Disponibles</option>
+              <option value="opportunity">Disponibles</option>
               <option value="writing">En cours</option>
               <option value="published">Publiées</option>
               <option value="skipped">Ignorées</option>
+              <option value="covered">Traitées</option>
             </select>
           </div>
         </div>
@@ -463,7 +465,7 @@ export default function GenerateQr() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
                         {/* Modifier le titre */}
-                        {q.article_status === 'new' && editingId !== q.id && (
+                        {q.article_status === 'opportunity' && editingId !== q.id && (
                           <button onClick={() => startEdit(q)}
                             title="Modifier le titre avant génération"
                             className="text-xs px-1.5 py-1 bg-surface2 text-muted rounded hover:text-white hover:bg-surface transition-colors">
@@ -471,16 +473,16 @@ export default function GenerateQr() {
                           </button>
                         )}
                         {/* Ignorer */}
-                        {q.article_status === 'new' && (
+                        {q.article_status === 'opportunity' && (
                           <button onClick={() => updateStatus(q.id, 'skipped')}
                             title="Ignorer cette question"
                             className="text-xs px-1.5 py-1 bg-surface2 text-muted rounded hover:text-amber hover:bg-amber/10 transition-colors">
                             —
                           </button>
                         )}
-                        {/* Remettre en new */}
+                        {/* Remettre en file d'attente */}
                         {(q.article_status === 'skipped' || q.article_status === 'published') && (
-                          <button onClick={() => updateStatus(q.id, 'new')}
+                          <button onClick={() => updateStatus(q.id, 'opportunity')}
                             title="Remettre en file d'attente"
                             className="text-xs px-1.5 py-1 bg-surface2 text-muted rounded hover:text-blue-400 hover:bg-blue-500/10 transition-colors">
                             ↺

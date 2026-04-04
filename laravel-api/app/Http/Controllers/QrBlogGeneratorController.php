@@ -18,7 +18,7 @@ class QrBlogGeneratorController extends Controller
      */
     public function stats(): JsonResponse
     {
-        $available = ContentQuestion::where('article_status', 'new')->count();
+        $available = ContentQuestion::where('article_status', 'opportunity')->count();
         $writing   = ContentQuestion::where('article_status', 'writing')->count();
         $published = ContentQuestion::where('article_status', 'published')->count();
         $skipped   = ContentQuestion::where('article_status', 'skipped')->count();
@@ -61,7 +61,7 @@ class QrBlogGeneratorController extends Controller
         $category = $data['category'] ?? null;
 
         // Récupérer les IDs des questions à traiter
-        $query = ContentQuestion::where('article_status', 'new')
+        $query = ContentQuestion::where('article_status', 'opportunity')
             ->orderByDesc('views');
 
         if ($country) {
@@ -78,7 +78,7 @@ class QrBlogGeneratorController extends Controller
         $questionIds = $query->limit($limit)->pluck('id')->toArray();
 
         if (empty($questionIds)) {
-            return response()->json(['message' => 'Aucune question disponible (status=new).'], 422);
+            return response()->json(['message' => 'Aucune question disponible (status=opportunity).'], 422);
         }
 
         // Initialiser la progression dans Redis
@@ -125,9 +125,9 @@ class QrBlogGeneratorController extends Controller
      */
     public function reset(): JsonResponse
     {
-        $count = ContentQuestion::where('article_status', 'writing')->update(['article_status' => 'new']);
+        $count = ContentQuestion::where('article_status', 'writing')->update(['article_status' => 'opportunity']);
         Cache::forget(self::PROGRESS_KEY);
 
-        return response()->json(['message' => "{$count} question(s) remises en statut 'new'.", 'reset' => $count]);
+        return response()->json(['message' => "{$count} question(s) remises en statut 'opportunity'.", 'reset' => $count]);
     }
 }

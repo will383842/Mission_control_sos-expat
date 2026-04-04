@@ -85,7 +85,7 @@ class GenerateQrBlogJob implements ShouldQueue
 
                 if (! $frContent) {
                     $log[] = ['type' => 'error', 'id' => $qId, 'title' => $title, 'reason' => 'Génération FR échouée'];
-                    $question->update(['article_status' => 'new']);
+                    $question->update(['article_status' => 'opportunity']);
                     $errors++;
                     continue;
                 }
@@ -96,7 +96,7 @@ class GenerateQrBlogJob implements ShouldQueue
 
                 if (! $sentFr) {
                     $log[] = ['type' => 'error', 'id' => $qId, 'title' => $title, 'reason' => 'Envoi FR Blog échoué'];
-                    $question->update(['article_status' => 'new']);
+                    $question->update(['article_status' => 'opportunity']);
                     $errors++;
                     continue;
                 }
@@ -118,7 +118,7 @@ class GenerateQrBlogJob implements ShouldQueue
             } catch (\Throwable $e) {
                 Log::error("GenerateQrBlogJob question #{$qId}", ['error' => $e->getMessage()]);
                 $log[] = ['type' => 'error', 'id' => $qId, 'title' => $question->title, 'reason' => $e->getMessage()];
-                $question->update(['article_status' => 'new']);
+                $question->update(['article_status' => 'opportunity']);
                 $errors++;
             }
 
