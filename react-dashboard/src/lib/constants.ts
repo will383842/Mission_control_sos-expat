@@ -20,6 +20,8 @@ export const DEFAULT_CONTACT_TYPES: ContactTypeConfig[] = [
   // Institutionnel
   { value: 'consulat',               label: 'Consulats & Ambassades',    icon: '🏛️', color: '#6366F1', bg: 'bg-indigo-500/20',  text: 'text-indigo-400' },
   { value: 'association',            label: 'Associations',              icon: '🤝', color: '#EC4899', bg: 'bg-pink-400/20',     text: 'text-pink-300' },
+  { value: 'ufe',                    label: 'UFE Monde',                 icon: '🇫🇷', color: '#2563EB', bg: 'bg-blue-600/20',     text: 'text-blue-400' },
+  { value: 'alliance_francaise',     label: 'Alliance Française',        icon: '🎭', color: '#7C3AED', bg: 'bg-violet-600/20',   text: 'text-violet-400' },
   { value: 'ecole',                  label: 'Écoles & Formation',        icon: '🏫', color: '#10B981', bg: 'bg-emerald-500/20',  text: 'text-emerald-400' },
   { value: 'institut_culturel',      label: 'Instituts culturels',       icon: '🎭', color: '#8B5CF6', bg: 'bg-violet-500/20',   text: 'text-violet-400' },
   { value: 'chambre_commerce',       label: 'Chambres de commerce',      icon: '🏢', color: '#14B8A6', bg: 'bg-teal-500/20',     text: 'text-teal-400' },
@@ -129,7 +131,7 @@ export const CONTACT_CATEGORIES: CategoryConfig[] = [
     bg: 'bg-indigo-500/20',
     text: 'text-indigo-400',
     border: 'border-indigo-500/40',
-    types: ['consulat', 'association', 'ecole', 'institut_culturel', 'chambre_commerce'],
+    types: ['consulat', 'association', 'ufe', 'alliance_francaise', 'ecole', 'institut_culturel', 'chambre_commerce'],
   },
   {
     value: 'medias_influence',

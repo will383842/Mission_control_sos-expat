@@ -192,6 +192,10 @@ export default function App() {
               element={<CategoryContactsPage key="digital" category="digital" />} />
             <Route path="contacts/ecoles"
               element={<CategoryContactsPage key="ecoles" category="institutionnel" contactType="ecole" />} />
+            <Route path="contacts/ufe"
+              element={<CategoryContactsPage key="ufe" category="institutionnel" contactType="ufe" />} />
+            <Route path="contacts/alliance-francaise"
+              element={<CategoryContactsPage key="alliance_francaise" category="institutionnel" contactType="alliance_francaise" />} />
 
             {/* ── Outils de sourcing contacts ── */}
             <Route path="contacts/journalistes" element={<AdminRoute><JournalistContacts /></AdminRoute>} />

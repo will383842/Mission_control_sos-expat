@@ -415,6 +415,12 @@ export default function Layout() {
                 <NavLink to="/contacts/ecoles" className={subNavClass} onClick={handleNavClick}>
                   🏫 Écoles
                 </NavLink>
+                <NavLink to="/contacts/ufe" className={subNavClass} onClick={handleNavClick}>
+                  🇫🇷 UFE Monde
+                </NavLink>
+                <NavLink to="/contacts/alliance-francaise" className={subNavClass} onClick={handleNavClick}>
+                  🎭 Alliance Française
+                </NavLink>
                 <NavLink to="/content/lawyers" className={subNavClass} onClick={handleNavClick}>
                   ⚖️ Avocats
                 </NavLink>
