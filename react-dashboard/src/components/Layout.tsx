@@ -508,6 +508,9 @@ export default function Layout() {
                     <NavLink to="/content/generate-qr" className={subNavClass} onClick={handleNavClick}>
                       ❓ Générer Q/R
                     </NavLink>
+                    <NavLink to="/content/news" className={subNavClass} onClick={handleNavClick}>
+                      📰 News RSS
+                    </NavLink>
                     <NavLink to="/content/campaigns" className={subNavClass} onClick={handleNavClick}>
                       🎯 Campagnes
                     </NavLink>
@@ -528,9 +531,6 @@ export default function Layout() {
                     </NavLink>
                     <NavLink to="/content/outils-visiteurs" className={subNavClass} onClick={handleNavClick}>
                       🌐 Outils Visiteurs
-                    </NavLink>
-                    <NavLink to="/content/news" className={subNavClass} onClick={handleNavClick}>
-                      📰 News RSS
                     </NavLink>
                   </NavSubGroup>
 
