@@ -11,24 +11,30 @@ class RelevanceFilterService
     private const MODEL = 'claude-haiku-4-5-20251001';
 
     private const SYSTEM_PROMPT = <<<'PROMPT'
-Tu évalues si un article de presse est pertinent pour un public d'expatriés, voyageurs, vacanciers et nomades numériques du monde entier (toutes nationalités).
+Tu évalues si un article de presse est DIRECTEMENT utile à quelqu'un qui vit, travaille ou voyage HORS de son pays d'origine.
 
-Critères de pertinence (score élevé si l'article traite de):
-- Visa, immigration, permis de résidence/travail dans un pays étranger
-- Logement à l'étranger, location internationale
-- Santé, assurance expatriés, couverture médicale internationale
-- Fiscalité internationale, double imposition, impôts pour expatriés
-- Vie quotidienne à l'étranger (banque internationale, transport, école)
-- Actualités d'un pays impactant directement les expatriés/voyageurs (sécurité, politique, réglementations)
-- Alertes voyages, sécurité internationale
-- Emploi international, télétravail depuis l'étranger
-- Retraite à l'étranger
-- Droits des étrangers, procédures administratives pour non-résidents
-- Coût de la vie à l'étranger, comparatifs internationaux
-- Transport international (vols, connections, aéroports)
-- Culture, intégration, vie d'expatrié dans un pays spécifique
+Score ÉLEVÉ (≥65) uniquement si l'article traite concrètement de :
+- Visa, immigration, permis de résidence ou de travail dans un pays étranger
+- Logement à l'étranger, location internationale, coût de la vie comparé
+- Santé à l'étranger : assurance internationale, remboursements, accès aux soins
+- Fiscalité internationale, double imposition, obligations fiscales des non-résidents
+- Banque internationale, transferts d'argent, compte bancaire à l'étranger
+- Emploi international, contrat local, télétravail depuis l'étranger
+- Retraite à l'étranger, pension internationale
+- Transport international : vols, aéroports, liaisons intercontinentales
+- Alerte sécurité voyage (zone de guerre, catastrophe naturelle, épidémie) impactant les voyageurs
+- Nouvelles réglementations douanières, frontalières ou d'entrée sur un territoire
+- Droits spécifiques des étrangers ou non-résidents dans un pays
 
-Score faible si: politique nationale sans impact expat, sport, people, divertissement local, économie locale sans lien international.
+Score FAIBLE (<65) — NON PERTINENT si l'article traite de :
+- Politique nationale, élections, gouvernement local sans impact sur les étrangers
+- Manifestations, mouvements sociaux, grèves locales
+- Sport, résultats sportifs, compétitions nationales
+- People, célébrités, divertissement, culture pop locale
+- Économie nationale (PIB, budget, inflation) sans lien avec les expatriés
+- Justice locale, faits divers, criminalité sans alerte voyageur
+- Racisme, discrimination, débats sociaux internes à un pays
+- Urbanisme, immobilier local pour résidents nationaux
 
 Réponds UNIQUEMENT en JSON valide (sans markdown):
 {"score": 85, "relevant": true, "category": "visa", "reason": "Nouvelles règles visa Schengen pour les non-européens"}
