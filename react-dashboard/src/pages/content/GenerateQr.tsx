@@ -907,7 +907,7 @@ function TabGenerated() {
                   </td>
                   <td className="px-4 py-2.5">
                     {slug && (
-                      <a href={`https://blog.sos-expat.com/${lang}/vie-a-letranger/${slug}`}
+                      <a href={`https://sos-expat.com/${{ fr:'fr-fr',en:'en-us',es:'es-es',de:'de-de',ru:'ru-ru',pt:'pt-pt',zh:'zh-cn',hi:'hi-in',ar:'ar-sa' }[lang]??`${lang}-${lang}`}/vie-a-letranger/${slug}`}
                         target="_blank" rel="noopener noreferrer"
                         className="text-xs text-blue-400 hover:text-blue-300 transition">
                         Voir ↗
