@@ -719,4 +719,26 @@ class StatsController extends Controller
             'russia' => 'Europe', 'russie' => 'Europe',
         ];
     }
+
+    /**
+     * Count contacts for a specific category (and optionally a contact_type).
+     * GET /api/stats/category-count?category=institutionnel[&contact_type=consulat]
+     */
+    public function categoryCount(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $query = Influenceur::query();
+
+        if ($request->user()->isResearcher()) {
+            $query->where('created_by', $request->user()->id);
+        }
+
+        if ($request->category) {
+            $query->where('category', $request->category);
+        }
+        if ($request->contact_type) {
+            $query->where('contact_type', $request->contact_type);
+        }
+
+        return response()->json(['count' => $query->count()]);
+    }
 }

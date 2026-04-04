@@ -244,6 +244,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/run-all', [\App\Http\Controllers\QualityController::class, 'runAll']);
     });
 
+    // Nombre de contacts pour une catégorie/type donné
+    Route::get('/stats/category-count', [StatsController::class, 'categoryCount']);
+
     // Matrice de couverture type × pays × langue (admin uniquement)
     Route::get('/stats/coverage-matrix', [StatsController::class, 'coverageMatrix'])
         ->middleware('role:admin');
