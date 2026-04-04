@@ -208,6 +208,10 @@ export default function JournalistContacts() {
   }, []);
 
   useEffect(() => { fetchContacts(); }, [fetchContacts]);
+  // Load stats immediately (for stats pills), reload publications when that tab opens
+  useEffect(() => {
+    api.get('/content-gen/journalists/stats').then(r => setStats(r.data)).catch(() => {});
+  }, []);
   useEffect(() => { if (tab === 'publications') fetchPublications(); }, [tab, fetchPublications]);
 
   const handleExport = async () => {
@@ -376,35 +380,33 @@ export default function JournalistContacts() {
         </div>
       )}
 
-      {/* Stats */}
+      {/* Stats pills */}
       {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="bg-surface border border-border rounded-xl p-3 text-center">
-            <div className="text-white font-bold text-xl">{stats.total_contacts.toLocaleString()}</div>
-            <div className="text-xs text-muted">Journalistes</div>
-          </div>
-          <div className="bg-surface border border-border rounded-xl p-3 text-center">
-            <div className="text-green-400 font-bold text-xl">{stats.with_email.toLocaleString()}</div>
-            <div className="text-xs text-muted">Avec email</div>
-          </div>
-          <div className="bg-surface border border-border rounded-xl p-3 text-center">
-            <div className="text-blue-300 font-bold text-xl">{stats.total_publications}</div>
-            <div className="text-xs text-muted">Publications</div>
-          </div>
-          <div className="bg-surface border border-border rounded-xl p-3 text-center">
-            <div className="text-amber-400 font-bold text-xl">{stats.pub_stats?.scraped ?? 0}</div>
-            <div className="text-xs text-muted">Scrapées</div>
-          </div>
-        </div>
-      )}
-
-      {/* By media type */}
-      {stats?.by_media_type && Object.keys(stats.by_media_type).length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {Object.entries(stats.by_media_type).map(([type, count]) => (
-            <div key={type} className={`px-3 py-1.5 rounded-lg text-xs font-medium ${MEDIA_TYPES[type]?.color || 'bg-surface2 text-muted'}`}>
-              {MEDIA_TYPES[type]?.label || type}: <span className="font-bold">{count}</span>
-            </div>
+          <span className="px-3 py-1 bg-surface border border-border rounded-lg text-xs">
+            <span className="text-white font-semibold">{stats.total_contacts.toLocaleString()}</span>
+            <span className="text-muted ml-1">journalistes</span>
+          </span>
+          {stats.total_contacts > 0 && (
+            <span className="px-3 py-1 bg-surface border border-border rounded-lg text-xs">
+              <span className="text-green-400 font-semibold">{Math.round(stats.with_email / stats.total_contacts * 100)}%</span>
+              <span className="text-muted ml-1">avec email</span>
+            </span>
+          )}
+          <span className="px-3 py-1 bg-surface border border-border rounded-lg text-xs">
+            <span className="text-blue-300 font-semibold">{stats.total_publications}</span>
+            <span className="text-muted ml-1">publications</span>
+          </span>
+          <span className="px-3 py-1 bg-surface border border-border rounded-lg text-xs">
+            <span className="text-amber-400 font-semibold">{stats.pub_stats?.scraped ?? 0}</span>
+            <span className="text-muted ml-1">scrapées</span>
+          </span>
+          {Object.entries(stats.by_media_type ?? {}).map(([type, count]) => (
+            <button key={type}
+              onClick={() => { setFilterMedia(filterMedia === type ? '' : type); setPage(1); }}
+              className={`px-3 py-1 border rounded-lg text-xs font-medium transition-colors ${filterMedia === type ? 'border-violet/50 bg-violet/20 text-white' : `${MEDIA_TYPES[type]?.color || 'bg-surface2 text-muted'} border-transparent hover:border-border`}`}>
+              {MEDIA_TYPES[type]?.label || type} <span className="font-bold ml-1">{count}</span>
+            </button>
           ))}
         </div>
       )}
@@ -606,8 +608,10 @@ export default function JournalistContacts() {
                   ))}
                   {contacts.length === 0 && !loading && (
                     <tr>
-                      <td colSpan={8} className="px-4 py-12 text-center text-muted">
-                        Aucun journaliste — lancez le scraping depuis l'onglet Publications
+                      <td colSpan={8} className="px-4 py-16 text-center">
+                        <div className="text-4xl mb-3">📰</div>
+                        <div className="text-white font-medium">Aucun journaliste trouvé</div>
+                        <div className="text-muted text-sm mt-1">Modifiez vos filtres ou lancez le scraping depuis l'onglet Publications</div>
                       </td>
                     </tr>
                   )}

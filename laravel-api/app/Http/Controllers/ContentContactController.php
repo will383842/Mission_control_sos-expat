@@ -59,12 +59,21 @@ class ContentContactController extends Controller
             ->with('source:id,name')
             ->get();
 
+        $byCountry = ContentContact::selectRaw('country, COUNT(*) as count')
+            ->whereNotNull('country')
+            ->where('country', '!=', '')
+            ->groupBy('country')
+            ->orderByDesc('count')
+            ->limit(8)
+            ->pluck('count', 'country');
+
         return response()->json([
             'total'      => $total,
             'with_email' => $withEmail,
             'with_phone' => $withPhone,
             'by_sector'  => $bySector,
             'by_source'  => $bySource,
+            'by_country' => $byCountry,
         ]);
     }
 

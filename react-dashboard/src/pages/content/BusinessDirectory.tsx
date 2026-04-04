@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import api from '../../api/client';
+import { LANGUAGES, getCountryFlag, getLanguageFlag } from '../../lib/constants';
 
 interface Business {
   id: number;
@@ -56,6 +57,7 @@ export default function BusinessDirectory() {
   const [filterCountry, setFilterCountry] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterEmail, setFilterEmail] = useState('');
+  const [filterLanguage, setFilterLanguage] = useState('');
   const [tab, setTab] = useState<'list' | 'countries' | 'stats'>('list');
   const [exporting, setExporting] = useState(false);
 
@@ -78,6 +80,7 @@ export default function BusinessDirectory() {
       if (filterCountry) params.country = filterCountry;
       if (filterCategory) params.category = filterCategory;
       if (filterEmail) params.has_email = filterEmail;
+      if (filterLanguage) params.language = filterLanguage;
       const res = await api.get('/businesses', { params, signal: controller.signal });
       if (!controller.signal.aborted) {
         setBusinesses(res.data.data);
@@ -90,7 +93,7 @@ export default function BusinessDirectory() {
     } finally {
       if (!controller.signal.aborted) setLoading(false);
     }
-  }, [page, search, filterCountry, filterCategory, filterEmail]);
+  }, [page, search, filterCountry, filterCategory, filterEmail, filterLanguage]);
 
   useEffect(() => { fetchBusinesses(); }, [fetchBusinesses]);
 
@@ -122,6 +125,7 @@ export default function BusinessDirectory() {
       if (filterCountry) params.country = filterCountry;
       if (filterCategory) params.category = filterCategory;
       if (filterEmail) params.has_email = '1';
+      if (filterLanguage) params.language = filterLanguage;
       if (search) params.search = search;
       const res = await api.get('/businesses/export', { params, responseType: 'blob' });
       const url = window.URL.createObjectURL(new Blob([res.data]));
@@ -171,20 +175,33 @@ export default function BusinessDirectory() {
         </div>
       )}
 
-      {/* KPIs */}
+      {/* Stats pills */}
       {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          {[
-            { label: 'Total', value: stats.total.toLocaleString() },
-            { label: 'Avec email', value: stats.with_email.toLocaleString(), color: 'text-green-400' },
-            { label: 'Avec telephone', value: stats.with_phone.toLocaleString() },
-            { label: 'Avec site web', value: stats.with_website.toLocaleString() },
-            { label: 'Premium', value: stats.premium.toLocaleString(), color: 'text-amber' },
-          ].map((k) => (
-            <div key={k.label} className="bg-surface border border-border rounded-xl p-3 text-center">
-              <div className={`text-lg font-bold ${k.color || 'text-white'}`}>{k.value}</div>
-              <div className="text-xs text-muted">{k.label}</div>
-            </div>
+        <div className="flex flex-wrap gap-2">
+          <span className="px-3 py-1 bg-surface border border-border rounded-lg text-xs">
+            <span className="text-white font-semibold">{stats.total.toLocaleString()}</span>
+            <span className="text-muted ml-1">entreprises</span>
+          </span>
+          {stats.total > 0 && (
+            <span className="px-3 py-1 bg-surface border border-border rounded-lg text-xs">
+              <span className="text-green-400 font-semibold">{Math.round(stats.with_email / stats.total * 100)}%</span>
+              <span className="text-muted ml-1">avec email</span>
+            </span>
+          )}
+          <span className="px-3 py-1 bg-surface border border-border rounded-lg text-xs">
+            <span className="text-cyan font-semibold">{stats.with_phone.toLocaleString()}</span>
+            <span className="text-muted ml-1">avec tél.</span>
+          </span>
+          <span className="px-3 py-1 bg-surface border border-border rounded-lg text-xs">
+            <span className="text-amber font-semibold">{stats.premium.toLocaleString()}</span>
+            <span className="text-muted ml-1">premium</span>
+          </span>
+          {stats.by_country.slice(0, 4).map((c) => (
+            <button key={c.country_slug}
+              onClick={() => { setFilterCountry(filterCountry === c.country_slug ? '' : c.country_slug); setTab('list'); setPage(1); }}
+              className={`px-3 py-1 border rounded-lg text-xs transition-colors ${filterCountry === c.country_slug ? 'bg-violet/20 border-violet/50 text-white' : 'bg-surface border-border text-muted hover:text-white'}`}>
+              {getCountryFlag(c.country)} {c.country} <span className="font-semibold text-white ml-1">{c.count}</span>
+            </button>
           ))}
         </div>
       )}
@@ -227,6 +244,13 @@ export default function BusinessDirectory() {
               <option value="">Tous</option>
               <option value="1">Avec email</option>
             </select>
+            <select value={filterLanguage} onChange={(e) => { setFilterLanguage(e.target.value); setPage(1); }}
+              className="bg-surface2 border border-border rounded-lg px-3 py-2 text-white text-sm">
+              <option value="">Toutes langues</option>
+              {LANGUAGES.map((l) => (
+                <option key={l.code} value={l.code}>{l.flag} {l.label}</option>
+              ))}
+            </select>
           </div>
 
           <div className="bg-surface border border-border rounded-xl overflow-x-auto">
@@ -251,7 +275,13 @@ export default function BusinessDirectory() {
                 </thead>
                 <tbody>
                   {businesses.length === 0 ? (
-                    <tr><td colSpan={9} className="px-4 py-8 text-center text-muted">Aucune entreprise trouvee</td></tr>
+                    <tr>
+                      <td colSpan={9} className="px-4 py-16 text-center">
+                        <div className="text-4xl mb-3">🏢</div>
+                        <div className="text-white font-medium">Aucune entreprise trouvée</div>
+                        <div className="text-muted text-sm mt-1">Modifiez vos filtres ou lancez un scraping</div>
+                      </td>
+                    </tr>
                   ) : businesses.map((b) => (
                     <tr key={b.id} className="border-b border-border/50 hover:bg-surface2 transition-colors">
                       <td className="px-4 py-2">

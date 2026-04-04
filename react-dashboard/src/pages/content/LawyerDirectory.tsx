@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import api from '../../api/client';
 import { toast } from '../../components/Toast';
-import { getLanguageLabel } from '../../lib/constants';
+import { getLanguageLabel, getLanguageFlag, getCountryFlag } from '../../lib/constants';
 
 interface LawyerRecord {
   id: number;
@@ -201,25 +201,41 @@ export default function LawyerDirectory() {
         </div>
       </div>
 
-      {/* Stats cards */}
+      {/* Stats pills */}
       {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="bg-surface border border-border rounded-xl p-3 text-center">
-            <div className="text-xl font-bold text-white">{stats.total.toLocaleString()}</div>
-            <div className="text-xs text-muted">Total avocats</div>
-          </div>
-          <div className="bg-surface border border-border rounded-xl p-3 text-center">
-            <div className="text-xl font-bold text-green-400">{stats.with_email.toLocaleString()}</div>
-            <div className="text-xs text-muted">Avec email</div>
-          </div>
-          <div className="bg-surface border border-border rounded-xl p-3 text-center">
-            <div className="text-xl font-bold text-blue-400">{stats.by_country.length}</div>
-            <div className="text-xs text-muted">Pays couverts</div>
-          </div>
-          <div className="bg-surface border border-border rounded-xl p-3 text-center">
-            <div className="text-xl font-bold text-orange-400">{stats.immigration.toLocaleString()}</div>
-            <div className="text-xs text-muted">Immigration</div>
-          </div>
+        <div className="flex flex-wrap gap-2">
+          <span className="px-3 py-1 bg-surface border border-border rounded-lg text-xs">
+            <span className="text-white font-semibold">{stats.total.toLocaleString()}</span>
+            <span className="text-muted ml-1">avocats</span>
+          </span>
+          {stats.total > 0 && (
+            <span className="px-3 py-1 bg-surface border border-border rounded-lg text-xs">
+              <span className="text-green-400 font-semibold">{Math.round(stats.with_email / stats.total * 100)}%</span>
+              <span className="text-muted ml-1">avec email</span>
+            </span>
+          )}
+          <span className="px-3 py-1 bg-surface border border-border rounded-lg text-xs">
+            <span className="text-blue-400 font-semibold">{stats.by_country.length}</span>
+            <span className="text-muted ml-1">pays</span>
+          </span>
+          <span className="px-3 py-1 bg-surface border border-border rounded-lg text-xs">
+            <span className="text-orange-400 font-semibold">{stats.immigration.toLocaleString()}</span>
+            <span className="text-muted ml-1">immigration</span>
+          </span>
+          {stats.by_language.slice(0, 4).map((l) => (
+            <button key={l.language}
+              onClick={() => { setFilterLanguage(filterLanguage === l.language ? '' : l.language); setTab('list'); setPage(1); }}
+              className={`px-3 py-1 border rounded-lg text-xs transition-colors ${filterLanguage === l.language ? 'bg-violet/20 border-violet/50 text-white' : 'bg-surface border-border text-muted hover:text-white'}`}>
+              {getLanguageFlag(l.language)} <span className="font-semibold text-white ml-1">{l.count.toLocaleString()}</span>
+            </button>
+          ))}
+          {stats.by_country.slice(0, 4).map((c) => (
+            <button key={c.country_code}
+              onClick={() => { setFilterCountry(filterCountry === c.country_code ? '' : c.country_code); setTab('list'); setPage(1); }}
+              className={`px-3 py-1 border rounded-lg text-xs transition-colors ${filterCountry === c.country_code ? 'bg-violet/20 border-violet/50 text-white' : 'bg-surface border-border text-muted hover:text-white'}`}>
+              {getCountryFlag(c.country)} {c.country} <span className="font-semibold text-white ml-1">{c.count.toLocaleString()}</span>
+            </button>
+          ))}
         </div>
       )}
 
@@ -308,7 +324,13 @@ export default function LawyerDirectory() {
                     <div className="flex justify-center"><div className="w-6 h-6 border-2 border-violet border-t-transparent rounded-full animate-spin" /></div>
                   </td></tr>
                 ) : lawyers.length === 0 ? (
-                  <tr><td colSpan={8} className="px-4 py-12 text-center text-muted">Aucun avocat trouvé</td></tr>
+                  <tr>
+                    <td colSpan={8} className="px-4 py-16 text-center">
+                      <div className="text-4xl mb-3">⚖️</div>
+                      <div className="text-white font-medium">Aucun avocat trouvé</div>
+                      <div className="text-muted text-sm mt-1">Modifiez vos filtres ou lancez un scraping</div>
+                    </td>
+                  </tr>
                 ) : lawyers.map(l => (
                   <tr key={l.id} className="border-b border-border/50 hover:bg-surface2/50 transition-colors">
                     <td className="px-4 py-3 text-white font-medium">{l.full_name}</td>
