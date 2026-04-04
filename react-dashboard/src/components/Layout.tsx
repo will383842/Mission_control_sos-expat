@@ -342,9 +342,6 @@ export default function Layout() {
                     <NavLink to="/content/contacts" className={subNavClass} onClick={handleNavClick}>
                       🌐 Contacts web
                     </NavLink>
-                    <NavLink to="/content/country-directory" className={subNavClass} onClick={handleNavClick}>
-                      🗺️ Annuaire Pays
-                    </NavLink>
                   </NavSubGroup>
 
                   <NavSubGroup label="Données contenu" isOpen={openSubGroups.sourcing_content} onToggle={() => toggleSubGroup('sourcing_content')}>
@@ -417,6 +414,9 @@ export default function Layout() {
                 </NavLink>
                 <NavLink to="/contacts/digital" className={subNavClass} onClick={handleNavClick}>
                   🔗 Digital & SEO
+                </NavLink>
+                <NavLink to="/content/country-directory" className={subNavClass} onClick={handleNavClick}>
+                  🗺️ Annuaire Pays
                 </NavLink>
 
                 {/* ── Actions ── */}
