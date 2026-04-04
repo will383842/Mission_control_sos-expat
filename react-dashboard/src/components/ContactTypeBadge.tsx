@@ -9,7 +9,7 @@ interface Props {
 }
 
 export default function ContactTypeBadge({ type, size = 'sm', showIcon = false }: Props) {
-  const config = CONTACT_TYPE_MAP[type] ?? CONTACT_TYPES[0];
+  const config = CONTACT_TYPE_MAP[type] ?? { value: type, label: type ?? 'Autre', icon: '📁', color: '#6B7280', bg: 'bg-gray-500/20', text: 'text-gray-400' };
   const sizeClass = size === 'sm' ? 'text-[10px] px-1.5 py-0.5' : 'text-xs px-2 py-1';
 
   return (
