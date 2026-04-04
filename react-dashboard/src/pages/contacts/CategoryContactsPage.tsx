@@ -1,12 +1,16 @@
 import React, { useEffect, useRef, useState, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
-import api from '../api/client';
-import { useContacts } from '../hooks/useContacts';
-import ContactsTable from '../components/ContactsTable';
-import FilterBar from '../components/FilterBar';
-import { AuthContext } from '../hooks/useAuth';
-import type { ContactCategory, ContactType, InfluenceurFilters, PipelineStatus } from '../types/influenceur';
-import { CONTACT_CATEGORIES, CONTACT_TYPES, PIPELINE_STATUSES } from '../lib/constants';
+import api from '../../api/client';
+import { useContacts } from '../../hooks/useContacts';
+import ContactsTable from '../../components/ContactsTable';
+import FilterBar from '../../components/FilterBar';
+import { AuthContext } from '../../hooks/useAuth';
+import { CONTACT_CATEGORIES, CONTACT_TYPES } from '../../lib/constants';
+import type { ContactCategory, ContactType, InfluenceurFilters, PipelineStatus } from '../../types/influenceur';
+
+interface Props {
+  category: ContactCategory;
+  contactType?: ContactType;
+}
 
 type CreateForm = {
   contact_type: ContactType;
@@ -26,77 +30,54 @@ type CreateForm = {
   source: string;
 };
 
-const EMPTY_FORM: CreateForm = {
-  contact_type: CONTACT_TYPES[0]?.value || 'association',
+const EMPTY_FORM = (defaultType: ContactType): CreateForm => ({
+  contact_type: defaultType,
   name: '', first_name: '', last_name: '', company: '',
   email: '', phone: '', country: '', language: '',
   profile_url: '', website_url: '', linkedin_url: '',
   status: 'new', notes: '', source: 'manual',
-};
+});
 
-interface ContactsSummary {
-  total: number;
-  with_email: number;
-  with_phone: number;
-  verified: number;
-  by_category: Record<string, number>;
-}
-
-export default function Contacts() {
+/**
+ * Page générique par catégorie de contacts.
+ * Chaque route dédiée (ex: /contacts/institutionnel) monte une instance FRAÎCHE
+ * de ce composant, garantissant un filtre toujours correct sans bug de stale state.
+ */
+export default function CategoryContactsPage({ category, contactType }: Props) {
   const { contacts, loading, error, hasMore, load, loadMore, createContact } = useContacts();
   const { user } = useContext(AuthContext);
-  const navigate = useNavigate();
+  const loaderRef = useRef<HTMLDivElement>(null);
 
   const [showCreate, setShowCreate] = useState(false);
-  const [createForm, setCreateForm] = useState<CreateForm>(EMPTY_FORM);
+  const [createForm, setCreateForm] = useState<CreateForm>(
+    EMPTY_FORM(CONTACT_CATEGORIES.find(c => c.value === category)?.types[0] as ContactType ?? 'association')
+  );
   const [createError, setCreateError] = useState('');
   const [creating, setCreating] = useState(false);
   const [emailCheck, setEmailCheck] = useState<{ exists: boolean; id?: number; name?: string; contact_type?: string } | null>(null);
   const [emailCheckLoading, setEmailCheckLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [summary, setSummary] = useState<ContactsSummary | null>(null);
-  const [currentFilters, setCurrentFilters] = useState<InfluenceurFilters>({});
-  const loaderRef = useRef<HTMLDivElement>(null);
+  const [categoryTotal, setCategoryTotal] = useState<number | null>(null);
 
-  // Chargement initial — tous les contacts, sans filtre de catégorie
+  // ── Chargement initial avec filtre figé ────────────────────────────────────
   useEffect(() => {
-    load({});
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    const initialFilters: InfluenceurFilters = {
+      category,
+      ...(contactType ? { contact_type: contactType } : {}),
+    };
+    load(initialFilters);
 
-  // Charger le résumé stats
-  useEffect(() => {
-    api.get<ContactsSummary>('/stats').then(({ data }) => {
-      setSummary({
-        total: (data as unknown as { total?: number }).total ?? 0,
-        with_email: 0,
-        with_phone: 0,
-        verified: 0,
-        by_category: {},
+    // Récupère le total exact pour cette catégorie
+    const params: Record<string, string> = { category };
+    if (contactType) params.contact_type = contactType;
+    api.get('/stats/category-count', { params })
+      .then(({ data }) => { if ((data as { count?: number }).count !== undefined) setCategoryTotal((data as { count: number }).count); })
+      .catch(() => {
+        // Fallback : pas de total disponible
       });
-    }).catch(() => {});
-    api.get('/stats/coverage-matrix').then(({ data }) => {
-      const d = data as { by_category?: Record<string, { total: number; with_email: number; with_phone: number }> };
-      if (d.by_category) {
-        let totalEmail = 0, totalPhone = 0, total = 0;
-        const by_category: Record<string, number> = {};
-        for (const [cat, v] of Object.entries(d.by_category)) {
-          total += v.total;
-          totalEmail += v.with_email;
-          totalPhone += v.with_phone;
-          by_category[cat] = v.total;
-        }
-        setSummary(prev => ({
-          total: prev?.total ?? total,
-          with_email: totalEmail,
-          with_phone: totalPhone,
-          verified: prev?.verified ?? 0,
-          by_category,
-        }));
-      }
-    }).catch(() => {});
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps — props fixes, montage unique
 
-  // Infinite scroll
+  // ── Infinite scroll ────────────────────────────────────────────────────────
   useEffect(() => {
     const observer = new IntersectionObserver(
       entries => { if (entries[0].isIntersecting && hasMore && !loading) loadMore(); },
@@ -106,25 +87,34 @@ export default function Contacts() {
     return () => observer.disconnect();
   }, [hasMore, loading, loadMore]);
 
-  const handleFilterChange = (filters: InfluenceurFilters) => {
-    setCurrentFilters(filters);
-    load(filters);
+  // ── Filtres additionnels (catégorie toujours verrouillée) ─────────────────
+  const handleFilterChange = (newFilters: InfluenceurFilters) => {
+    load({
+      ...newFilters,
+      category,
+      ...(contactType ? { contact_type: contactType } : {}),
+    });
   };
 
-  // Naviguer vers la route dédiée de chaque catégorie
-  const handleCategoryClick = (cat: ContactCategory | null) => {
-    if (!cat) { navigate('/contacts'); return; }
-    const routeMap: Record<ContactCategory, string> = {
-      institutionnel:   '/contacts/institutionnel',
-      medias_influence: '/contacts/medias-influence',
-      services_b2b:     '/contacts/services-b2b',
-      communautes:      '/contacts/communautes',
-      digital:          '/contacts/digital',
-      autre:            '/contacts',
-    };
-    navigate(routeMap[cat] ?? '/contacts');
+  // ── Export ─────────────────────────────────────────────────────────────────
+  const handleExport = async (format: 'csv' | 'excel') => {
+    setExporting(true);
+    try {
+      const qs = new URLSearchParams({ category, ...(contactType ? { contact_type: contactType } : {}) });
+      const response = await fetch(`/api/contacts/exports/${format}?${qs}`, { credentials: 'include' });
+      if (!response.ok) throw new Error('Export failed');
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `contacts-${category}-${new Date().toISOString().split('T')[0]}.${format === 'csv' ? 'csv' : 'xlsx'}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch { /* ignore */ }
+    setExporting(false);
   };
 
+  // ── Check email doublon ───────────────────────────────────────────────────
   const handleEmailBlur = async (email: string) => {
     if (!email || !email.includes('@')) { setEmailCheck(null); return; }
     setEmailCheckLoading(true);
@@ -138,6 +128,7 @@ export default function Contacts() {
     }
   };
 
+  // ── Création ───────────────────────────────────────────────────────────────
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setCreateError('');
@@ -161,7 +152,7 @@ export default function Contacts() {
         source: createForm.source || 'manual',
       });
       setShowCreate(false);
-      setCreateForm(EMPTY_FORM);
+      setCreateForm(EMPTY_FORM(createForm.contact_type));
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
       setCreateError(e.response?.data?.message ?? 'Erreur lors de la création.');
@@ -170,48 +161,13 @@ export default function Contacts() {
     }
   };
 
-  const handleExport = async (format: 'csv' | 'excel') => {
-    setExporting(true);
-    try {
-      const response = await fetch(`/api/contacts/exports/${format}`, { credentials: 'include' });
-      if (!response.ok) throw new Error('Export failed');
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `contacts-${new Date().toISOString().split('T')[0]}.${format === 'csv' ? 'csv' : 'xlsx'}`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch { /* ignore */ }
-    setExporting(false);
-  };
+  // ── Données d'affichage ────────────────────────────────────────────────────
+  const catConfig = CONTACT_CATEGORIES.find(c => c.value === category);
+  const typeConfig = contactType ? CONTACT_TYPES.find(t => t.value === contactType) : null;
+  const pageTitle  = typeConfig ? `${typeConfig.icon} ${typeConfig.label}` : `${catConfig?.icon ?? '👥'} ${catConfig?.label ?? category}`;
+  const catTypes   = catConfig?.types ?? [];
 
   const inp = 'w-full bg-bg border border-border rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-violet transition-colors';
-
-  const total = contacts.length;
-  const withEmailCount = summary?.with_email ?? 0;
-  const withPhoneCount = summary?.with_phone ?? 0;
-  const verifiedCount = summary?.verified ?? 0;
-  const globalTotal = summary?.total ?? 0;
-
-  const statItems = [
-    { label: 'Total', value: globalTotal.toLocaleString(), icon: '👥', color: 'text-white', bg: 'bg-surface' },
-    {
-      label: 'Avec email',
-      value: withEmailCount > 0 ? `${withEmailCount.toLocaleString()} (${globalTotal ? Math.round(withEmailCount / globalTotal * 100) : 0}%)` : '—',
-      icon: '✉️', color: 'text-cyan-400', bg: 'bg-cyan-500/10',
-    },
-    {
-      label: 'Avec téléphone',
-      value: withPhoneCount > 0 ? `${withPhoneCount.toLocaleString()} (${globalTotal ? Math.round(withPhoneCount / globalTotal * 100) : 0}%)` : '—',
-      icon: '📞', color: 'text-teal-400', bg: 'bg-teal-500/10',
-    },
-    {
-      label: 'Vérifiés',
-      value: verifiedCount > 0 ? verifiedCount.toLocaleString() : '—',
-      icon: '✅', color: 'text-green-400', bg: 'bg-green-500/10',
-    },
-  ];
 
   return (
     <div className="p-4 md:p-6 space-y-5">
@@ -219,8 +175,15 @@ export default function Contacts() {
       {/* ── En-tête ── */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h2 className="font-title text-2xl font-bold text-white">Base de contacts</h2>
-          <p className="text-muted text-sm mt-0.5">Gestion unifiée de tous vos contacts</p>
+          <h2 className={`font-title text-2xl font-bold ${catConfig?.text ?? 'text-white'}`}>
+            {pageTitle}
+          </h2>
+          <p className="text-muted text-sm mt-0.5">
+            {typeConfig
+              ? `Sous-catégorie de ${catConfig?.label} · ${contacts.length} contacts chargés`
+              : `${contacts.length} contacts chargés${categoryTotal ? ` sur ${categoryTotal.toLocaleString()} au total` : ''}`
+            }
+          </p>
         </div>
         <div className="flex items-center gap-2">
           {user?.role === 'admin' && (
@@ -236,60 +199,43 @@ export default function Contacts() {
             </>
           )}
           <button
-            onClick={() => { setShowCreate(!showCreate); setCreateError(''); setCreateForm(EMPTY_FORM); }}
-            className="px-4 py-1.5 bg-violet hover:bg-violet/90 text-white text-sm rounded-lg transition-colors"
+            onClick={() => { setShowCreate(!showCreate); setCreateError(''); }}
+            className={`px-4 py-1.5 text-white text-sm rounded-lg transition-colors ${catConfig?.bg ?? 'bg-violet'} border ${catConfig?.border ?? 'border-violet/40'} hover:opacity-90`}
           >
             + Ajouter
           </button>
         </div>
       </div>
 
-      {/* ── Stats bar ── */}
-      {globalTotal > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {statItems.map(s => (
-            <div key={s.label} className={`${s.bg} border border-border rounded-xl px-4 py-3 flex items-center gap-3`}>
-              <span className="text-xl">{s.icon}</span>
-              <div>
-                <div className={`font-bold text-lg leading-tight ${s.color}`}>{s.value}</div>
-                <div className="text-muted text-xs">{s.label}</div>
-              </div>
-            </div>
-          ))}
+      {/* ── Types de contacts dans cette catégorie ── */}
+      {!contactType && catTypes.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {catTypes.map(t => {
+            const tc = CONTACT_TYPES.find(x => x.value === t);
+            if (!tc) return null;
+            return (
+              <span key={t} className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-full border ${catConfig?.bg ?? 'bg-surface'} ${catConfig?.border ?? 'border-border'} ${catConfig?.text ?? 'text-muted'}`}>
+                {tc.icon} {tc.label}
+              </span>
+            );
+          })}
         </div>
       )}
 
-      {/* ── Navigation par catégorie ── */}
-      {/* Raccourcis vers les catégories (naviguent vers leurs routes dédiées) */}
-      <div className="flex items-center gap-2 flex-wrap">
-        {CONTACT_CATEGORIES.map(cat => {
-          const count = summary?.by_category?.[cat.value] ?? 0;
-          return (
-            <button
-              key={cat.value}
-              onClick={() => handleCategoryClick(cat.value)}
-              className="px-3 py-1.5 rounded-lg text-sm border bg-bg border-border text-muted hover:text-white transition-colors"
-            >
-              {cat.icon} {cat.label}
-              {count > 0 && <span className="ml-1.5 text-xs opacity-70">{count.toLocaleString()}</span>}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* ── Barre de filtres ── */}
+      {/* ── Barre de filtres (catégorie verrouillée) ── */}
       <FilterBar
-        initialFilters={currentFilters}
+        key={`${category}-${contactType ?? ''}`}
+        initialFilters={{ category, ...(contactType ? { contact_type: contactType } : {}) }}
         onFilterChange={handleFilterChange}
-        total={total}
-        summary={summary}
+        lockedCategory={category}
+        total={contacts.length}
       />
 
       {/* ── Formulaire de création ── */}
       {showCreate && (
         <form onSubmit={handleCreate} className="bg-surface border border-border rounded-xl p-5 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-title font-semibold text-white text-sm">Nouveau contact</h3>
+            <h3 className="font-title font-semibold text-white text-sm">Nouveau contact — {catConfig?.label}</h3>
             <button type="button" onClick={() => setShowCreate(false)} className="text-muted hover:text-white text-lg leading-none">✕</button>
           </div>
 
@@ -297,20 +243,16 @@ export default function Contacts() {
             <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-lg">{createError}</div>
           )}
 
-          {/* Ligne 1 : Type + Statut + Source */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs text-muted mb-1">Catégorie / Type *</label>
+              <label className="block text-xs text-muted mb-1">Type de contact *</label>
               <select value={createForm.contact_type}
                 onChange={e => setCreateForm(p => ({ ...p, contact_type: e.target.value as ContactType }))}
                 className={inp}>
-                {CONTACT_CATEGORIES.map(cat => (
-                  <optgroup key={cat.value} label={`${cat.icon} ${cat.label}`}>
-                    {CONTACT_TYPES.filter(t => cat.types.includes(t.value)).map(t => (
-                      <option key={t.value} value={t.value}>{t.icon} {t.label}</option>
-                    ))}
-                  </optgroup>
-                ))}
+                {catTypes.map(t => {
+                  const tc = CONTACT_TYPES.find(x => x.value === t);
+                  return tc ? <option key={t} value={t}>{tc.icon} {tc.label}</option> : null;
+                })}
               </select>
             </div>
             <div>
@@ -318,7 +260,13 @@ export default function Contacts() {
               <select value={createForm.status}
                 onChange={e => setCreateForm(p => ({ ...p, status: e.target.value as PipelineStatus }))}
                 className={inp}>
-                {PIPELINE_STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                <option value="new">Nouveau</option>
+                <option value="prospect">Prospect</option>
+                <option value="contacted">Contacté</option>
+                <option value="negotiating">En négociation</option>
+                <option value="active">Actif</option>
+                <option value="refused">Refusé</option>
+                <option value="inactive">Inactif</option>
               </select>
             </div>
             <div>
@@ -335,7 +283,6 @@ export default function Contacts() {
             </div>
           </div>
 
-          {/* Ligne 2 : Identité */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
             <div className="md:col-span-2">
               <label className="block text-xs text-muted mb-1">Nom / Raison sociale *</label>
@@ -343,7 +290,7 @@ export default function Contacts() {
                 onChange={e => setCreateForm(p => ({ ...p, name: e.target.value }))} className={inp} />
             </div>
             <div>
-              <label className="block text-xs text-muted mb-1">Prénom (personne)</label>
+              <label className="block text-xs text-muted mb-1">Prénom</label>
               <input type="text" value={createForm.first_name} placeholder="Jean"
                 onChange={e => setCreateForm(p => ({ ...p, first_name: e.target.value }))} className={inp} />
             </div>
@@ -354,7 +301,6 @@ export default function Contacts() {
             </div>
           </div>
 
-          {/* Ligne 3 : Contact */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
             <div>
               <label className="block text-xs text-muted mb-1">Email</label>
@@ -366,11 +312,9 @@ export default function Contacts() {
               {emailCheck?.exists && (
                 <p className="text-xs text-amber-400 mt-1">
                   ⚠ Existe déjà :{' '}
-                  <a href={`/contacts/${emailCheck.id}`} target="_blank" rel="noopener noreferrer"
-                    className="underline hover:text-amber-300">
+                  <a href={`/contacts/${emailCheck.id}`} target="_blank" rel="noopener noreferrer" className="underline hover:text-amber-300">
                     {emailCheck.name}
-                  </a>
-                  {' '}({emailCheck.contact_type})
+                  </a> ({emailCheck.contact_type})
                 </p>
               )}
             </div>
@@ -396,21 +340,18 @@ export default function Contacts() {
                 <option value="ar">🇸🇦 العربية</option>
                 <option value="ru">🇷🇺 Русский</option>
                 <option value="zh">🇨🇳 中文</option>
+                <option value="it">🇮🇹 Italiano</option>
+                <option value="nl">🇳🇱 Nederlands</option>
+                <option value="pl">🇵🇱 Polski</option>
               </select>
             </div>
           </div>
 
-          {/* Ligne 4 : URLs */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-muted mb-1">Site web / Profil URL</label>
               <input type="url" value={createForm.profile_url} placeholder="https://..."
                 onChange={e => setCreateForm(p => ({ ...p, profile_url: e.target.value }))} className={inp} />
-            </div>
-            <div>
-              <label className="block text-xs text-muted mb-1">Site web officiel</label>
-              <input type="url" value={createForm.website_url} placeholder="https://..."
-                onChange={e => setCreateForm(p => ({ ...p, website_url: e.target.value }))} className={inp} />
             </div>
             <div>
               <label className="block text-xs text-muted mb-1">LinkedIn</label>
@@ -419,9 +360,8 @@ export default function Contacts() {
             </div>
           </div>
 
-          {/* Notes */}
           <div>
-            <label className="block text-xs text-muted mb-1">Notes internes</label>
+            <label className="block text-xs text-muted mb-1">Notes</label>
             <textarea value={createForm.notes} rows={2} placeholder="Informations complémentaires..."
               onChange={e => setCreateForm(p => ({ ...p, notes: e.target.value }))}
               className={`${inp} resize-none`} />
@@ -432,7 +372,7 @@ export default function Contacts() {
               className="px-5 py-2 bg-violet hover:bg-violet/90 disabled:opacity-50 text-white text-sm rounded-lg transition-colors">
               {creating ? 'Création...' : 'Créer le contact'}
             </button>
-            <button type="button" onClick={() => { setShowCreate(false); setCreateForm(EMPTY_FORM); setCreateError(''); }}
+            <button type="button" onClick={() => { setShowCreate(false); setCreateError(''); }}
               className="px-4 py-2 text-muted hover:text-white text-sm transition-colors">
               Annuler
             </button>
@@ -456,7 +396,7 @@ export default function Contacts() {
         )}
         {!loading && contacts.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-4xl mb-3">👥</p>
+            <p className="text-4xl mb-3">{typeConfig?.icon ?? catConfig?.icon ?? '👥'}</p>
             <p className="text-white font-medium">Aucun contact trouvé</p>
             <p className="text-muted text-sm mt-1">Modifiez les filtres ou ajoutez un contact.</p>
           </div>

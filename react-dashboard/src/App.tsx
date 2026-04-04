@@ -37,6 +37,7 @@ import CityProfileDetail from './pages/content/CityProfileDetail';
 import ContentContacts from './pages/content/ContentContacts';
 import JournalistContacts from './pages/contacts/JournalistContacts';
 import ContactsBase from './pages/contacts/ContactsBase';
+import CategoryContactsPage from './pages/contacts/CategoryContactsPage';
 import ScrapingDashboard from './pages/scraping/ScrapingDashboard';
 import ContentQuestions from './pages/content/ContentQuestions';
 import ProspectionHub from './pages/prospection/ProspectionHub';
@@ -173,7 +174,28 @@ export default function App() {
 
             {/* Core CRM — Contacts */}
             <Route path="contacts" element={<Contacts />} />
+
+            {/* ── Catégories (route dédiée = remount garanti = filtre toujours correct) ── */}
+            <Route path="contacts/institutionnel"
+              element={<CategoryContactsPage key="institutionnel" category="institutionnel" />} />
+            <Route path="contacts/medias-influence"
+              element={<CategoryContactsPage key="medias_influence" category="medias_influence" />} />
+            <Route path="contacts/youtubeurs"
+              element={<CategoryContactsPage key="youtubeurs" category="medias_influence" contactType="youtubeur" />} />
+            <Route path="contacts/services-b2b"
+              element={<CategoryContactsPage key="services_b2b" category="services_b2b" />} />
+            <Route path="contacts/communautes"
+              element={<CategoryContactsPage key="communautes" category="communautes" />} />
+            <Route path="contacts/digital"
+              element={<CategoryContactsPage key="digital" category="digital" />} />
+
+            {/* ── Outils de sourcing contacts ── */}
+            <Route path="contacts/journalistes" element={<AdminRoute><JournalistContacts /></AdminRoute>} />
+            <Route path="contacts/base" element={<AdminRoute><ContactsBase /></AdminRoute>} />
+
+            {/* ── Fiche contact individuelle (après les routes statiques) ── */}
             <Route path="contacts/:id" element={<ContactDetail />} />
+
             {/* Redirections legacy */}
             <Route path="influenceurs" element={<Navigate to="/contacts" replace />} />
             <Route path="influenceurs/:id" element={<Navigate to="/contacts" replace />} />
@@ -201,8 +223,6 @@ export default function App() {
             <Route path="content/country-directory" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><CountryDirectoryPage /></React.Suspense></AdminRoute>} />
             <Route path="content/lawyers" element={<AdminRoute><LawyerDirectory /></AdminRoute>} />
             <Route path="content/contacts" element={<AdminRoute><ContentContacts /></AdminRoute>} />
-            <Route path="contacts/journalistes" element={<AdminRoute><JournalistContacts /></AdminRoute>} />
-            <Route path="contacts/base" element={<AdminRoute><ContactsBase /></AdminRoute>} />
             <Route path="scraping/dashboard" element={<AdminRoute><ScrapingDashboard /></AdminRoute>} />
             <Route path="content/questions" element={<AdminRoute><ContentQuestions /></AdminRoute>} />
             <Route path="content/affiliates" element={<AdminRoute><AffiliateLinks /></AdminRoute>} />

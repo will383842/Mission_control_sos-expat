@@ -8,6 +8,8 @@ interface Props {
   total?: number;
   summary?: { with_email: number; with_phone: number; verified: number } | null;
   initialFilters?: InfluenceurFilters;
+  /** Si défini, la catégorie est verrouillée (affichée en badge, non modifiable) */
+  lockedCategory?: ContactCategory;
 }
 
 interface CoverageCountry { country: string; total: number }
@@ -41,7 +43,7 @@ const SEARCH_FIELDS: { value: SearchField; label: string }[] = [
   { value: 'url',     label: 'URL' },
 ];
 
-export default function FilterBar({ onFilterChange, total, summary, initialFilters }: Props) {
+export default function FilterBar({ onFilterChange, total, summary, initialFilters, lockedCategory }: Props) {
   const [filters, setFilters] = useState<InfluenceurFilters>(initialFilters ?? {});
   const [search, setSearch] = useState('');
   const [searchField, setSearchField] = useState<SearchField>('all');
@@ -68,7 +70,9 @@ export default function FilterBar({ onFilterChange, total, summary, initialFilte
     const finalSearch = searchVal && searchField !== 'all'
       ? `${searchField}:${searchVal}`
       : searchVal;
-    onFilterChange({ ...newFilters, search: finalSearch });
+    // Si catégorie verrouillée, toujours l'inclure dans les filtres émis
+    const categoryOverride = lockedCategory ? { category: lockedCategory } : {};
+    onFilterChange({ ...newFilters, search: finalSearch, ...categoryOverride });
   };
 
   const update = (patch: Partial<InfluenceurFilters>) => {
@@ -94,8 +98,8 @@ export default function FilterBar({ onFilterChange, total, summary, initialFilte
     onFilterChange({});
   };
 
-  // Comptage des filtres actifs (hors search)
-  const activeFilters = Object.entries(filters).filter(([, v]) => v !== undefined && v !== false);
+  // Comptage des filtres actifs (hors search, hors catégorie verrouillée)
+  const activeFilters = Object.entries(filters).filter(([k, v]) => v !== undefined && v !== false && !(lockedCategory && k === 'category'));
   const activeCount = activeFilters.length + (search ? 1 : 0);
 
   // Chip d'un filtre actif
@@ -167,17 +171,30 @@ export default function FilterBar({ onFilterChange, total, summary, initialFilte
           )}
         </div>
 
-        {/* Catégorie */}
-        <select
-          value={filters.category ?? ''}
-          onChange={e => update({ category: (e.target.value as ContactCategory) || undefined, contact_type: undefined })}
-          className={sel}
-        >
-          <option value="">Toutes catégories</option>
-          {CONTACT_CATEGORIES.map(c => (
-            <option key={c.value} value={c.value}>{c.icon} {c.label}</option>
-          ))}
-        </select>
+        {/* Catégorie — verrouillée ou libre */}
+        {lockedCategory ? (
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border ${
+            CONTACT_CATEGORIES.find(c => c.value === lockedCategory)?.bg ?? 'bg-surface'
+          } ${
+            CONTACT_CATEGORIES.find(c => c.value === lockedCategory)?.border ?? 'border-border'
+          } ${
+            CONTACT_CATEGORIES.find(c => c.value === lockedCategory)?.text ?? 'text-white'
+          }`}>
+            {CONTACT_CATEGORIES.find(c => c.value === lockedCategory)?.icon}{' '}
+            {CONTACT_CATEGORIES.find(c => c.value === lockedCategory)?.label}
+          </span>
+        ) : (
+          <select
+            value={filters.category ?? ''}
+            onChange={e => update({ category: (e.target.value as ContactCategory) || undefined, contact_type: undefined })}
+            className={sel}
+          >
+            <option value="">Toutes catégories</option>
+            {CONTACT_CATEGORIES.map(c => (
+              <option key={c.value} value={c.value}>{c.icon} {c.label}</option>
+            ))}
+          </select>
+        )}
 
         {/* Type (filtré par catégorie si sélectionnée) */}
         <select

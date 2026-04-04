@@ -391,55 +391,32 @@ export default function Layout() {
                 onToggle={() => toggleGroup('contacts')}
                 badge={reminders.length}
               >
-                <NavLink
-                  to="/contacts"
-                  className={subNavClass({ isActive: location.pathname === '/contacts' && !location.search.includes('category=') })}
-                  onClick={handleNavClick}
-                >
+                {/* Tous les contacts */}
+                <NavLink to="/contacts" end className={subNavClass} onClick={handleNavClick}>
                   👥 Tous les contacts
                 </NavLink>
-                <NavLink
-                  to="/contacts?category=institutionnel"
-                  className={subNavClass({ isActive: location.pathname === '/contacts' && location.search.includes('category=institutionnel') })}
-                  onClick={handleNavClick}
-                >
+
+                {/* ── Catégories — routes dédiées, remount garanti ── */}
+                <NavLink to="/contacts/institutionnel" className={subNavClass} onClick={handleNavClick}>
                   🏛️ Institutionnel
                 </NavLink>
-                <NavLink
-                  to="/contacts?category=medias_influence"
-                  className={subNavClass({ isActive: location.pathname === '/contacts' && location.search.includes('category=medias_influence') && !location.search.includes('contact_type=youtubeur') })}
-                  onClick={handleNavClick}
-                >
+                <NavLink to="/contacts/medias-influence" className={subNavClass} onClick={handleNavClick}>
                   📺 Médias & Influence
                 </NavLink>
-                <NavLink
-                  to="/contacts?category=medias_influence&contact_type=youtubeur"
-                  className={subNavClass({ isActive: location.pathname === '/contacts' && location.search.includes('contact_type=youtubeur') })}
-                  onClick={handleNavClick}
-                >
+                <NavLink to="/contacts/youtubeurs" className={subNavClass} onClick={handleNavClick}>
                   ▶️ YouTubeurs
                 </NavLink>
-                <NavLink
-                  to="/contacts?category=services_b2b"
-                  className={subNavClass({ isActive: location.pathname === '/contacts' && location.search.includes('category=services_b2b') })}
-                  onClick={handleNavClick}
-                >
+                <NavLink to="/contacts/services-b2b" className={subNavClass} onClick={handleNavClick}>
                   💼 Services B2B
                 </NavLink>
-                <NavLink
-                  to="/contacts?category=communautes"
-                  className={subNavClass({ isActive: location.pathname === '/contacts' && location.search.includes('category=communautes') })}
-                  onClick={handleNavClick}
-                >
+                <NavLink to="/contacts/communautes" className={subNavClass} onClick={handleNavClick}>
                   🌍 Communautés
                 </NavLink>
-                <NavLink
-                  to="/contacts?category=digital"
-                  className={subNavClass({ isActive: location.pathname === '/contacts' && location.search.includes('category=digital') })}
-                  onClick={handleNavClick}
-                >
+                <NavLink to="/contacts/digital" className={subNavClass} onClick={handleNavClick}>
                   🔗 Digital & SEO
                 </NavLink>
+
+                {/* ── Actions ── */}
                 <NavLink to="/a-relancer" className={subNavClass} onClick={handleNavClick}>
                   <span className="flex items-center gap-2 w-full">
                     🔔 Relances
