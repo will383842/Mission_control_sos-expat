@@ -333,9 +333,6 @@ export default function Layout() {
                     <NavLink to="/directories" className={subNavClass} onClick={handleNavClick}>
                       📚 Annuaires web
                     </NavLink>
-                    <NavLink to="/content/lawyers" className={subNavClass} onClick={handleNavClick}>
-                      ⚖️ Avocats
-                    </NavLink>
                     <NavLink to="/content/businesses" className={subNavClass} onClick={handleNavClick}>
                       🏢 Entreprises
                     </NavLink>
@@ -414,6 +411,9 @@ export default function Layout() {
                 </NavLink>
                 <NavLink to="/contacts/digital" className={subNavClass} onClick={handleNavClick}>
                   🔗 Digital & SEO
+                </NavLink>
+                <NavLink to="/content/lawyers" className={subNavClass} onClick={handleNavClick}>
+                  ⚖️ Avocats
                 </NavLink>
                 <NavLink to="/content/country-directory" className={subNavClass} onClick={handleNavClick}>
                   🗺️ Annuaire Pays
