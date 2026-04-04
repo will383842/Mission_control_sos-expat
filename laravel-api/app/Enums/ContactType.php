@@ -17,6 +17,7 @@ enum ContactType: string
     case PodcastRadio = 'podcast_radio';
     case Influenceur = 'influenceur';
     case Youtubeur = 'youtubeur';
+    case Instagrammeur = 'instagrammeur';
 
     // Services B2B
     case Avocat = 'avocat';
