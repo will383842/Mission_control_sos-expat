@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useContext } from 'react';
 import api from '../../api/client';
 import { useContacts } from '../../hooks/useContacts';
+import { getLanguageFlag, getCountryFlag } from '../../lib/constants';
 import ContactsTable from '../../components/ContactsTable';
 import FilterBar from '../../components/FilterBar';
 import { AuthContext } from '../../hooks/useAuth';
@@ -58,6 +59,9 @@ export default function CategoryContactsPage({ category, contactType }: Props) {
   const [emailCheckLoading, setEmailCheckLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [categoryTotal, setCategoryTotal] = useState<number | null>(null);
+  const [withEmail, setWithEmail]         = useState<number | null>(null);
+  const [byLanguage, setByLanguage]       = useState<Record<string, number>>({});
+  const [byCountry, setByCountry]         = useState<Record<string, number>>({});
 
   // Ref stable vers load — évite la dépendance cyclique dans useEffect
   const loadRef = useRef(load);
@@ -72,12 +76,21 @@ export default function CategoryContactsPage({ category, contactType }: Props) {
     };
     loadRef.current(filters);
     setCategoryTotal(null);
+    setWithEmail(null);
+    setByLanguage({});
+    setByCountry({});
 
-    // Récupère le total exact pour cette catégorie
+    // Récupère les stats complètes pour cette catégorie
     const params: Record<string, string> = { category };
     if (contactType) params.contact_type = contactType;
     api.get('/stats/category-count', { params })
-      .then(({ data }) => { if ((data as { count?: number }).count !== undefined) setCategoryTotal((data as { count: number }).count); })
+      .then(({ data }) => {
+        const d = data as { count?: number; with_email?: number; by_language?: Record<string, number>; by_country?: Record<string, number> };
+        if (d.count !== undefined)      setCategoryTotal(d.count);
+        if (d.with_email !== undefined) setWithEmail(d.with_email);
+        if (d.by_language)              setByLanguage(d.by_language);
+        if (d.by_country)               setByCountry(d.by_country);
+      })
       .catch(() => {});
   }, [category, contactType]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -188,6 +201,38 @@ export default function CategoryContactsPage({ category, contactType }: Props) {
               : `${contacts.length} contacts chargés${categoryTotal ? ` sur ${categoryTotal.toLocaleString()} au total` : ''}`
             }
           </p>
+          {/* ── Stats rapides ── */}
+          {categoryTotal !== null && (
+            <div className="flex flex-wrap items-center gap-3 mt-2">
+              <span className="inline-flex items-center gap-1.5 text-xs bg-surface2 border border-border rounded-full px-2.5 py-1">
+                <span className="text-white font-semibold">{categoryTotal.toLocaleString()}</span>
+                <span className="text-muted">contacts</span>
+              </span>
+              {withEmail !== null && (
+                <span className="inline-flex items-center gap-1.5 text-xs bg-surface2 border border-border rounded-full px-2.5 py-1">
+                  <span>📧</span>
+                  <span className="text-cyan-400 font-semibold">{withEmail.toLocaleString()}</span>
+                  <span className="text-muted">avec email</span>
+                  {categoryTotal > 0 && (
+                    <span className="text-muted">({Math.round(withEmail / categoryTotal * 100)}%)</span>
+                  )}
+                </span>
+              )}
+              {Object.entries(byLanguage).slice(0, 4).map(([lang, count]) => (
+                <span key={lang} className="inline-flex items-center gap-1 text-xs bg-surface2 border border-border rounded-full px-2.5 py-1">
+                  <span>{getLanguageFlag(lang)}</span>
+                  <span className="text-white font-medium">{count.toLocaleString()}</span>
+                </span>
+              ))}
+              {Object.entries(byCountry).slice(0, 4).map(([country, count]) => (
+                <span key={country} className="inline-flex items-center gap-1 text-xs bg-surface2 border border-border rounded-full px-2.5 py-1">
+                  <span>{getCountryFlag(country)}</span>
+                  <span className="text-white font-medium">{country}</span>
+                  <span className="text-muted">·{count}</span>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {user?.role === 'admin' && (

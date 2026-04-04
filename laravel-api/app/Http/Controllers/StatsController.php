@@ -739,6 +739,26 @@ class StatsController extends Controller
             $query->where('contact_type', $request->contact_type);
         }
 
-        return response()->json(['count' => $query->count()]);
+        $total     = (clone $query)->count();
+        $withEmail = (clone $query)->whereNotNull('email')->where('email', '!=', '')->count();
+        $byLang    = (clone $query)->whereNotNull('language')->where('language', '!=', '')
+                        ->groupBy('language')
+                        ->selectRaw('language, count(*) as count')
+                        ->orderByDesc('count')
+                        ->limit(5)
+                        ->pluck('count', 'language');
+        $byCountry = (clone $query)->whereNotNull('country')->where('country', '!=', '')
+                        ->groupBy('country')
+                        ->selectRaw('country, count(*) as count')
+                        ->orderByDesc('count')
+                        ->limit(5)
+                        ->pluck('count', 'country');
+
+        return response()->json([
+            'count'      => $total,
+            'with_email' => $withEmail,
+            'by_language'=> $byLang,
+            'by_country' => $byCountry,
+        ]);
     }
 }
