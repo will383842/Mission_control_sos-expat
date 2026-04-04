@@ -24,6 +24,7 @@ export default function ContentContacts() {
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [filterSector, setFilterSector] = useState('');
+  const [filterEmail, setFilterEmail] = useState(false);
   const [exporting, setExporting] = useState(false);
 
   const abortRef = useRef<AbortController | null>(null);
@@ -42,6 +43,7 @@ export default function ContentContacts() {
       const params: Record<string, string> = { page: String(page), per_page: '50' };
       if (search) params.search = search;
       if (filterSector) params.sector = filterSector;
+      if (filterEmail) params.has_email = '1';
       const res = await api.get('/content-contacts', { params, signal: controller.signal });
       if (!controller.signal.aborted) {
         setContacts(res.data.data);
@@ -53,7 +55,7 @@ export default function ContentContacts() {
     } finally {
       if (!controller.signal.aborted) setLoading(false);
     }
-  }, [page, search, filterSector]);
+  }, [page, search, filterSector, filterEmail]);
 
   useEffect(() => { fetchContacts(); }, [fetchContacts]);
 
@@ -63,6 +65,7 @@ export default function ContentContacts() {
       const params: Record<string, string> = {};
       if (filterSector) params.sector = filterSector;
       if (search) params.search = search;
+      if (filterEmail) params.has_email = '1';
       const res = await api.get('/content-contacts/export', { params, responseType: 'blob' });
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const a = document.createElement('a');
@@ -75,14 +78,14 @@ export default function ContentContacts() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 md:p-6 space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-title text-2xl font-bold text-white">Contacts</h1>
-          <p className="text-muted text-sm mt-1">{total} contacts identifies</p>
+          <h2 className="font-title text-2xl font-bold text-white">Contacts</h2>
+          <p className="text-muted text-sm mt-0.5">{total.toLocaleString()} contacts identifiés</p>
         </div>
         <button onClick={handleExport} disabled={exporting}
-          className="px-4 py-2 bg-surface border border-border text-white rounded-lg text-sm hover:bg-surface2 disabled:opacity-50">
+          className="px-4 py-1.5 bg-surface2 border border-border text-muted hover:text-white text-sm rounded-lg disabled:opacity-50">
           {exporting ? 'Export...' : 'Export CSV'}
         </button>
       </div>
@@ -98,6 +101,10 @@ export default function ContentContacts() {
             <option key={s} value={s}>{s}</option>
           ))}
         </select>
+        <button onClick={() => { setFilterEmail(!filterEmail); setPage(1); }}
+          className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${filterEmail ? 'bg-green-900/40 text-green-300' : 'bg-surface2 text-muted hover:text-white'}`}>
+          Avec email
+        </button>
       </div>
 
       <div className="bg-surface border border-border rounded-xl overflow-x-auto">

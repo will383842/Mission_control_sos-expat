@@ -1,5 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import api from '../../api/client';
+import { toast } from '../../components/Toast';
+import { getLanguageLabel } from '../../lib/constants';
 
 interface LawyerRecord {
   id: number;
@@ -43,16 +45,6 @@ interface DirectorySource {
   last_scraped_at: string | null;
 }
 
-const LANGUAGE_LABELS: Record<string, string> = {
-  en: '🇬🇧 English', de: '🇩🇪 Deutsch', es: '🇪🇸 Español', pt: '🇧🇷 Português',
-  it: '🇮🇹 Italiano', nl: '🇳🇱 Nederlands', pl: '🇵🇱 Polski', ru: '🇷🇺 Русский',
-  ar: '🇸🇦 العربية', zh: '🇨🇳 中文', ja: '🇯🇵 日本語', ko: '🇰🇷 한국어',
-  tr: '🇹🇷 Türkçe', hi: '🇮🇳 हिन्दी', th: '🇹🇭 ไทย', vi: '🇻🇳 Tiếng Việt',
-  sv: '🇸🇪 Svenska', da: '🇩🇰 Dansk', fi: '🇫🇮 Suomi', no: '🇳🇴 Norsk',
-  el: '🇬🇷 Ελληνικά', cs: '🇨🇿 Čeština', hu: '🇭🇺 Magyar', ro: '🇷🇴 Română',
-  bg: '🇧🇬 Български', hr: '🇭🇷 Hrvatski', sk: '🇸🇰 Slovenčina', uk: '🇺🇦 Українська',
-  he: '🇮🇱 עברית', id: '🇮🇩 Bahasa', ms: '🇲🇾 Melayu',
-};
 
 export default function LawyerDirectory() {
   const [lawyers, setLawyers] = useState<LawyerRecord[]>([]);
@@ -125,11 +117,10 @@ export default function LawyerDirectory() {
     setScraping(slug);
     try {
       await api.post(`/lawyers/scrape/${slug}`);
-      // Refresh sources
       const res = await api.get('/lawyers/sources');
       setSources(res.data);
     } catch {
-      alert('Erreur lors du lancement');
+      toast('error', 'Erreur lors du lancement du scraping');
     } finally {
       setScraping(null);
     }
@@ -142,7 +133,7 @@ export default function LawyerDirectory() {
       const res = await api.get('/lawyers/sources');
       setSources(res.data);
     } catch {
-      alert('Erreur lors du lancement');
+      toast('error', 'Erreur lors du lancement du scraping');
     } finally {
       setScraping(null);
     }
@@ -175,7 +166,7 @@ export default function LawyerDirectory() {
       a.href = url; a.download = `avocats-export-${new Date().toISOString().slice(0, 10)}.csv`;
       a.click(); URL.revokeObjectURL(url);
     } catch {
-      alert('Erreur export');
+      toast('error', 'Erreur lors de l\'export');
     } finally {
       setExporting(false);
     }
@@ -189,24 +180,22 @@ export default function LawyerDirectory() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <span className="text-3xl">&#9878;</span> Annuaire Avocats Mondial
-          </h1>
-          <p className="text-sm text-gray-400 mt-1">
+          <h2 className="font-title text-2xl font-bold text-white">Annuaire Avocats Mondial</h2>
+          <p className="text-muted text-sm mt-0.5">
             {stats ? `${stats.total.toLocaleString()} avocats dans ${stats.by_country.length} pays` : 'Chargement...'}
           </p>
         </div>
         <div className="flex gap-2">
           <button onClick={handleExport} disabled={exporting}
-            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium disabled:opacity-50">
+            className="px-4 py-1.5 bg-surface2 border border-border text-muted hover:text-white text-sm rounded-lg disabled:opacity-50">
             {exporting ? 'Export...' : 'Exporter CSV'}
           </button>
           <button onClick={handleScrapeAll} disabled={!!scraping}
-            className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-sm font-medium disabled:opacity-50">
+            className="px-4 py-1.5 bg-violet hover:bg-violet/90 text-white text-sm rounded-lg font-medium disabled:opacity-50">
             {scraping === 'all' ? 'Lancement...' : 'Scraper Tout'}
           </button>
         </div>
@@ -214,32 +203,32 @@ export default function LawyerDirectory() {
 
       {/* Stats cards */}
       {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-surface border border-border rounded-lg p-4">
-            <div className="text-2xl font-bold text-white">{stats.total.toLocaleString()}</div>
-            <div className="text-sm text-gray-400">Total avocats</div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="bg-surface border border-border rounded-xl p-3 text-center">
+            <div className="text-xl font-bold text-white">{stats.total.toLocaleString()}</div>
+            <div className="text-xs text-muted">Total avocats</div>
           </div>
-          <div className="bg-surface border border-border rounded-lg p-4">
-            <div className="text-2xl font-bold text-green-400">{stats.with_email.toLocaleString()}</div>
-            <div className="text-sm text-gray-400">Avec email</div>
+          <div className="bg-surface border border-border rounded-xl p-3 text-center">
+            <div className="text-xl font-bold text-green-400">{stats.with_email.toLocaleString()}</div>
+            <div className="text-xs text-muted">Avec email</div>
           </div>
-          <div className="bg-surface border border-border rounded-lg p-4">
-            <div className="text-2xl font-bold text-blue-400">{stats.by_country.length}</div>
-            <div className="text-sm text-gray-400">Pays couverts</div>
+          <div className="bg-surface border border-border rounded-xl p-3 text-center">
+            <div className="text-xl font-bold text-blue-400">{stats.by_country.length}</div>
+            <div className="text-xs text-muted">Pays couverts</div>
           </div>
-          <div className="bg-surface border border-border rounded-lg p-4">
-            <div className="text-2xl font-bold text-orange-400">{stats.immigration.toLocaleString()}</div>
-            <div className="text-sm text-gray-400">Immigration</div>
+          <div className="bg-surface border border-border rounded-xl p-3 text-center">
+            <div className="text-xl font-bold text-orange-400">{stats.immigration.toLocaleString()}</div>
+            <div className="text-xs text-muted">Immigration</div>
           </div>
         </div>
       )}
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-surface2 rounded-lg p-1">
+      <div className="flex gap-1 border-b border-border">
         {(['list', 'countries', 'languages', 'stats'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              tab === t ? 'bg-violet-600 text-white' : 'text-gray-400 hover:text-white'
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              tab === t ? 'border-violet text-white' : 'border-transparent text-muted hover:text-white'
             }`}>
             {t === 'list' ? 'Liste' : t === 'countries' ? 'Par Pays' : t === 'languages' ? 'Par Langue' : 'Sources'}
           </button>
@@ -267,7 +256,7 @@ export default function LawyerDirectory() {
               className="px-3 py-2 bg-surface border border-border rounded-lg text-sm text-white">
               <option value="">Toutes les langues</option>
               {stats?.by_language.map(l => (
-                <option key={l.language} value={l.language}>{LANGUAGE_LABELS[l.language] || l.language} ({l.count})</option>
+                <option key={l.language} value={l.language}>{getLanguageLabel(l.language)} ({l.count})</option>
               ))}
             </select>
 
@@ -287,7 +276,7 @@ export default function LawyerDirectory() {
               ))}
             </select>
 
-            <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-muted cursor-pointer">
               <input type="checkbox" checked={filterImmigration}
                 onChange={e => { setFilterImmigration(e.target.checked); setPage(1); }}
                 className="rounded border-border" />
@@ -296,13 +285,13 @@ export default function LawyerDirectory() {
           </div>
 
           {/* Results count */}
-          <div className="text-sm text-gray-400">{total.toLocaleString()} resultats</div>
+          <div className="text-sm text-muted">{total.toLocaleString()} résultats</div>
 
           {/* Table */}
-          <div className="overflow-x-auto bg-surface border border-border rounded-lg">
+          <div className="overflow-x-auto bg-surface border border-border rounded-xl">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border text-left text-gray-400">
+                <tr className="border-b border-border text-left text-muted">
                   <th className="px-4 py-3 font-medium">Nom</th>
                   <th className="px-4 py-3 font-medium">Email</th>
                   <th className="px-4 py-3 font-medium">Pays</th>
@@ -315,26 +304,28 @@ export default function LawyerDirectory() {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={8} className="px-4 py-12 text-center text-gray-500">Chargement...</td></tr>
+                  <tr><td colSpan={8} className="px-4 py-12 text-center">
+                    <div className="flex justify-center"><div className="w-6 h-6 border-2 border-violet border-t-transparent rounded-full animate-spin" /></div>
+                  </td></tr>
                 ) : lawyers.length === 0 ? (
-                  <tr><td colSpan={8} className="px-4 py-12 text-center text-gray-500">Aucun avocat trouve</td></tr>
+                  <tr><td colSpan={8} className="px-4 py-12 text-center text-muted">Aucun avocat trouvé</td></tr>
                 ) : lawyers.map(l => (
                   <tr key={l.id} className="border-b border-border/50 hover:bg-surface2/50 transition-colors">
                     <td className="px-4 py-3 text-white font-medium">{l.full_name}</td>
                     <td className="px-4 py-3">
-                      <a href={`mailto:${l.email}`} className="text-violet-400 hover:underline">{l.email}</a>
+                      <a href={`mailto:${l.email}`} className="text-violet-light hover:underline">{l.email}</a>
                     </td>
-                    <td className="px-4 py-3 text-gray-300">{l.country || '-'}</td>
-                    <td className="px-4 py-3 text-gray-300">{l.city || '-'}</td>
+                    <td className="px-4 py-3 text-white/80">{l.country || '-'}</td>
+                    <td className="px-4 py-3 text-white/80">{l.city || '-'}</td>
                     <td className="px-4 py-3">
-                      <span className="text-xs">{LANGUAGE_LABELS[l.language || ''] || l.language || '-'}</span>
+                      <span className="text-xs">{getLanguageLabel(l.language || '')}</span>
                     </td>
-                    <td className="px-4 py-3 text-gray-300">
+                    <td className="px-4 py-3 text-white/80">
                       {l.is_immigration_lawyer && <span className="inline-block mr-1 px-1.5 py-0.5 bg-orange-600/20 text-orange-400 text-xs rounded">Immigration</span>}
                       {l.specialty || '-'}
                     </td>
-                    <td className="px-4 py-3 text-gray-400 text-xs">{l.firm_name || '-'}</td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">{l.source_slug}</td>
+                    <td className="px-4 py-3 text-muted text-xs">{l.firm_name || '-'}</td>
+                    <td className="px-4 py-3 text-muted text-xs">{l.source_slug}</td>
                   </tr>
                 ))}
               </tbody>
@@ -343,16 +334,12 @@ export default function LawyerDirectory() {
 
           {/* Pagination */}
           {lastPage > 1 && (
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-center gap-2">
               <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                className="px-4 py-2 bg-surface border border-border rounded-lg text-sm text-gray-400 hover:text-white disabled:opacity-30">
-                Precedent
-              </button>
-              <span className="text-sm text-gray-400">Page {page} / {lastPage}</span>
+                className="px-3 py-1 bg-surface border border-border rounded text-sm text-white disabled:opacity-30">← Préc.</button>
+              <span className="text-sm text-muted">Page {page} / {lastPage}</span>
               <button onClick={() => setPage(p => Math.min(lastPage, p + 1))} disabled={page === lastPage}
-                className="px-4 py-2 bg-surface border border-border rounded-lg text-sm text-gray-400 hover:text-white disabled:opacity-30">
-                Suivant
-              </button>
+                className="px-3 py-1 bg-surface border border-border rounded text-sm text-white disabled:opacity-30">Suiv. →</button>
             </div>
           )}
         </>
@@ -363,12 +350,12 @@ export default function LawyerDirectory() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {stats.by_country.map(c => (
             <button key={c.country_code} onClick={() => { setFilterCountry(c.country_code); setTab('list'); setPage(1); }}
-              className="flex items-center justify-between p-4 bg-surface border border-border rounded-lg hover:border-violet-500 transition-colors">
+              className="flex items-center justify-between p-4 bg-surface border border-border rounded-lg hover:border-violet/50 transition-colors">
               <div>
                 <div className="text-white font-medium">{c.country}</div>
-                <div className="text-xs text-gray-500">{c.country_code}</div>
+                <div className="text-xs text-muted">{c.country_code}</div>
               </div>
-              <div className="text-xl font-bold text-violet-400">{c.count}</div>
+              <div className="text-xl font-bold text-violet-light">{c.count}</div>
             </button>
           ))}
         </div>
@@ -379,9 +366,9 @@ export default function LawyerDirectory() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {stats.by_language.map(l => (
             <button key={l.language} onClick={() => { setFilterLanguage(l.language); setTab('list'); setPage(1); }}
-              className="flex items-center justify-between p-4 bg-surface border border-border rounded-lg hover:border-violet-500 transition-colors">
-              <div className="text-white font-medium">{LANGUAGE_LABELS[l.language] || l.language}</div>
-              <div className="text-xl font-bold text-violet-400">{l.count}</div>
+              className="flex items-center justify-between p-4 bg-surface border border-border rounded-lg hover:border-violet/50 transition-colors">
+              <div className="text-white font-medium">{getLanguageLabel(l.language)}</div>
+              <div className="text-xl font-bold text-violet-light">{l.count}</div>
             </button>
           ))}
         </div>
@@ -396,7 +383,7 @@ export default function LawyerDirectory() {
               <div key={s.slug} className="bg-surface border border-border rounded-lg p-4 flex items-center justify-between">
                 <div>
                   <div className="text-white font-medium">{s.name}</div>
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="text-xs text-muted mt-1">
                     {s.total_lawyers} avocats / {s.total_with_email} avec email
                     {s.last_scraped_at && ` / Dernier: ${new Date(s.last_scraped_at).toLocaleDateString()}`}
                   </div>
@@ -405,7 +392,7 @@ export default function LawyerDirectory() {
                   {statusBadge(s.status)}
                   <button onClick={() => handleScrape(s.slug)}
                     disabled={!!scraping || s.status === 'scraping'}
-                    className="px-3 py-1.5 bg-violet-600 hover:bg-violet-700 text-white rounded text-xs font-medium disabled:opacity-50">
+                    className="px-3 py-1.5 bg-violet hover:bg-violet/90 text-white rounded text-xs font-medium disabled:opacity-50">
                     {scraping === s.slug ? 'Lancement...' : 'Scraper'}
                   </button>
                 </div>
@@ -420,9 +407,9 @@ export default function LawyerDirectory() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {stats.by_specialty.map(s => (
                   <button key={s.specialty} onClick={() => { setFilterSpecialty(s.specialty); setTab('list'); setPage(1); }}
-                    className="flex items-center justify-between p-3 bg-surface border border-border rounded-lg hover:border-violet-500 transition-colors">
-                    <span className="text-gray-300 text-sm">{s.specialty}</span>
-                    <span className="text-violet-400 font-bold">{s.count}</span>
+                    className="flex items-center justify-between p-3 bg-surface border border-border rounded-lg hover:border-violet/50 transition-colors">
+                    <span className="text-white/80 text-sm">{s.specialty}</span>
+                    <span className="text-violet-light font-bold">{s.count}</span>
                   </button>
                 ))}
               </div>

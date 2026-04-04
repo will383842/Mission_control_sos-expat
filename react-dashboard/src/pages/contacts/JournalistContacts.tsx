@@ -323,12 +323,12 @@ export default function JournalistContacts() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 md:p-6 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-title text-2xl font-bold text-white">Journalistes & Presse</h1>
-          <p className="text-muted text-sm mt-1">
+          <h2 className="font-title text-2xl font-bold text-white">Journalistes & Presse</h2>
+          <p className="text-muted text-sm mt-0.5">
             Presse francophone — entrepreneuriat, voyage, expatriation, international
           </p>
         </div>
