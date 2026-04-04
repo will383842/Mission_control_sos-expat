@@ -95,7 +95,8 @@ export default function FilterBar({ onFilterChange, total, summary, initialFilte
     setFilters({});
     setSearch('');
     setSearchField('all');
-    onFilterChange({});
+    const categoryOverride = lockedCategory ? { category: lockedCategory } : {};
+    onFilterChange({ ...categoryOverride });
   };
 
   // Comptage des filtres actifs (hors search, hors catégorie verrouillée)

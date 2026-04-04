@@ -406,6 +406,9 @@ export default function Layout() {
                 <NavLink to="/contacts/youtubeurs" className={subNavClass} onClick={handleNavClick}>
                   ▶️ YouTubeurs
                 </NavLink>
+                <NavLink to="/contacts/instagrammeurs" className={subNavClass} onClick={handleNavClick}>
+                  📸 Instagrammeurs
+                </NavLink>
                 <NavLink to="/contacts/services-b2b" className={subNavClass} onClick={handleNavClick}>
                   💼 Services B2B
                 </NavLink>

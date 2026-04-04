@@ -182,6 +182,8 @@ export default function App() {
               element={<CategoryContactsPage key="medias_influence" category="medias_influence" />} />
             <Route path="contacts/youtubeurs"
               element={<CategoryContactsPage key="youtubeurs" category="medias_influence" contactType="youtubeur" />} />
+            <Route path="contacts/instagrammeurs"
+              element={<CategoryContactsPage key="instagrammeurs" category="medias_influence" contactType="instagrammeur" />} />
             <Route path="contacts/services-b2b"
               element={<CategoryContactsPage key="services_b2b" category="services_b2b" />} />
             <Route path="contacts/communautes"
