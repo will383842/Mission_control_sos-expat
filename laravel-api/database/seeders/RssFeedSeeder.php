@@ -8,34 +8,63 @@ use Illuminate\Database\Seeder;
 /**
  * Initial RSS feeds focused on expatriation, travel, and international news.
  * Run: php artisan db:seed --class=RssFeedSeeder
+ *
+ * Note: Le Petit Journal n'expose pas de flux RSS public (URL /feed → 404).
+ * Remplacé par France 24 + RFI + Le Monde pour la couverture francophone.
  */
 class RssFeedSeeder extends Seeder
 {
     public function run(): void
     {
         $feeds = [
-            // ─── Le Petit Journal ───────────────────────────────────────────
+            // ─── France 24 ──────────────────────────────────────────────────
             [
-                'name'                  => 'Le Petit Journal - À la une',
-                'url'                   => 'https://lepetitjournal.com/feed',
+                'name'                  => 'France 24 - Actualités françaises',
+                'url'                   => 'https://www.france24.com/fr/rss',
+                'language'              => 'fr',
+                'country'               => null,
+                'category'              => 'monde',
+                'active'                => true,
+                'fetch_interval_hours'  => 3,
+                'relevance_threshold'   => 60,
+                'notes'                 => 'Chaîne d\'info internationale FR. Excellente couverture internationale pour expatriés.',
+            ],
+            [
+                'name'                  => 'France 24 - International (EN)',
+                'url'                   => 'https://www.france24.com/en/rss',
+                'language'              => 'en',
+                'country'               => null,
+                'category'              => 'monde',
+                'active'                => true,
+                'fetch_interval_hours'  => 3,
+                'relevance_threshold'   => 60,
+                'notes'                 => 'France 24 English — international coverage relevant to expats worldwide.',
+            ],
+
+            // ─── RFI ────────────────────────────────────────────────────────
+            [
+                'name'                  => 'RFI - Actualités monde',
+                'url'                   => 'https://www.rfi.fr/fr/rss',
                 'language'              => 'fr',
                 'country'               => null,
                 'category'              => 'expatriation',
                 'active'                => true,
                 'fetch_interval_hours'  => 4,
-                'relevance_threshold'   => 60,
-                'notes'                 => 'Média de référence pour les expatriés français dans le monde. Couvre vie pratique, actualités par pays, conseils.',
+                'relevance_threshold'   => 58,
+                'notes'                 => 'Radio France Internationale — forte couverture Afrique, Asie, Amériques. Idéal expatriés.',
             ],
+
+            // ─── Le Monde ───────────────────────────────────────────────────
             [
-                'name'                  => 'Le Petit Journal - Pratique',
-                'url'                   => 'https://lepetitjournal.com/expatriation/feed',
+                'name'                  => 'Le Monde - International',
+                'url'                   => 'https://www.lemonde.fr/international/rss_full.xml',
                 'language'              => 'fr',
                 'country'               => null,
-                'category'              => 'expatriation',
+                'category'              => 'monde',
                 'active'                => true,
-                'fetch_interval_hours'  => 6,
-                'relevance_threshold'   => 55,
-                'notes'                 => 'Rubriques pratiques expatriation : visa, logement, fiscalité, santé.',
+                'fetch_interval_hours'  => 4,
+                'relevance_threshold'   => 65,
+                'notes'                 => 'Le Monde International — analyse et actualité monde pour expatriés informés.',
             ],
 
             // ─── BBC ────────────────────────────────────────────────────────
@@ -51,15 +80,15 @@ class RssFeedSeeder extends Seeder
                 'notes'                 => 'Actualités mondiales BBC. Filtre IA à 65 pour ne garder que ce qui concerne expatriés/voyageurs.',
             ],
             [
-                'name'                  => 'BBC Travel',
-                'url'                   => 'https://feeds.bbci.co.uk/travel/rss.xml',
+                'name'                  => 'BBC News - General',
+                'url'                   => 'https://feeds.bbci.co.uk/news/rss.xml',
                 'language'              => 'en',
                 'country'               => null,
                 'category'              => 'voyage',
                 'active'                => true,
                 'fetch_interval_hours'  => 4,
-                'relevance_threshold'   => 55,
-                'notes'                 => 'BBC Travel — destinations, conseils voyage, reportages.',
+                'relevance_threshold'   => 60,
+                'notes'                 => 'BBC News général — inclut UK policy, immigration, travel advisories.',
             ],
             [
                 'name'                  => 'BBC Business (expat finance)',
@@ -110,12 +139,12 @@ class RssFeedSeeder extends Seeder
         ];
 
         foreach ($feeds as $feedData) {
-            RssFeed::firstOrCreate(
+            RssFeed::updateOrCreate(
                 ['url' => $feedData['url']],
                 $feedData
             );
         }
 
-        $this->command->info('✅ ' . count($feeds) . ' flux RSS initiaux créés (Le Petit Journal, BBC, CNN).');
+        $this->command->info('✅ ' . count($feeds) . ' flux RSS créés/mis à jour (France 24, RFI, Le Monde, BBC, CNN).');
     }
 }
