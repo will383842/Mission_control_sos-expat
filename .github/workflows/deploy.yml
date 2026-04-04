@@ -2,7 +2,7 @@ name: Deploy to Production
 
 on:
   push:
-    branches: [master]
+    branches: [main, master]
 
 jobs:
   deploy:
@@ -27,10 +27,11 @@ jobs:
             # Stash any local changes (production hotfixes, etc.)
             git stash --include-untracked 2>/dev/null || true
 
-            # Pull latest code
-            git fetch origin master
-            git checkout master
-            git reset --hard origin/master
+            # Pull latest code (support main or master branch)
+            BRANCH=$(git remote show origin | grep 'HEAD branch' | awk '{print $NF}')
+            git fetch origin $BRANCH
+            git checkout $BRANCH
+            git reset --hard origin/$BRANCH
 
             # Restore .env.production (in case git removed it after gitignore change)
             cp .env.production.bak .env.production 2>/dev/null || true
