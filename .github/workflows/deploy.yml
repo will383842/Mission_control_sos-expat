@@ -38,7 +38,12 @@ jobs:
 
             # Rebuild and restart containers (including new content + publication workers)
             docker compose build --no-cache app queue scheduler scraper frontend content-worker publication-worker
-            docker compose up -d --force-recreate app queue scheduler scraper frontend nginx-api content-worker publication-worker
+
+            # Stop services first (avoid --force-recreate which creates random container names)
+            docker compose stop app queue scheduler scraper frontend nginx-api content-worker publication-worker
+
+            # Bring everything up cleanly (correct names, remove orphans)
+            docker compose up -d --remove-orphans
 
             # Wait for app container to be ready
             sleep 5
