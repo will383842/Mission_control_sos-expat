@@ -23,7 +23,7 @@ class RssFetcherService
         }
 
         $newCount = 0;
-        $cutoff   = now()->subDays(7);
+        $cutoff   = now()->subDays(2); // Nouvelles fraiches uniquement (aujourd'hui + hier)
 
         try {
             $parsed = @simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA);
