@@ -742,3 +742,82 @@ export const launchFicheGeneration = (type: string, country: string, draft = fal
 
 export const fetchFichesProgress = (type: string) =>
   api.get(`/content-gen/fiches/${type}/progress`);
+
+// ─── CONTENT TEMPLATES ENGINE ────────────────────────────────
+export interface ContentTemplate {
+  id: number;
+  uuid: string;
+  name: string;
+  description: string | null;
+  preset_type: string;
+  content_type: string;
+  title_template: string;
+  variables: Array<{ name: string; type: string; required: boolean }>;
+  expansion_mode: string;
+  expansion_values: string[];
+  language: string;
+  tone: string;
+  article_length: string;
+  generation_instructions: string | null;
+  generate_faq: boolean;
+  faq_count: number;
+  research_sources: boolean;
+  auto_internal_links: boolean;
+  auto_affiliate_links: boolean;
+  auto_translate: boolean;
+  image_source: string;
+  total_items: number;
+  generated_items: number;
+  published_items: number;
+  failed_items: number;
+  is_active: boolean;
+  items_count?: number;
+  pending_count?: number;
+  generated_count?: number;
+  items?: ContentTemplateItem[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ContentTemplateItem {
+  id: number;
+  template_id: number;
+  expanded_title: string;
+  variable_values: Record<string, string>;
+  status: string;
+  optimized_title: string | null;
+  generated_article_id: number | null;
+  error_message: string | null;
+  generation_cost_cents: number;
+  generated_at: string | null;
+}
+
+export const fetchTemplates = (params?: Record<string, unknown>) =>
+  api.get('/content-gen/templates', { params });
+
+export const fetchTemplate = (id: number) =>
+  api.get<ContentTemplate>(`/content-gen/templates/${id}`);
+
+export const createTemplate = (data: Partial<ContentTemplate>) =>
+  api.post<ContentTemplate>('/content-gen/templates', data);
+
+export const updateTemplate = (id: number, data: Partial<ContentTemplate>) =>
+  api.put<ContentTemplate>(`/content-gen/templates/${id}`, data);
+
+export const deleteTemplate = (id: number) =>
+  api.delete(`/content-gen/templates/${id}`);
+
+export const expandTemplate = (id: number) =>
+  api.post(`/content-gen/templates/${id}/expand`);
+
+export const addTemplateItems = (id: number, items: string[]) =>
+  api.post(`/content-gen/templates/${id}/add-items`, { items });
+
+export const generateTemplateItems = (id: number, limit?: number, itemIds?: number[]) =>
+  api.post(`/content-gen/templates/${id}/generate`, { limit, item_ids: itemIds });
+
+export const skipTemplateItem = (itemId: number) =>
+  api.post(`/content-gen/templates/items/${itemId}/skip`);
+
+export const resetTemplateItem = (itemId: number) =>
+  api.post(`/content-gen/templates/items/${itemId}/reset`);

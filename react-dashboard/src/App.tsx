@@ -57,7 +57,8 @@ const ArticlesList = React.lazy(() => import('./pages/content/ArticlesList'));
 const ArticleCreate = React.lazy(() => import('./pages/content/ArticleCreate'));
 const ArticleDetail = React.lazy(() => import('./pages/content/ArticleDetail'));
 const FichesPays = React.lazy(() => import('./pages/content/FichesPays'));
-const ArticleKeywords = React.lazy(() => import('./pages/content/ArticleKeywords'));
+const ContentTemplates = React.lazy(() => import('./pages/content/ContentTemplates'));
+const ContentTemplateDetail = React.lazy(() => import('./pages/content/ContentTemplateDetail'));
 const ComparativesList = React.lazy(() => import('./pages/content/ComparativesList'));
 const ComparativeCreate = React.lazy(() => import('./pages/content/ComparativeCreate'));
 const ComparativeDetail = React.lazy(() => import('./pages/content/ComparativeDetail'));
@@ -280,10 +281,8 @@ export default function App() {
             <Route path="content/fiches-general" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><FichesPays type="general" /></React.Suspense></AdminRoute>} />
             <Route path="content/fiches-expatriation" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><FichesPays type="expatriation" /></React.Suspense></AdminRoute>} />
             <Route path="content/fiches-vacances" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><FichesPays type="vacances" /></React.Suspense></AdminRoute>} />
-            <Route path="content/art-mots-cles" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ArticleKeywords preset="mots-cles" /></React.Suspense></AdminRoute>} />
-            <Route path="content/art-longues-traines" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ArticleKeywords preset="longues-traines" /></React.Suspense></AdminRoute>} />
-            <Route path="content/art-rec-avocats" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ArticleKeywords preset="rec-avocats" /></React.Suspense></AdminRoute>} />
-            <Route path="content/art-rec-expats" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ArticleKeywords preset="rec-expats" /></React.Suspense></AdminRoute>} />
+            <Route path="content/templates" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ContentTemplates /></React.Suspense></AdminRoute>} />
+            <Route path="content/templates/:id" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ContentTemplateDetail /></React.Suspense></AdminRoute>} />
             <Route path="content/press/releases/:id" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><PressDetail /></React.Suspense></AdminRoute>} />
             <Route path="content/press/dossiers/:id" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><DossierDetail /></React.Suspense></AdminRoute>} />
             <Route path="seo/keywords" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><KeywordTracker /></React.Suspense></AdminRoute>} />

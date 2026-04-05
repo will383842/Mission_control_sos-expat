@@ -476,6 +476,22 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 
     // ============================================================
+    // CONTENT TEMPLATES ENGINE — Generation par templates avec variables
+    // ============================================================
+    Route::prefix('content-gen/templates')->middleware('role:admin')->group(function () {
+        Route::get('/',           [\App\Http\Controllers\ContentTemplateController::class, 'index']);
+        Route::post('/',          [\App\Http\Controllers\ContentTemplateController::class, 'store']);
+        Route::get('/{id}',       [\App\Http\Controllers\ContentTemplateController::class, 'show'])->where('id', '[0-9]+');
+        Route::put('/{id}',       [\App\Http\Controllers\ContentTemplateController::class, 'update'])->where('id', '[0-9]+');
+        Route::delete('/{id}',    [\App\Http\Controllers\ContentTemplateController::class, 'destroy'])->where('id', '[0-9]+');
+        Route::post('/{id}/expand',    [\App\Http\Controllers\ContentTemplateController::class, 'expand'])->where('id', '[0-9]+');
+        Route::post('/{id}/add-items', [\App\Http\Controllers\ContentTemplateController::class, 'addItems'])->where('id', '[0-9]+');
+        Route::post('/{id}/generate',  [\App\Http\Controllers\ContentTemplateController::class, 'generate'])->where('id', '[0-9]+');
+        Route::post('/items/{itemId}/skip',  [\App\Http\Controllers\ContentTemplateController::class, 'skipItem']);
+        Route::post('/items/{itemId}/reset', [\App\Http\Controllers\ContentTemplateController::class, 'resetItem']);
+    });
+
+    // ============================================================
     // Q&A (forum questions scraped from expat sites)
     // ============================================================
     Route::prefix('questions')->middleware('role:admin')->group(function () {
