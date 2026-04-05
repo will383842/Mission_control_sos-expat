@@ -115,6 +115,7 @@ const DEFAULT_SUBGROUPS: Record<string, boolean> = {
   sourcing_config   : true,
   content_piloter   : true,
   content_contenu   : true,
+  content_landing   : true,
   content_publish   : true,
 };
 
@@ -532,8 +533,11 @@ export default function Layout() {
                     <NavLink to="/content/clusters" className={subNavClass} onClick={handleNavClick}>
                       🔵 Clusters
                     </NavLink>
+                  </NavSubGroup>
+
+                  <NavSubGroup label="Landing Generator" isOpen={openSubGroups.content_landing} onToggle={() => toggleSubGroup('content_landing')}>
                     <NavLink to="/content/landings" className={subNavClass} onClick={handleNavClick}>
-                      🛬 Landings
+                      🛬 Landing Pages
                     </NavLink>
                   </NavSubGroup>
 
