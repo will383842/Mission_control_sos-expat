@@ -58,6 +58,7 @@ const ArticleCreate = React.lazy(() => import('./pages/content/ArticleCreate'));
 const ArticleDetail = React.lazy(() => import('./pages/content/ArticleDetail'));
 const FichesPays = React.lazy(() => import('./pages/content/FichesPays'));
 const ContentGenerator = React.lazy(() => import('./pages/content/ContentGenerator'));
+const ArtMotsCles = React.lazy(() => import('./pages/content/ArtMotsCles'));
 const ContentTemplates = React.lazy(() => import('./pages/content/ContentTemplates'));
 const ContentTemplateDetail = React.lazy(() => import('./pages/content/ContentTemplateDetail'));
 const ComparativesList = React.lazy(() => import('./pages/content/ComparativesList'));
@@ -287,6 +288,7 @@ export default function App() {
             <Route path="content/admin-groupes" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ContentGenerator type="admin-groupes" /></React.Suspense></AdminRoute>} />
             <Route path="content/avocats" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ContentGenerator type="avocats" /></React.Suspense></AdminRoute>} />
             <Route path="content/expats-aidants" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ContentGenerator type="expats-aidants" /></React.Suspense></AdminRoute>} />
+            <Route path="content/art-mots-cles" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ArtMotsCles /></React.Suspense></AdminRoute>} />
             <Route path="content/templates" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ContentTemplates /></React.Suspense></AdminRoute>} />
             <Route path="content/templates/:id" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ContentTemplateDetail /></React.Suspense></AdminRoute>} />
             <Route path="content/press/releases/:id" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><PressDetail /></React.Suspense></AdminRoute>} />
