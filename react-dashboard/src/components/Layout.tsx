@@ -517,6 +517,18 @@ export default function Layout() {
                     <NavLink to="/content/articles" className={subNavClass} onClick={handleNavClick}>
                       📝 Articles
                     </NavLink>
+                    <NavLink to="/content/art-mots-cles" className={subNavClass} onClick={handleNavClick}>
+                      🔑 Art Mots cles
+                    </NavLink>
+                    <NavLink to="/content/art-longues-traines" className={subNavClass} onClick={handleNavClick}>
+                      🎯 Art Longues traines
+                    </NavLink>
+                    <NavLink to="/content/art-rec-avocats" className={subNavClass} onClick={handleNavClick}>
+                      ⚖️ Art Rec Avocats
+                    </NavLink>
+                    <NavLink to="/content/art-rec-expats" className={subNavClass} onClick={handleNavClick}>
+                      🧳 Art Rec Expats
+                    </NavLink>
                     <NavLink to="/content/comparatives" className={subNavClass} onClick={handleNavClick}>
                       ⚖️ Comparatifs
                     </NavLink>
