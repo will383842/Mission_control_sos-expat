@@ -3,6 +3,8 @@
 namespace App\Services\News;
 
 use App\Models\RssFeedItem;
+use App\Services\Content\GenerationGuardService;
+use App\Services\Content\KnowledgeBaseService;
 use App\Services\News\SimilarityCheckerService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -11,6 +13,11 @@ class NewsGenerationService
 {
     private const MODEL_GENERATE = 'claude-sonnet-4-6';
     private const MODEL_LIGHT    = 'claude-haiku-4-5-20251001';
+
+    public function __construct(
+        private KnowledgeBaseService $knowledgeBase,
+        private GenerationGuardService $guard,
+    ) {}
 
     /**
      * Generate a blog article from an RSS feed item.
@@ -22,6 +29,19 @@ class NewsGenerationService
 
         if (! $anthropicKey) {
             $item->update(['status' => 'failed', 'error_message' => 'ANTHROPIC_API_KEY manquant']);
+            return false;
+        }
+
+        // ── Generation Guard: dedup check ──
+        $guardResult = $this->guard->check(
+            $item->title,
+            'news',
+            $item->language ?? 'fr',
+            $item->country,
+        );
+        if ($guardResult['status'] === 'block') {
+            $item->update(['status' => 'skipped', 'error_message' => 'Duplicate: ' . $guardResult['reason']]);
+            Log::info("NewsGenerationService: blocked by guard", ['item_id' => $item->id, 'reason' => $guardResult['reason']]);
             return false;
         }
 
@@ -113,7 +133,8 @@ Contenu: {$source}
 Réponds en JSON: {"facts": ["fait1", "fait2", ...], "country": "XX ou null", "angle": "angle editorial suggéré"}
 PROMPT;
 
-        $result = $this->callClaude(self::MODEL_LIGHT, $prompt, 500, $key);
+        $kbLight = $this->knowledgeBase->getLightPrompt('news', $item->country, $item->language ?? 'fr');
+        $result = $this->callClaude(self::MODEL_LIGHT, $prompt, 500, $key, $kbLight);
         if (! $result) return null;
 
         return $this->extractJson($result);
@@ -177,7 +198,8 @@ Réponds UNIQUEMENT en JSON valide (sans markdown):
 }
 PROMPT;
 
-        $result = $this->callClaude(self::MODEL_GENERATE, $prompt, 5000, $key);
+        $kbFull = $this->knowledgeBase->getSystemPrompt('news', $item->country, $lang);
+        $result = $this->callClaude(self::MODEL_GENERATE, $prompt, 5000, $key, $kbFull);
         if (! $result) return null;
 
         $json = $this->extractJson($result);
@@ -258,17 +280,23 @@ PROMPT;
     // CLAUDE API
     // ─────────────────────────────────────────
 
-    private function callClaude(string $model, string $prompt, int $maxTokens, string $key): ?string
+    private function callClaude(string $model, string $prompt, int $maxTokens, string $key, ?string $systemPrompt = null): ?string
     {
+        $body = [
+            'model'      => $model,
+            'max_tokens' => $maxTokens,
+            'messages'   => [['role' => 'user', 'content' => $prompt]],
+        ];
+
+        if ($systemPrompt) {
+            $body['system'] = $systemPrompt;
+        }
+
         $response = Http::withHeaders([
             'x-api-key'         => $key,
             'anthropic-version' => '2023-06-01',
             'content-type'      => 'application/json',
-        ])->timeout(120)->post('https://api.anthropic.com/v1/messages', [
-            'model'      => $model,
-            'max_tokens' => $maxTokens,
-            'messages'   => [['role' => 'user', 'content' => $prompt]],
-        ]);
+        ])->timeout(120)->post('https://api.anthropic.com/v1/messages', $body);
 
         if (! $response->successful()) {
             Log::error('NewsGenerationService: Claude API error', [

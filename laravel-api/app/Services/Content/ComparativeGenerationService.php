@@ -23,6 +23,8 @@ use Illuminate\Support\Str;
  */
 class ComparativeGenerationService
 {
+    private string $kbPrompt = '';
+
     public function __construct(
         private OpenAiService $openAi,
         private PerplexitySearchService $perplexity,
@@ -31,6 +33,8 @@ class ComparativeGenerationService
         private SlugService $slugService,
         private InternalLinkingService $internalLinking,
         private UnsplashService $unsplash,
+        private KnowledgeBaseService $knowledgeBase,
+        private GenerationGuardService $guard,
     ) {}
 
     /**
@@ -46,6 +50,18 @@ class ComparativeGenerationService
         $language = $params['language'] ?? 'fr';
         $country = $params['country'] ?? null;
         $keywords = $params['keywords'] ?? [];
+
+        // Load KB prompt for all AI phases
+        $this->kbPrompt = $this->knowledgeBase->getSystemPrompt('comparatifs', $country, $language);
+
+        // Generation Guard: check for duplicate comparatives
+        if (empty($params['force_generate'])) {
+            $guardResult = $this->guard->checkComparative($entities, $language);
+            if ($guardResult['status'] === 'block') {
+                Log::warning('ComparativeGenerationService: blocked by guard', ['reason' => $guardResult['reason']]);
+                throw new \RuntimeException("Generation blocked: {$guardResult['reason']}");
+            }
+        }
 
         $comparative = Comparative::create([
             'uuid' => (string) Str::uuid(),
@@ -78,7 +94,7 @@ class ComparativeGenerationService
             if (!empty($combinedResearch)) {
                 try {
                     $lsiResult = $this->openAi->complete(
-                        "Extrais 10-15 mots-clés sémantiques (LSI) de ce texte de recherche comparative. Ce sont des termes que Google s'attend à trouver dans un comparatif complet sur ce sujet. Retourne en JSON: {\"lsi_keywords\": [\"mot1\", \"mot2\", ...]}",
+                        $this->kbPrompt . "\n\nExtrais 10-15 mots-clés sémantiques (LSI) de ce texte de recherche comparative. Ce sont des termes que Google s'attend à trouver dans un comparatif complet sur ce sujet. Retourne en JSON: {\"lsi_keywords\": [\"mot1\", \"mot2\", ...]}",
                         mb_substr($combinedResearch, 0, 3000),
                         ['temperature' => 0.3, 'max_tokens' => 300, 'json_mode' => true]
                     );
@@ -120,7 +136,7 @@ class ComparativeGenerationService
             try {
                 $entityNames = is_array($entities) ? $entities : [];
                 $snippetResult = $this->openAi->complete(
-                    "Génère un paragraphe de définition de 40-60 mots comparant " . implode(' et ', $entityNames) . ". Format featured snippet Google. Commence par '" . ($entityNames[0] ?? '') . " et " . ($entityNames[1] ?? '') . " sont...' ou 'La comparaison entre...'",
+                    $this->kbPrompt . "\n\nGénère un paragraphe de définition de 40-60 mots comparant " . implode(' et ', $entityNames) . ". Format featured snippet Google. Commence par '" . ($entityNames[0] ?? '') . " et " . ($entityNames[1] ?? '') . " sont...' ou 'La comparaison entre...'",
                     "Entités: " . implode(', ', $entityNames) . "\nPays: " . ($country ?? ''),
                     ['temperature' => 0.5, 'max_tokens' => 200]
                 );
@@ -293,7 +309,7 @@ class ComparativeGenerationService
             }
         }
 
-        $systemPrompt = "Tu es un analyste comparatif. Compare les entités suivantes selon des critères pertinents. "
+        $systemPrompt = $this->kbPrompt . "\n\nTu es un analyste comparatif. Compare les entités suivantes selon des critères pertinents. "
             . "Retourne en JSON un tableau de comparaison:\n"
             . "[{\"criteria\": \"Nom du critère\", \"values\": {\"Entity1\": \"valeur\", \"Entity2\": \"valeur\"}}]\n\n"
             . "Inclus 8-12 critères pertinents (prix, fonctionnalités, facilité d'utilisation, support, etc.).";
@@ -325,7 +341,7 @@ class ComparativeGenerationService
     {
         $contextExcerpt = mb_substr($context, 0, 1500);
 
-        $systemPrompt = "Analyse l'entité suivante et retourne en JSON:\n"
+        $systemPrompt = $this->kbPrompt . "\n\nAnalyse l'entité suivante et retourne en JSON:\n"
             . "{\"pros\": [\"avantage 1\", ...], \"cons\": [\"inconvénient 1\", ...], \"rating\": 4.2}\n\n"
             . "3-6 avantages, 2-4 inconvénients, note sur 5. Sois objectif et factuel.";
 
@@ -368,7 +384,7 @@ class ComparativeGenerationService
             $prosConsHtml .= $this->buildProsConsHtml($entity, $data);
         }
 
-        $systemPrompt = "Tu es un rédacteur web expert en comparatifs. Rédige un article comparatif complet en HTML. "
+        $systemPrompt = $this->kbPrompt . "\n\nTu es un rédacteur web expert en comparatifs. Rédige un article comparatif complet en HTML. "
             . "Langue: {$language}.\n\n"
             . "STRUCTURE ATTENDUE:\n"
             . "- Introduction (2-3 paragraphes)\n"
@@ -488,7 +504,7 @@ class ComparativeGenerationService
         $entitiesStr = implode(' vs ', $entities);
         $year = date('Y');
 
-        $systemPrompt = "Génère des métadonnées SEO pour un comparatif. Langue: {$language}.\n"
+        $systemPrompt = $this->kbPrompt . "\n\nGénère des métadonnées SEO pour un comparatif. Langue: {$language}.\n"
             . "Retourne en JSON: {\"meta_title\": \"...\", \"meta_description\": \"...\", \"excerpt\": \"...\"}\n\n"
             . "RÈGLES META TITLE :\n"
             . "- EXACTEMENT 50-60 caractères\n"
@@ -538,7 +554,7 @@ class ComparativeGenerationService
         $faqCount = $typeConfig['faq_count'] ?? 6;
         if ($faqCount > 0) {
             $faqResult = $this->openAi->complete(
-                "Genere {$faqCount} questions frequentes sur la comparaison entre ces entites pour les expatries. Retourne en JSON: {\"faqs\": [{\"question\":\"...\",\"answer\":\"...\"}]}",
+                $this->kbPrompt . "\n\nGenere {$faqCount} questions frequentes sur la comparaison entre ces entites pour les expatries. Retourne en JSON: {\"faqs\": [{\"question\":\"...\",\"answer\":\"...\"}]}",
                 "Entites comparees: {$entitiesStr}\nPays: " . ($comparative->country ?? ''),
                 ['temperature' => 0.6, 'max_tokens' => 2000, 'json_mode' => true]
             );

@@ -3,6 +3,8 @@
 namespace App\Jobs;
 
 use App\Models\ContentQuestion;
+use App\Services\Content\GenerationGuardService;
+use App\Services\Content\KnowledgeBaseService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -67,6 +69,16 @@ class GenerateQrBlogJob implements ShouldQueue
             ]);
 
             try {
+                // 0. Generation Guard: dedup check
+                $guard = app(GenerationGuardService::class);
+                $guardResult = $guard->checkQa($question->title, 'fr');
+                if ($guardResult['status'] === 'block') {
+                    $log[] = ['type' => 'skip', 'id' => $qId, 'title' => $question->title, 'reason' => 'Duplicate: ' . $guardResult['reason']];
+                    $question->update(['article_status' => 'skipped']);
+                    $skipped++;
+                    continue;
+                }
+
                 // 1. Optimiser le titre + évaluer pertinence
                 $optimization = $this->optimizeTitle($question->toArray(), $anthropicKey);
 
@@ -192,7 +204,9 @@ Réponds UNIQUEMENT en JSON :
 {"skip":false,"reason":null,"title":"Titre optimisé","country":"FR","category":"visa"}
 PROMPT;
 
-        $result = $this->callClaude(self::MODEL_GENERATE, $prompt, 200, $key);
+        $kb = app(KnowledgeBaseService::class);
+        $kbLight = $kb->getLightPrompt('qr', $q['country'] ?? null, 'fr');
+        $result = $this->callClaude(self::MODEL_GENERATE, $prompt, 200, $key, $kbLight);
         if (! $result) return ['skip' => false, 'title' => $q['title'], 'country' => $q['country'], 'category' => 'quotidien'];
 
         return $this->extractJson($result) ?: ['skip' => false, 'title' => $q['title'], 'country' => $q['country'], 'category' => 'quotidien'];
@@ -244,7 +258,9 @@ Réponds UNIQUEMENT en JSON valide (sans markdown) :
 }
 PROMPT;
 
-        $result = $this->callClaude(self::MODEL_GENERATE, $prompt, 4000, $key);
+        $kb = app(KnowledgeBaseService::class);
+        $kbFull = $kb->getSystemPrompt('qr', $country, 'fr');
+        $result = $this->callClaude(self::MODEL_GENERATE, $prompt, 4000, $key, $kbFull);
         if (! $result) return null;
 
         $json = $this->extractJson($result);
@@ -335,17 +351,23 @@ PROMPT;
     // CLAUDE API
     // ─────────────────────────────────────────
 
-    private function callClaude(string $model, string $prompt, int $maxTokens, string $key): ?string
+    private function callClaude(string $model, string $prompt, int $maxTokens, string $key, ?string $systemPrompt = null): ?string
     {
+        $body = [
+            'model'      => $model,
+            'max_tokens' => $maxTokens,
+            'messages'   => [['role' => 'user', 'content' => $prompt]],
+        ];
+
+        if ($systemPrompt) {
+            $body['system'] = $systemPrompt;
+        }
+
         $response = Http::withHeaders([
             'x-api-key'         => $key,
             'anthropic-version' => '2023-06-01',
             'content-type'      => 'application/json',
-        ])->timeout(120)->post('https://api.anthropic.com/v1/messages', [
-            'model'      => $model,
-            'max_tokens' => $maxTokens,
-            'messages'   => [['role' => 'user', 'content' => $prompt]],
-        ]);
+        ])->timeout(120)->post('https://api.anthropic.com/v1/messages', $body);
 
         if (! $response->successful()) {
             Log::error('Claude API error in QrBlogJob', ['status' => $response->status()]);

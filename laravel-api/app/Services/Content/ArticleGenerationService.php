@@ -34,6 +34,8 @@ use Illuminate\Support\Str;
  */
 class ArticleGenerationService
 {
+    private string $kbPrompt = '';
+
     public function __construct(
         private OpenAiService $openAi,
         private ClaudeService $claude,
@@ -45,6 +47,8 @@ class ArticleGenerationService
         private SlugService $slugService,
         private InternalLinkingService $internalLinking,
         private GeoMetaService $geoMeta,
+        private KnowledgeBaseService $knowledgeBase,
+        private GenerationGuardService $guard,
     ) {}
 
     /**
@@ -57,20 +61,35 @@ class ArticleGenerationService
         // Load content-type-specific AI configuration
         $contentType = $params['content_type'] ?? 'article';
         $typeConfig = ContentTypeConfig::get($contentType);
+        $language = $params['language'] ?? 'fr';
+        $country = $params['country'] ?? null;
 
-        // Dedup check
-        $dedup = app(DeduplicationService::class);
-        $existingArticle = $dedup->findDuplicateArticle(
-            $params['topic'] ?? $params['title'] ?? '',
-            $params['country'] ?? '',
-            $params['language'] ?? 'fr'
-        );
-        if ($existingArticle && empty($params['force_generate'])) {
-            Log::warning('ArticleGenerationService: duplicate detected, skipping', [
-                'topic' => $params['topic'] ?? '',
-                'existing_id' => $existingArticle->id,
-            ]);
-            return $existingArticle;
+        // Load Knowledge Base prompt for this content type (injected into all AI phases)
+        $this->kbPrompt = $this->knowledgeBase->getSystemPrompt($contentType, $country, $language);
+
+        // Generation Guard: dedup + cross-source check
+        if (empty($params['force_generate'])) {
+            $guardResult = $this->guard->check(
+                $params['topic'] ?? $params['title'] ?? '',
+                $contentType,
+                $language,
+                $country,
+            );
+
+            if ($guardResult['status'] === 'block') {
+                Log::warning('ArticleGenerationService: blocked by GenerationGuard', [
+                    'topic' => $params['topic'] ?? '',
+                    'reason' => $guardResult['reason'],
+                ]);
+                // Return existing article if available
+                if ($guardResult['existing_id']) {
+                    $existing = GeneratedArticle::find($guardResult['existing_id']);
+                    if ($existing) {
+                        return $existing;
+                    }
+                }
+                throw new \RuntimeException("Generation blocked: {$guardResult['reason']}");
+            }
         }
 
         // 1. Use pre-created article if article_id provided, otherwise create new
@@ -553,7 +572,7 @@ class ArticleGenerationService
         // Step 1 — GPT extracts key facts from the scraped content (always done)
         $truncated     = mb_substr(strip_tags($sourceContent), 0, 4000);
         $extractResult = $this->openAi->complete(
-            "Tu es un assistant de recherche. Extrais les faits clés, chiffres, données importantes "
+            $this->kbPrompt . "\n\nTu es un assistant de recherche. Extrais les faits clés, chiffres, données importantes "
             . "et points essentiels de ce contenu. "
             . "Retourne en JSON : {\"facts\": [\"fait1\", \"fait2\", ...], \"lsi_keywords\": [\"mot1\", \"mot2\", ...]}",
             "Contenu source :\n{$truncated}",
@@ -719,7 +738,7 @@ class ArticleGenerationService
 
         $template = $this->getPromptTemplate('article', 'title');
 
-        $systemPrompt = $template
+        $systemPrompt = $this->kbPrompt . "\n\n" . ($template
             ? $this->replaceVariables($template->system_message, ['language' => $language, 'year' => $year])
             : "Tu es un expert SEO senior spécialisé dans les titres à fort CTR. "
               . "Génère un titre d'article PARFAIT pour Google et les moteurs de recherche.\n\n"
@@ -738,7 +757,7 @@ class ArticleGenerationService
               . "6. PAS de : clickbait, point d'exclamation, majuscules excessives, \"meilleur\" sans justification\n"
               . "7. NE COMMENCE PAS le titre par : \"Guide\", \"Article\", \"Comment\", \"Voici\"\n"
               . "7. UNIQUE : le titre ne doit pas être générique, il doit être spécifique au sujet\n\n"
-              . "Langue: {$language}. Retourne UNIQUEMENT le titre, sans guillemets ni explication.";
+              . "Langue: {$language}. Retourne UNIQUEMENT le titre, sans guillemets ni explication.");
 
         $userPrompt = "Sujet: {$topic}\nMot-clé principal: {$primaryKeyword}\nAnnée: {$year}{$factsContext}";
 
@@ -811,7 +830,7 @@ class ArticleGenerationService
     {
         $factsContext = !empty($facts) ? "\nFaits: " . implode('. ', array_slice($facts, 0, 3)) : '';
 
-        $systemPrompt = "Tu es un expert SEO. Génère un résumé de 2-3 phrases (150-200 caractères) qui servira d'EXCERPT pour l'article."
+        $systemPrompt = $this->kbPrompt . "\n\nTu es un expert SEO. Génère un résumé de 2-3 phrases (150-200 caractères) qui servira d'EXCERPT pour l'article."
             . "\n\nRÈGLES STRICTES :"
             . "\n- LONGUEUR : entre 150 et 200 caractères EXACTEMENT (Google snippet + meta description)"
             . "\n- Commence directement par l'information clé (PAS 'Cet article traite de...')"
@@ -862,7 +881,7 @@ class ArticleGenerationService
 
         $template = $this->getPromptTemplate($contentType, 'content');
 
-        $systemPrompt = $template
+        $systemPrompt = $this->kbPrompt . "\n\n" . ($template
             ? $this->replaceVariables($template->system_message, [
                 'language' => $language,
                 'tone' => $tone,
@@ -908,7 +927,7 @@ class ArticleGenerationService
               . "- Mentionne '" . date('Y') . "' dans les données chiffrées\n"
               . "- Dans la conclusion\n"
               . "- Densité totale : 1-2% (ni trop, ni trop peu)\n"
-              . "Le mot-clé doit apparaître NATURELLEMENT — jamais forcé ou répétitif.";
+              . "Le mot-clé doit apparaître NATURELLEMENT — jamais forcé ou répétitif.");
 
         $userPrompt = "Titre: {$title}\n\n"
             . "Introduction (déjà rédigée, à intégrer):\n{$excerpt}\n\n"
@@ -1011,7 +1030,7 @@ class ArticleGenerationService
                     . "ARTICLE À DÉVELOPPER :\n" . $content;
 
                 $extendResult = $this->openAi->complete(
-                    "Tu es un rédacteur web expert. Développe cet article en HTML pour qu'il atteigne {$targetWords} mots minimum.",
+                    $this->kbPrompt . "\n\nTu es un rédacteur web expert. Développe cet article en HTML pour qu'il atteigne {$targetWords} mots minimum.",
                     $extendPrompt,
                     [
                         'model' => $typeConfig['model'] ?? null,
@@ -1045,9 +1064,9 @@ class ArticleGenerationService
 
         $template = $this->getPromptTemplate('article', 'featured_snippet');
 
-        $systemPrompt = $template
+        $systemPrompt = $this->kbPrompt . "\n\n" . ($template
             ? $this->replaceVariables($template->system_message, ['topic' => $article->title, 'keyword' => $primaryKeyword, 'language' => $language])
-            : "Tu es un expert SEO. Génère un paragraphe de définition de EXACTEMENT 40-60 mots qui répond directement à la question implicite du titre. Ce paragraphe doit commencer par une reformulation du sujet (ex: 'Le visa pour l'Allemagne est...'). Il sera utilisé comme featured snippet Google (Position 0). Langue: {$language}.";
+            : "Tu es un expert SEO. Génère un paragraphe de définition de EXACTEMENT 40-60 mots qui répond directement à la question implicite du titre. Ce paragraphe doit commencer par une reformulation du sujet (ex: 'Le visa pour l'Allemagne est...'). Il sera utilisé comme featured snippet Google (Position 0). Langue: {$language}.");
 
         $userPrompt = $template
             ? $this->replaceVariables($template->user_message_template, [
@@ -1101,7 +1120,7 @@ class ArticleGenerationService
         // Force country name in every FAQ question — prevents generic duplicate FAQs across 197 countries
         $faqCountryConstraint = $country ? $this->geoMeta->buildFaqCountryConstraint($country, $language) : '';
 
-        $systemPrompt = "Tu es un expert SEO spécialisé en FAQ Schema. Génère exactement {$count} questions fréquemment posées "
+        $systemPrompt = $this->kbPrompt . "\n\nTu es un expert SEO spécialisé en FAQ Schema. Génère exactement {$count} questions fréquemment posées "
             . "sur le sujet de l'article, avec des réponses détaillées (3-5 phrases chacune). "
             . "Langue: {$language}.\n\n"
             . "Retourne en JSON: [{\"question\": \"...\", \"answer\": \"...\"}]\n"
@@ -1132,7 +1151,7 @@ class ArticleGenerationService
     private function phase07_generateMeta(string $title, string $excerpt, string $primaryKeyword, string $language): array
     {
         $year = date('Y');
-        $systemPrompt = "Tu es un expert SEO senior. Génère un meta title ET une meta description parfaitement optimisés pour Google.\n"
+        $systemPrompt = $this->kbPrompt . "\n\nTu es un expert SEO senior. Génère un meta title ET une meta description parfaitement optimisés pour Google.\n"
             . "Langue: {$language}.\n\n"
             . "Retourne en JSON: {\"meta_title\": \"...\", \"meta_description\": \"...\"}\n\n"
             . "RÈGLES META TITLE (balise <title>) :\n"
@@ -1217,7 +1236,7 @@ class ArticleGenerationService
     ): array {
         $contentSnippet = mb_substr($contentText, 0, 800);
 
-        $systemPrompt = "Tu génères 3 éléments différenciés pour un article sur '{$primaryKeyword}' en {$language}.\n\n"
+        $systemPrompt = $this->kbPrompt . "\n\nTu génères 3 éléments différenciés pour un article sur '{$primaryKeyword}' en {$language}.\n\n"
             . "Retourne en JSON:\n"
             . "{\n"
             . "  \"og_title\": \"Titre accrocheur pour réseaux sociaux (≤95 chars, DIFFÉRENT du meta_title)\",\n"
