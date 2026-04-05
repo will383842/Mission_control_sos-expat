@@ -515,6 +515,21 @@ export default function Layout() {
                     <NavLink to="/content/fiches-vacances" className={subNavClass} onClick={handleNavClick}>
                       🏖️ Fiches Pays Vacances
                     </NavLink>
+                    <NavLink to="/content/chatters" className={subNavClass} onClick={handleNavClick}>
+                      💬 Chatters
+                    </NavLink>
+                    <NavLink to="/content/influenceurs" className={subNavClass} onClick={handleNavClick}>
+                      📢 Influenceurs
+                    </NavLink>
+                    <NavLink to="/content/admin-groupes" className={subNavClass} onClick={handleNavClick}>
+                      👥 Admin Groupes
+                    </NavLink>
+                    <NavLink to="/content/avocats" className={subNavClass} onClick={handleNavClick}>
+                      ⚖️ Avocats
+                    </NavLink>
+                    <NavLink to="/content/expats-aidants" className={subNavClass} onClick={handleNavClick}>
+                      🧳 Expats Aidants
+                    </NavLink>
                     <NavLink to="/content/articles" className={subNavClass} onClick={handleNavClick}>
                       📝 Articles
                     </NavLink>

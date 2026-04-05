@@ -57,6 +57,7 @@ const ArticlesList = React.lazy(() => import('./pages/content/ArticlesList'));
 const ArticleCreate = React.lazy(() => import('./pages/content/ArticleCreate'));
 const ArticleDetail = React.lazy(() => import('./pages/content/ArticleDetail'));
 const FichesPays = React.lazy(() => import('./pages/content/FichesPays'));
+const ContentGenerator = React.lazy(() => import('./pages/content/ContentGenerator'));
 const ContentTemplates = React.lazy(() => import('./pages/content/ContentTemplates'));
 const ContentTemplateDetail = React.lazy(() => import('./pages/content/ContentTemplateDetail'));
 const ComparativesList = React.lazy(() => import('./pages/content/ComparativesList'));
@@ -281,6 +282,11 @@ export default function App() {
             <Route path="content/fiches-general" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><FichesPays type="general" /></React.Suspense></AdminRoute>} />
             <Route path="content/fiches-expatriation" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><FichesPays type="expatriation" /></React.Suspense></AdminRoute>} />
             <Route path="content/fiches-vacances" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><FichesPays type="vacances" /></React.Suspense></AdminRoute>} />
+            <Route path="content/chatters" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ContentGenerator type="chatters" /></React.Suspense></AdminRoute>} />
+            <Route path="content/influenceurs" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ContentGenerator type="influenceurs" /></React.Suspense></AdminRoute>} />
+            <Route path="content/admin-groupes" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ContentGenerator type="admin-groupes" /></React.Suspense></AdminRoute>} />
+            <Route path="content/avocats" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ContentGenerator type="avocats" /></React.Suspense></AdminRoute>} />
+            <Route path="content/expats-aidants" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ContentGenerator type="expats-aidants" /></React.Suspense></AdminRoute>} />
             <Route path="content/templates" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ContentTemplates /></React.Suspense></AdminRoute>} />
             <Route path="content/templates/:id" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ContentTemplateDetail /></React.Suspense></AdminRoute>} />
             <Route path="content/press/releases/:id" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><PressDetail /></React.Suspense></AdminRoute>} />
