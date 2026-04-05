@@ -71,6 +71,10 @@ class NewsGenerationService
             }
         }
 
+        // ── Post-process: quality check, SEO score ──
+        $postProcessor = app(\App\Services\Content\ContentPostProcessor::class);
+        $content = $postProcessor->process($content, 'news', $item->language ?? 'fr', $item->country, "news_rss_{$item->id}");
+
         // ── Envoi au Blog ──
         $sent = $this->sendToBlog($item, $content);
 

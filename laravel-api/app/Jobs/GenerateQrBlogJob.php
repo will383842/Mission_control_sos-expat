@@ -91,6 +91,16 @@ class GenerateQrBlogJob implements ShouldQueue
                     continue;
                 }
 
+                // 2b. Post-process: quality check, SEO score, plagiarism
+                $postProcessor = app(\App\Services\Content\ContentPostProcessor::class);
+                $frContent = $postProcessor->process($frContent, 'qa', 'fr', $country, "qr_blog_{$qId}");
+
+                $qm = $frContent['quality_metrics'] ?? [];
+                if (! ($qm['passed'] ?? true)) {
+                    $log[] = ['type' => 'warning', 'id' => $qId, 'title' => $title, 'reason' => 'Qualite insuffisante: ' . implode(', ', $qm['issues'] ?? [])];
+                    // Continue anyway — just log the warning, don't block
+                }
+
                 // 3. Envoyer FR au Blog
                 $uuid = "mc_question_{$qId}";
                 $sentFr = $this->sendToBlog($uuid, 'fr', $country, $frContent, $blogApiUrl, $blogApiKey);
