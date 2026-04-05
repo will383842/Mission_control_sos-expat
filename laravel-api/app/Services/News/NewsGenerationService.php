@@ -210,6 +210,8 @@ PROMPT;
 
         $uuid = "mc_rss_{$item->id}";
 
+        $qm = $content['quality_metrics'] ?? [];
+
         $payload = [
             'uuid'               => $uuid,
             'event'              => 'create',
@@ -225,8 +227,10 @@ PROMPT;
             'keywords_secondary' => $content['keywords_secondary'] ?? [],
             'source_url'         => $item->url,
             'source_name'        => $item->source_name,
-            // Auto-publish immédiatement (article validé par anti-plagiat)
             'published_at'       => now()->toIso8601String(),
+            'seo_score'          => $qm['seo_score'] ?? null,
+            'quality_score'      => $qm['quality_score'] ?? null,
+            'readability_score'  => $qm['readability_score'] ?? null,
             'faqs'               => array_map(fn($f) => [
                 'question' => $f['question'],
                 'answer'   => $f['answer'],

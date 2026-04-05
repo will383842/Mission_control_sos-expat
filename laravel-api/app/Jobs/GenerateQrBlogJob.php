@@ -307,6 +307,8 @@ PROMPT;
     {
         if (! $blogUrl || ! $blogKey) return false;
 
+        $qm = $content['quality_metrics'] ?? [];
+
         $payload = [
             'uuid'               => $uuid,
             'event'              => 'create',
@@ -324,6 +326,10 @@ PROMPT;
                 'question' => $f['question'],
                 'answer'   => $f['answer'],
             ], $content['faqs'] ?? []),
+            'published_at'       => now()->toIso8601String(),
+            'seo_score'          => $qm['seo_score'] ?? null,
+            'quality_score'      => $qm['quality_score'] ?? null,
+            'readability_score'  => $qm['readability_score'] ?? null,
         ];
 
         if ($country) $payload['country'] = strtoupper($country);
