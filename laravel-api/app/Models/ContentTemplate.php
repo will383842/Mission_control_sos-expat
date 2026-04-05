@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\CountryGeo;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -73,19 +74,18 @@ class ContentTemplate extends Model
         $expansions = [];
 
         if ($this->expansion_mode === 'all_countries') {
-            $countries = \App\Models\Country::with(['translations' => fn ($q) => $q->where('language_code', $this->language ?? 'fr')])
-                ->orderBy('priority', 'desc')
-                ->get();
+            $lang = $this->language ?? 'fr';
+            $countries = CountryGeo::orderBy('country_name_fr')->get();
 
             foreach ($countries as $country) {
-                $name = $country->translations->first()?->name ?? $country->code;
+                $name = $lang === 'en' ? $country->country_name_en : $country->country_name_fr;
                 $values = [];
                 $title = $this->title_template;
 
                 foreach ($varNames as $var) {
                     if (in_array($var, ['pays', 'country', 'pais', 'land'])) {
                         $values[$var] = $name;
-                        $values["{$var}_code"] = $country->code;
+                        $values["{$var}_code"] = $country->country_code;
                         $title = str_replace("{{$var}}", $name, $title);
                     }
                 }
@@ -94,20 +94,18 @@ class ContentTemplate extends Model
             }
         } elseif ($this->expansion_mode === 'selected_countries') {
             $codes = $this->expansion_values ?? [];
-            $countries = \App\Models\Country::whereIn('code', $codes)
-                ->with(['translations' => fn ($q) => $q->where('language_code', $this->language ?? 'fr')])
-                ->orderBy('priority', 'desc')
-                ->get();
+            $lang = $this->language ?? 'fr';
+            $countries = CountryGeo::whereIn('country_code', $codes)->orderBy('country_name_fr')->get();
 
             foreach ($countries as $country) {
-                $name = $country->translations->first()?->name ?? $country->code;
+                $name = $lang === 'en' ? $country->country_name_en : $country->country_name_fr;
                 $values = [];
                 $title = $this->title_template;
 
                 foreach ($varNames as $var) {
                     if (in_array($var, ['pays', 'country', 'pais', 'land'])) {
                         $values[$var] = $name;
-                        $values["{$var}_code"] = $country->code;
+                        $values["{$var}_code"] = $country->country_code;
                         $title = str_replace("{{$var}}", $name, $title);
                     }
                 }

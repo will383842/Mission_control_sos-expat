@@ -29,7 +29,7 @@ return new class extends Migration
 
             // Expansion mode: how variables are expanded
             $table->string('expansion_mode', 30)->default('manual');
-            // manual, all_countries, selected_countries, all_cities, custom_list
+            // manual, all_countries, selected_countries, custom_list
 
             // Selected values for expansion (country codes, city names, etc.)
             $table->jsonb('expansion_values')->default('[]');
