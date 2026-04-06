@@ -39,13 +39,21 @@ interface QueueItem {
 }
 
 const TYPE_ICONS: Record<string, string> = {
-  qa: '❓', news: '📰', article: '📝', guide: '🌍', guide_city: '🏙️',
-  comparative: '⚖️', outreach: '📢', testimonial: '💬',
+  qa: '❓', art_mots_cles: '🔑', art_longues_traines: '🎯',
+  guide: '🌍', guide_expat: '✈️', guide_vacances: '🏖️', guide_city: '🏙️',
+  comparative: '⚖️', affiliation: '💰',
+  outreach_chatters: '💬', outreach_influenceurs: '📢', outreach_admin_groupes: '👥',
+  outreach_avocats: '⚖️', outreach_expats: '🧳',
+  testimonial: '💬', brand_content: '🏷️',
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  qa: 'bg-blue-500', news: 'bg-emerald-500', article: 'bg-violet-500', guide: 'bg-amber-500',
-  guide_city: 'bg-sky-500', comparative: 'bg-rose-500', outreach: 'bg-cyan-500', testimonial: 'bg-pink-500',
+  qa: 'bg-blue-500', art_mots_cles: 'bg-violet-500', art_longues_traines: 'bg-indigo-500',
+  guide: 'bg-amber-500', guide_expat: 'bg-orange-500', guide_vacances: 'bg-yellow-500', guide_city: 'bg-sky-500',
+  comparative: 'bg-rose-500', affiliation: 'bg-emerald-500',
+  outreach_chatters: 'bg-cyan-500', outreach_influenceurs: 'bg-teal-500', outreach_admin_groupes: 'bg-lime-500',
+  outreach_avocats: 'bg-green-500', outreach_expats: 'bg-fuchsia-500',
+  testimonial: 'bg-pink-500', brand_content: 'bg-purple-500',
 };
 
 export default function ContentOrchestrator() {
@@ -158,6 +166,37 @@ export default function ContentOrchestrator() {
             {config.last_run_at && ` — Derniere gen: ${new Date(config.last_run_at).toLocaleTimeString('fr-FR')}`}
           </p>
         </div>
+      </div>
+
+      {/* RSS Independent Section */}
+      <div className="bg-surface/60 border border-border/20 rounded-xl p-5 flex items-center gap-4">
+        <span className="text-2xl">📰</span>
+        <div className="flex-1">
+          <p className="text-white font-semibold">News RSS (independant)</p>
+          <p className="text-muted text-xs">{config.today_rss_generated ?? 0}/{config.rss_daily_target ?? 10} news aujourd'hui — auto fetch 4h + generation 08:00</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <input type="number" min="0" max="10000"
+            value={config.rss_daily_target ?? 10}
+            onChange={e => saveConfig({ rss_daily_target: parseInt(e.target.value) || 10 })}
+            className="w-20 bg-bg border border-border rounded-lg px-3 py-2 text-white text-center text-sm" />
+          <span className="text-xs text-muted">/jour</span>
+        </div>
+      </div>
+
+      {/* Telegram Alerts Toggle */}
+      <div className="bg-surface/60 border border-border/20 rounded-xl p-4 flex items-center gap-4">
+        <span className="text-xl">🔔</span>
+        <div className="flex-1">
+          <p className="text-white text-sm font-medium">Alertes Telegram</p>
+          <p className="text-muted text-xs">Notification en cas d'erreur, quota atteint, ou compte API vide</p>
+        </div>
+        <button onClick={() => saveConfig({ telegram_alerts: !config.telegram_alerts })}
+          className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            config.telegram_alerts ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-muted/10 text-muted border border-border/20'
+          }`}>
+          {config.telegram_alerts ? '✅ Actif' : '⭕ Desactive'}
+        </button>
       </div>
 
       {/* Progress Bar */}
