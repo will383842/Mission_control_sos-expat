@@ -49,6 +49,11 @@ ENCADRE "Urgence" (pour articles urgence uniquement) :
 </ul>
 </div>
 
+REPONSE DIRECTE "Featured Snippet" (premier paragraphe, OBLIGATOIRE pour Q/R et tutoriels) :
+<div class="featured-snippet">
+<p>Reponse directe et factuelle en 40-60 mots maximum. Inclure le mot-cle principal, la reponse concrete et 1 chiffre cle si disponible.</p>
+</div>
+
 ENCADRE "En bref" (resume en haut d'article) :
 <div class="summary-box">
 <p><strong>En bref</strong></p>
