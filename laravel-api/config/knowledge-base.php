@@ -56,7 +56,7 @@ return [
             'PAS un cabinet d\'avocats — SOS-Expat ne fournit PAS de conseil juridique directement',
             'PAS une assurance voyage — SOS-Expat ne rembourse rien en cas de sinistre',
             'PAS un consulat ou une ambassade — aucun pouvoir consulaire',
-            'PAS un service gratuit — appels payants (49EUR avocat, 19EUR expert)',
+            'PAS un service gratuit — appels payants (avocat 49EUR/55USD, expert 19EUR/25USD)',
             'PAS un chatbot ou une IA — ce sont de VRAIS humains verifies au telephone',
             'PAS un service d\'urgence (ne pas utiliser pour urgences medicales vitales)',
             'PAS un service de conseil fiscal, medical ou reglementaire direct',
@@ -482,14 +482,14 @@ return [
             'Ne jamais utiliser un ton alarmiste ou anxiogene',
             'Ne jamais denigrer les ambassades, assurances ou concurrents',
             'Ne jamais promettre des resultats specifiques (chaque situation est unique)',
-            'Ne jamais confondre avocat (49EUR/20min) et expert local (19EUR/30min)',
+            'Ne jamais confondre avocat (49EUR ou 55USD/20min) et expert local (19EUR ou 25USD/30min)',
             'Ne jamais dire que c\'est un chatbot ou une IA — ce sont de vrais humains',
         ],
 
         'always_say' => [
             'Toujours mentionner "197 pays" et "9 langues" quand c\'est pertinent',
             'Toujours preciser "en moins de 5 minutes" pour le temps de mise en relation',
-            'Toujours differencier avocat (49EUR/20min) et expert local (19EUR/30min)',
+            'Toujours differencier avocat (49EUR ou 55USD/20min) et expert local (19EUR ou 25USD/30min)',
             'Toujours rappeler que le service est disponible 24h/24, 7j/7',
             'Toujours inclure un CTA vers sos-expat.com en fin d\'article (max 1 CTA)',
         ],
@@ -580,7 +580,7 @@ return [
     // =====================================================================
 
     'tools' => [
-        'total' => 26,
+        'total' => 24,
         'access' => 'Gratuit, sans inscription',
         'url' => 'https://blog.life-expat.com/outils/',
         'categories' => [

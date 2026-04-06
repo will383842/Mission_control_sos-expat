@@ -135,7 +135,7 @@ PROMPT;
 - Retrait minimum : $30 | Frais retrait : $3 fixe
 - 4 moyens de paiement : Stripe (carte), PayPal, Wise (virement), Flutterwave (Mobile Money Afrique)
 - 14 fournisseurs Mobile Money : Orange Money, Wave, MTN MoMo, M-Pesa, Airtel Money, etc.
-- 26 outils interactifs gratuits sur blog.life-expat.com
+- 24 outils interactifs gratuits sur blog.life-expat.com
 - Entite legale : WorldExpat OU, Estonie
 === FIN REFERENCE ===
 PROMPT;
