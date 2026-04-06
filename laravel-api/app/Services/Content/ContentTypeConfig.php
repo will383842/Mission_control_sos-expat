@@ -101,9 +101,12 @@ class ContentTypeConfig
                 'quality_threshold' => 85,
                 'h2_count' => [6, 8],
                 'include_charts_data' => false,
-                'include_key_figures' => false,
+                'include_key_figures' => true,
                 'eeat_signals' => true,
-                'prompt_suffix' => "Article informatif et pratique de haute qualite.",
+                'prompt_suffix' => "Article informatif et pratique de haute qualite. "
+                    . "OBLIGATOIRE : inclure au moins 3 donnees chiffrees precises et verifiees (montants, delais, pourcentages, statistiques officielles). "
+                    . "Chaque section H2 doit apporter une valeur concrete. "
+                    . "Un encadre 'Chiffres cles' avec les donnees essentielles en <strong>.",
             ],
 
             // COMPARATIVES (tableaux, donnees structurees)

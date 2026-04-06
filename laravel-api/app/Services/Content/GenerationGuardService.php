@@ -234,7 +234,7 @@ class GenerationGuardService
             ->whereNull('parent_article_id')
             ->whereIn('status', ['draft', 'review', 'published'])
             ->select('id', 'title', 'country')
-            ->limit(200)
+            ->limit(1000)
             ->get();
 
         foreach ($candidates as $candidate) {
