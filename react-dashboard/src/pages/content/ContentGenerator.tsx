@@ -111,6 +111,33 @@ const TYPE_CONFIG: Record<string, {
     titleTemplate: 'Temoignage expatrie en {pays} : mon experience et mes conseils',
     instructions: 'Temoignage simule d\'un expatrie installe dans le pays. Style narratif a la premiere personne. Inclure: contexte de depart, defis rencontres, bonnes surprises, conseils concrets. NE PAS inventer de donnees chiffrees precises. Ton personnel et authentique. CTA vers SOS-Expat.com pour une aide personnalisee.',
   },
+  tutorial: {
+    emoji: '📖', title: 'Tutoriels', slug: 'tutoriels',
+    description: 'Guides pratiques pas-a-pas pour les demarches des expatries',
+    gradient: 'from-teal-500/20 to-teal-500/5',
+    contentType: 'tutorial',
+    autoExpand: true,
+    titleTemplate: 'Comment {demarche} en {pays} : guide complet etape par etape',
+    instructions: 'Guide pratique pas-a-pas sur une demarche administrative ou pratique pour expatrie. Structure: introduction contexte, pre-requis, etapes numerotees avec details concrets, delais, couts, erreurs a eviter, FAQ. Inclure captures/schemas si pertinent. CTA vers SOS-Expat.com pour aide personnalisee.',
+  },
+  'partner-legal': {
+    emoji: '🤝', title: 'Part. Avocats', slug: 'part-avocats',
+    description: 'Contenu expert juridique redige par des avocats partenaires SOS-Expat',
+    gradient: 'from-emerald-500/20 to-emerald-500/5',
+    contentType: 'partner_legal',
+    autoExpand: true,
+    titleTemplate: '{sujet-juridique} en {pays} : ce que vous devez savoir (guide avocat)',
+    instructions: 'Article juridique expert sur un sujet lie a l\'expatriation. Ton professionnel et precis. Mentionner les textes de loi applicables. Inclure: etapes concretes, delais, couts estimatifs, erreurs a eviter. AJOUTER une clause de non-responsabilite en fin d\'article. E-E-A-T fort avec references juridiques. CTA vers consultation avocat sur SOS-Expat.com.',
+  },
+  'partner-expat': {
+    emoji: '🌐', title: 'Part. Expats', slug: 'part-expats',
+    description: 'Contenu terrain redige par des expatries prestataires partenaires',
+    gradient: 'from-orange-500/20 to-orange-500/5',
+    contentType: 'partner_expat',
+    autoExpand: true,
+    titleTemplate: 'Mon experience d\'expatrie en {pays} : conseils pratiques et vecu',
+    instructions: 'Article base sur l\'experience terrain d\'un expatrie prestataire partenaire. Melanger expertise professionnelle et vecu personnel. Conseils pratiques et actionnables, ton accessible et authentique. Premiere personne partielle. Inclure anecdotes concretes et chiffres vecus. CTA vers SOS-Expat.com pour mise en relation.',
+  },
 };
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {

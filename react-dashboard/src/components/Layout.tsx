@@ -543,8 +543,11 @@ export default function Layout() {
                     <NavLink to="/content/longues-traines" className={subNavClass} onClick={handleNavClick}>
                       🎯 Art Longues Traines
                     </NavLink>
+                    <NavLink to="/content/tutoriels" className={subNavClass} onClick={handleNavClick}>
+                      📖 Tutoriels
+                    </NavLink>
                     <NavLink to="/content/brand-content" className={subNavClass} onClick={handleNavClick}>
-                      ��️ Brand Content
+                      ✍️ Brand Content
                     </NavLink>
                     <NavLink to="/content/articles" className={subNavClass} onClick={handleNavClick}>
                       📝 Art Titre Manuel
@@ -554,6 +557,12 @@ export default function Layout() {
                     </NavLink>
                     <NavLink to="/content/temoignages" className={subNavClass} onClick={handleNavClick}>
                       💬 Temoignages
+                    </NavLink>
+                    <NavLink to="/content/part-avocats" className={subNavClass} onClick={handleNavClick}>
+                      🤝 Part. Avocats
+                    </NavLink>
+                    <NavLink to="/content/part-expats" className={subNavClass} onClick={handleNavClick}>
+                      🌐 Part. Expats
                     </NavLink>
                     <NavLink to="/content/sondages" className={subNavClass} onClick={handleNavClick}>
                       📊 Sondages
