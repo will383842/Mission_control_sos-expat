@@ -34,7 +34,9 @@ COPY laravel-api/composer.json ./
 RUN touch .env && composer update --no-dev --no-scripts --no-autoloader --prefer-dist
 
 COPY laravel-api/ .
-RUN touch .env && composer dump-autoload --optimize
+# --no-scripts skips artisan package:discover which requires a real .env to boot.
+# package:discover runs in entrypoint.sh once env vars are injected.
+RUN touch .env && composer dump-autoload --optimize --no-scripts
 
 RUN mkdir -p /var/www/html/public-shared \
     && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public-shared \
