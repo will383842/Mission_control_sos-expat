@@ -81,9 +81,29 @@ CTA SOS-EXPAT (1 seul par article, en fin de contenu) :
 
 IMAGE AVEC LEGENDE :
 <figure>
-<img src="{url}" alt="{description}" loading="lazy">
-<figcaption>{credit}</figcaption>
+<img src="{url}" alt="{description}" loading="lazy" width="1200" height="630">
+<figcaption>{credit} — Photo on Unsplash</figcaption>
 </figure>
+
+FAQ ACCORDION INLINE (pour les articles avec questions frequentes integrees) :
+<details class="faq-item">
+<summary><strong>Question frequente ici ?</strong></summary>
+<p>Reponse detaillee et actionnable ici. Min 80 mots, max 200 mots.</p>
+</details>
+
+LIENS OFFICIELS (sources gouvernementales, ambassades, organismes — max 5) :
+<div class="official-links">
+<p><strong>🔗 Sources officielles</strong></p>
+<ul>
+<li><a href="{url}" target="_blank" rel="noopener">Nom de l'organisme officiel</a></li>
+</ul>
+</div>
+
+DISCLAIMER JURIDIQUE (OBLIGATOIRE pour tous les articles juridiques/fiscaux) :
+<div class="disclaimer-box">
+<p><strong>⚠️ Avertissement</strong></p>
+<p>Cet article est fourni a titre informatif uniquement et ne constitue pas un conseil juridique. Les lois et reglements varient selon les pays et evoluent regulierement. Consultez un professionnel qualifie pour votre situation specifique.</p>
+</div>
 
 REGLES HTML :
 - JAMAIS de <h1> (le titre H1 est gere par le template de page)
@@ -93,15 +113,18 @@ REGLES HTML :
 - <a href="..."> pour les liens (internes et externes)
 - <ul>/<ol> pour les listes (minimum 3 items)
 - JAMAIS de classes Tailwind personnalisees (bg-blue-50, etc.) — utiliser les classes ci-dessus
+- DISCLAIMER OBLIGATOIRE en fin d'article pour tout contenu juridique, fiscal ou medical
 === FIN TEMPLATES HTML ===
 HTML,
 
-    // CSS classes that MUST be in the blog safelist
+    // CSS classes used in generated content — must be defined in blog app.css
     'safelist_classes' => [
         // Callout types
         'callout-info', 'callout-warning', 'callout-tip',
         // Special boxes
         'emergency-box', 'summary-box', 'pricing-box', 'cta-box', 'cta-button',
+        // FAQ + links + legal
+        'faq-item', 'official-links', 'disclaimer-box',
         // Featured snippet
         'featured-snippet',
     ],
