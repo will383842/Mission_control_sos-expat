@@ -3,6 +3,10 @@ import api from '../../api/client';
 import { generateArticle } from '../../api/contentApi';
 import type { GenerateArticleParams } from '../../types/content';
 import { toast } from '../../components/Toast';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, Cell,
+} from 'recharts';
 
 // ─── TYPES ───────────────────────────────────────────────
 
@@ -130,12 +134,13 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }>
   skipped:    { bg: 'bg-muted/10', text: 'text-muted/40', label: 'Ignore' },
 };
 
-const TABS = ['sources', 'items', 'generer'] as const;
+const TABS = ['sources', 'items', 'generer', 'stats'] as const;
 type Tab = typeof TABS[number];
 const TAB_LABELS: Record<Tab, { emoji: string; label: string }> = {
   sources: { emoji: '📋', label: 'Sources' },
   items:   { emoji: '📦', label: 'Items' },
   generer: { emoji: '⚡', label: 'Generer' },
+  stats:   { emoji: '📊', label: 'Stats' },
 };
 
 // ─── COMPONENT ───────────────────────────────────────────
@@ -156,6 +161,8 @@ export default function ContentGenerator({ type }: Props) {
   const [newTitle, setNewTitle] = useState('');
   const [bulkInput, setBulkInput] = useState('');
   const [showBulk, setShowBulk] = useState(false);
+  const [logs, setLogs] = useState<Array<{ date: string; generated: number; published: number; errors: number }>>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
 
   // Load data
   const loadData = useCallback(async () => {
@@ -171,14 +178,46 @@ export default function ContentGenerator({ type }: Props) {
       const cats = (statsRes.data as any) ?? [];
       const myCat = Array.isArray(cats) ? cats.find((c: any) => c.slug === config.slug) : null;
       setStats(myCat ?? null);
+      // Load logs for stats tab
+      if (tab === 'stats') {
+        try {
+          const logsRes = await api.get('/content/orchestrator/logs', { params: { days: 30 } });
+          const allLogs: any[] = Array.isArray(logsRes.data) ? logsRes.data : [];
+          // Filter by content type
+          const filtered = allLogs
+            .filter((l: any) => l.type === config.contentType || l.content_type === config.contentType)
+            .slice(0, 30)
+            .reverse();
+          setLogs(filtered);
+        } catch {
+          setLogs([]);
+        }
+      }
     } catch {
       toast.error('Erreur chargement');
     } finally {
       setLoading(false);
     }
-  }, [config.slug, filterStatus]);
+  }, [config.slug, config.contentType, filterStatus, tab]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  // Load logs when switching to stats tab
+  useEffect(() => {
+    if (tab !== 'stats') return;
+    setLogsLoading(true);
+    api.get('/content/orchestrator/logs', { params: { days: 30 } })
+      .then(res => {
+        const allLogs: any[] = Array.isArray(res.data) ? res.data : [];
+        const filtered = allLogs
+          .filter((l: any) => l.type === config.contentType || l.content_type === config.contentType)
+          .slice(0, 30)
+          .reverse();
+        setLogs(filtered);
+      })
+      .catch(() => setLogs([]))
+      .finally(() => setLogsLoading(false));
+  }, [tab, config.contentType]);
 
   // Generate one item
   const handleGenerateOne = async (item: SourceItem) => {
@@ -552,6 +591,92 @@ export default function ContentGenerator({ type }: Props) {
                 >
                   Generer {bulkInput.split('\n').filter(l => l.trim()).length} articles
                 </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {tab === 'stats' && (
+        <div className="space-y-6">
+          {/* KPIs */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { label: 'Total items', value: stats?.total ?? 0, color: 'text-white' },
+              { label: 'Prets', value: stats?.ready ?? 0, color: 'text-emerald-400' },
+              { label: 'Utilises', value: stats?.used ?? 0, color: 'text-violet-light' },
+              { label: 'Quota/jour', value: stats?.daily_quota ?? 0, color: 'text-amber-400' },
+            ].map(kpi => (
+              <div key={kpi.label} className="bg-surface/60 border border-border/30 rounded-2xl p-4 text-center">
+                <div className={`text-2xl font-bold ${kpi.color}`}>{kpi.value}</div>
+                <div className="text-xs text-muted mt-1">{kpi.label}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Distribution donut-style */}
+          {stats && (
+            <div className="bg-surface/60 border border-border/30 rounded-2xl p-5">
+              <h3 className="text-sm font-bold text-white mb-4">Distribution du stock</h3>
+              <div className="flex flex-col gap-2">
+                {[
+                  { label: 'Prets', value: stats.ready, color: '#10b981' },
+                  { label: 'En cours', value: stats.processing, color: '#7c3aed' },
+                  { label: 'Utilises', value: stats.used, color: '#6b7280' },
+                ].map(row => (
+                  <div key={row.label} className="flex items-center gap-3">
+                    <span className="text-xs text-muted w-16">{row.label}</span>
+                    <div className="flex-1 h-2 bg-border/20 rounded-full overflow-hidden">
+                      <div
+                        className="h-2 rounded-full transition-all"
+                        style={{
+                          width: stats.total > 0 ? `${Math.round(row.value / stats.total * 100)}%` : '0%',
+                          backgroundColor: row.color,
+                        }}
+                      />
+                    </div>
+                    <span className="text-xs text-white w-8 text-right">{row.value}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 text-xs text-muted">
+                Poids orchestrator : <span className="text-white font-medium">{stats.weight_percent}%</span>
+                {' · '}Statut : <span className={stats.is_paused ? 'text-danger' : 'text-emerald-400'}>
+                  {stats.is_paused ? 'En pause' : 'Actif'}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Historique 30 jours */}
+          <div className="bg-surface/60 border border-border/30 rounded-2xl p-5">
+            <h3 className="text-sm font-bold text-white mb-4">Generations (30 derniers jours)</h3>
+            {logsLoading ? (
+              <div className="text-xs text-muted text-center py-4">Chargement...</div>
+            ) : logs.length > 0 ? (
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={logs} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fill: '#6b7280', fontSize: 10 }}
+                    tickFormatter={(v: string) => v.slice(5)}
+                  />
+                  <YAxis tick={{ fill: '#6b7280', fontSize: 10 }} />
+                  <Tooltip
+                    contentStyle={{ background: '#101419', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 12 }}
+                    labelStyle={{ color: '#fff' }}
+                  />
+                  <Bar dataKey="generated" name="Generes" radius={[3, 3, 0, 0]}>
+                    {logs.map((_: any, i: number) => (
+                      <Cell key={i} fill={i === logs.length - 1 ? '#7c3aed' : '#a78bfa'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="text-xs text-muted text-center py-8 opacity-60">
+                Aucune donnee d'historique disponible pour ce type de contenu.
               </div>
             )}
           </div>
