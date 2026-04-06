@@ -65,7 +65,6 @@ class CityTemplatesSeeder extends Seeder
                 'published_items' => 0,
                 'failed_items' => 0,
                 'is_active' => true,
-                'sort_order' => $i,
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);
