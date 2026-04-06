@@ -48,6 +48,9 @@ jobs:
             # Wait for app container to be ready
             sleep 5
 
+            # Regenerate Composer autoloader (discover new classes after git pull)
+            docker exec inf-app composer dump-autoload --optimize --no-dev
+
             # Clear Laravel caches
             docker exec inf-app php artisan optimize:clear
             docker exec inf-app php artisan optimize
