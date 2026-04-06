@@ -258,6 +258,13 @@ class ComparativeGenerationService
                 'duration_ms' => $totalDuration,
             ]);
 
+            // Ensure CTA is present
+            $html = $comparative->content_html ?? '';
+            if (!str_contains($html, 'cta-box') && !str_contains($html, 'sos-expat.com')) {
+                $cta = '<div class="cta-box"><p><strong>Besoin d\'aide sur place ?</strong></p><p>Un avocat ou expert local disponible en moins de 5 minutes, 24h/24, dans 197 pays.</p><p><a href="https://sos-expat.com" class="cta-button">Appeler maintenant</a></p></div>';
+                $comparative->update(['content_html' => $html . "\n" . $cta]);
+            }
+
             return $comparative->fresh();
         } catch (\Throwable $e) {
             Log::error('Comparative generation failed', [

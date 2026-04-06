@@ -48,6 +48,10 @@ Schedule::job(new \App\Jobs\RunOrchestratorCycleJob)->everyFifteenMinutes()->wit
 // Orchestrator: warm-up scaling every Monday at 06:00 UTC
 Schedule::command('orchestrator:warmup-scale')->weeklyOn(1, '06:00')->withoutOverlapping();
 
+// Auto-discover new long-tail keywords every Wednesday + Saturday (feed the pipeline)
+Schedule::command('keywords:discover --limit=30')->weeklyOn(3, '07:00')->withoutOverlapping(3600);
+Schedule::command('keywords:discover --limit=30')->weeklyOn(6, '07:00')->withoutOverlapping(3600);
+
 // Orchestrator: reset daily counters at midnight UTC
 Schedule::call(function () {
     app(\App\Services\Content\ContentOrchestratorService::class)->resetDaily();

@@ -314,6 +314,12 @@ PROMPT;
     {
         if (! $blogUrl || ! $blogKey) return false;
 
+        // Ensure CTA present
+        $html = $content['content_html'] ?? '';
+        if (!str_contains($html, 'cta-box') && !str_contains($html, 'sos-expat.com')) {
+            $content['content_html'] = $html . "\n" . '<div class="cta-box"><p><strong>Besoin d\'aide ?</strong></p><p>Un avocat ou expert local en moins de 5 min via SOS-Expat.com.</p><p><a href="https://sos-expat.com" class="cta-button">Appeler</a></p></div>';
+        }
+
         $qm = $content['quality_metrics'] ?? [];
 
         $payload = [

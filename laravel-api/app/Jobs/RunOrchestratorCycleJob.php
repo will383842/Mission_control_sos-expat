@@ -74,6 +74,9 @@ class RunOrchestratorCycleJob implements ShouldQueue
             'target' => $config['daily_target'],
         ]);
 
+        // Check stock levels and alert if sources running low
+        $this->checkStockLevels($orchestrator);
+
         // Determine which types to generate based on % distribution
         $typesToGenerate = $this->selectTypes($config, $articlesThisCycle);
 
@@ -295,6 +298,55 @@ class RunOrchestratorCycleJob implements ShouldQueue
         } catch (\Throwable $e) {
             Log::error("Orchestrator fiches trigger failed: {$type}/{$country}", ['error' => $e->getMessage()]);
             throw $e;
+        }
+    }
+
+    /**
+     * Check stock levels for each source. Alert if running low.
+     * Skip types with 0 stock in the distribution.
+     */
+    private function checkStockLevels(ContentOrchestratorService $orchestrator): void
+    {
+        // Only check once per day (first cycle)
+        $cacheKey = 'orchestrator_stock_check_' . now()->toDateString();
+        if (\Illuminate\Support\Facades\Cache::has($cacheKey)) return;
+        \Illuminate\Support\Facades\Cache::put($cacheKey, true, now()->endOfDay());
+
+        $lowStock = [];
+
+        // Check comparatives
+        $compPending = \App\Models\Comparative::where('status', 'draft')->whereNull('content_html')->count();
+        if ($compPending < 10) $lowStock[] = "Comparatifs: {$compPending} restants";
+
+        // Check keywords (art_mots_cles + longues_traines)
+        $kwUnused = \Illuminate\Support\Facades\DB::table('keyword_tracking')
+            ->where('articles_using_count', 0)
+            ->count();
+        if ($kwUnused < 20) $lowStock[] = "Mots-cles: {$kwUnused} inutilises";
+
+        // Check content templates (pending items not yet generated)
+        $templatesPending = \Illuminate\Support\Facades\DB::table('content_template_items')
+            ->where('status', 'pending')
+            ->count();
+        if ($templatesPending < 50) $lowStock[] = "Templates items: {$templatesPending} en attente";
+
+        // Auto-discover new keywords if stock is low
+        if ($kwUnused < 50) {
+            try {
+                \Illuminate\Support\Facades\Artisan::call('keywords:discover', ['--limit' => 10]);
+                Log::info('Orchestrator: auto-discovered keywords (stock was low)');
+            } catch (\Throwable $e) {
+                Log::warning("Orchestrator: keywords:discover failed", ['error' => $e->getMessage()]);
+            }
+        }
+
+        // Alert if any source is running low
+        if (!empty($lowStock)) {
+            $orchestrator->sendTelegramAlert(
+                "⚠️ Sources de contenu basses :\n" . implode("\n", array_map(fn($s) => "• {$s}", $lowStock))
+                . "\n\nLa decouverte automatique de mots-cles est activee.",
+                'warning'
+            );
         }
     }
 
