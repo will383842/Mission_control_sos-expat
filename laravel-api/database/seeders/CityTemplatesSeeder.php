@@ -30,6 +30,12 @@ class CityTemplatesSeeder extends Seeder
             ['title' => 'demenager a {ville} : checklist complete pour expatries', 'cluster' => 'Demenagement', 'intent' => 'informational'],
             ['title' => 'visiter {ville} en vacances : itineraire, budget et conseils', 'cluster' => 'Vacances', 'intent' => 'informational'],
             ['title' => 'investir dans l\'immobilier a {ville} : prix, rendement et procedure', 'cluster' => 'Immobilier', 'intent' => 'commercial_investigation'],
+            // VACANCIERS / TOURISTES
+            ['title' => 'que faire a {ville} : top activites et visites incontournables', 'cluster' => 'Tourisme', 'intent' => 'informational'],
+            ['title' => 'ou dormir a {ville} : meilleurs quartiers et hotels pour touristes', 'cluster' => 'Hebergement', 'intent' => 'commercial_investigation'],
+            ['title' => 'budget vacances a {ville} : cout par jour, hotels, restaurants, transports', 'cluster' => 'Budget Vacances', 'intent' => 'informational'],
+            ['title' => 'securite a {ville} pour touristes : arnaques, zones et conseils', 'cluster' => 'Securite Touriste', 'intent' => 'informational'],
+            ['title' => 'se deplacer a {ville} en vacances : transports, taxi, location', 'cluster' => 'Transport Touriste', 'intent' => 'informational'],
         ];
 
         $now = now();

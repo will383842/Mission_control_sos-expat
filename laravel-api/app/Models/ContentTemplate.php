@@ -113,24 +113,51 @@ class ContentTemplate extends Model
                 $expansions[] = ['expanded_title' => $title, 'variable_values' => $values];
             }
         } elseif ($this->expansion_mode === 'custom_list') {
-            $items = $this->expansion_values ?? [];
-            foreach ($items as $item) {
-                $title = $this->title_template;
-                $values = [];
+            $rawValues = $this->expansion_values ?? [];
 
-                if (is_string($item)) {
-                    // Simple string list — replace first variable
-                    $var = $varNames[0] ?? 'value';
-                    $values[$var] = $item;
-                    $title = str_replace("{{$var}}", $item, $title);
-                } elseif (is_array($item)) {
-                    foreach ($item as $key => $val) {
-                        $values[$key] = $val;
+            // Dynamic source: fetch from database table
+            if (isset($rawValues['source']) && $rawValues['source'] === 'content_cities') {
+                $cities = \App\Models\ContentCity::with('country')
+                    ->orderBy('name')
+                    ->get();
+
+                foreach ($cities as $city) {
+                    $title = $this->title_template;
+                    $countryName = $city->country?->name ?? '';
+                    $values = [
+                        'ville' => $city->name,
+                        'pays' => $countryName,
+                        'city' => $city->name,
+                        'country' => $countryName,
+                        'country_code' => $city->country?->country_code ?? '',
+                    ];
+
+                    foreach ($values as $key => $val) {
                         $title = str_replace("{{$key}}", $val, $title);
                     }
-                }
 
-                $expansions[] = ['expanded_title' => $title, 'variable_values' => $values];
+                    $expansions[] = ['expanded_title' => $title, 'variable_values' => $values];
+                }
+            } else {
+                // Static list
+                $items = $rawValues;
+                foreach ($items as $item) {
+                    $title = $this->title_template;
+                    $values = [];
+
+                    if (is_string($item)) {
+                        $var = $varNames[0] ?? 'value';
+                        $values[$var] = $item;
+                        $title = str_replace("{{$var}}", $item, $title);
+                    } elseif (is_array($item)) {
+                        foreach ($item as $key => $val) {
+                            $values[$key] = $val;
+                            $title = str_replace("{{$key}}", $val, $title);
+                        }
+                    }
+
+                    $expansions[] = ['expanded_title' => $title, 'variable_values' => $values];
+                }
             }
         } else {
             // Manual — return template as-is for manual keyword entry
