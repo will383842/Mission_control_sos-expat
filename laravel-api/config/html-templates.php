@@ -81,8 +81,8 @@ CTA SOS-EXPAT (1 seul par article, en fin de contenu) :
 
 IMAGE AVEC LEGENDE :
 <figure>
-<img src="{url}" alt="{description}" loading="lazy" width="1200" height="630">
-<figcaption>{credit} — Photo on Unsplash</figcaption>
+<img src="{url}" alt="{description}" loading="lazy" decoding="async" width="1200" height="630">
+<figcaption>Photo by <a href="{photographer_url}?utm_source=sos-expat-blog&utm_medium=referral" target="_blank" rel="noopener nofollow">{photographer_name}</a> on <a href="https://unsplash.com/?utm_source=sos-expat-blog&utm_medium=referral" target="_blank" rel="noopener nofollow">Unsplash</a></figcaption>
 </figure>
 
 FAQ ACCORDION INLINE (pour les articles avec questions frequentes integrees) :
