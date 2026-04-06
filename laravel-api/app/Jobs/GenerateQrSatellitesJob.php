@@ -72,7 +72,7 @@ class GenerateQrSatellitesJob implements ShouldQueue
 
         $generated = 0;
 
-        foreach (array_slice($questions, 0, 3) as $question) {
+        foreach (array_slice($questions, 0, 5) as $question) {
             // Guard check — skip if duplicate Q/R exists
             $guardResult = $guard->checkQa($question, $article->language ?? 'fr');
             if ($guardResult['status'] === 'block') {
@@ -94,17 +94,18 @@ class GenerateQrSatellitesJob implements ShouldQueue
             sleep(rand(3, 8)); // Natural spacing
         }
 
-        Log::info("QrSatellites: {$generated}/3 Q/R generated for article {$article->id}");
+        Log::info("QrSatellites: {$generated}/5 Q/R generated for article {$article->id}");
     }
 
     private function extractQuestions(GeneratedArticle $article, string $apiKey): array
     {
         $contentSnippet = mb_substr(strip_tags($article->content_html ?? ''), 0, 2000);
 
-        $prompt = "Analyse cet article et genere exactement 3 questions 'People Also Ask' que des expatries/voyageurs de TOUTE nationalite taperaient dans Google. "
-            . "Questions COMPLEMENTAIRES (pas la meme question reformulee). 4+ mots minimum. "
+        $prompt = "Analyse cet article et genere exactement 5 questions 'People Also Ask' que des expatries/voyageurs de TOUTE nationalite (pas uniquement francophones) taperaient dans Google. "
+            . "Questions COMPLEMENTAIRES au sujet (pas la meme question reformulee). 4+ mots minimum. "
             . "Inclure le nom du pays/ville si l'article est specifique. "
-            . "Retourne en JSON: [\"question 1 ?\", \"question 2 ?\", \"question 3 ?\"]"
+            . "S'adresser a des personnes de TOUTE nationalite vivant ou voyageant a l'etranger. "
+            . "Retourne en JSON: [\"question 1 ?\", \"question 2 ?\", \"question 3 ?\", \"question 4 ?\", \"question 5 ?\"]"
             . "\n\nArticle: \"{$article->title}\"\nExtrait: {$contentSnippet}";
 
         $response = Http::withHeaders([
@@ -146,7 +147,8 @@ class GenerateQrSatellitesJob implements ShouldQueue
             . "REGLES:\n"
             . "- content_html: 300-800 mots, HTML <h2>, <h3>, <p>, <ul>, <strong>. PAS de <h1>.\n"
             . "- Premier paragraphe = reponse DIRECTE en 40-60 mots (featured snippet)\n"
-            . "- S'adresse a TOUTE nationalite\n"
+            . "- S'adresse a TOUTE nationalite (pas uniquement francophones — monde entier)\n"
+            . "- Dire 'votre ambassade' PAS 'l'ambassade de France'\n"
             . "- 3-5 FAQ complementaires\n"
             . "- 1 lien interne vers l'article parent: {$parentLink}\n"
             . "- meta_title: max 60 chars | meta_description: 140-155 chars | ai_summary: max 100 chars\n\n"
