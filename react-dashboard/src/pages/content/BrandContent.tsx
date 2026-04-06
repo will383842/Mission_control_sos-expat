@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import api from '../../services/api';
+import api from '../../api/client';
 import UnifiedContentTab from '../../components/UnifiedContentTab';
 import { truncate, errMsg } from './helpers';
 
