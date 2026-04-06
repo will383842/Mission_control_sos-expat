@@ -28,7 +28,7 @@ class WarmupScaleCommand extends Command
     protected $description = 'Automatically scale daily_target and unlock content types based on warm-up phase';
 
     private const PHASES = [
-        // [max_week, daily_target, rss_target, distribution, countries]
+        // Phase 1: Piliers Tier 1 — établir l'autorité topicale
         ['week' => 2, 'target' => 5, 'rss' => 5, 'dist' => [
             'qa' => 0, 'art_mots_cles' => 15, 'art_longues_traines' => 10,
             'guide' => 20, 'guide_expat' => 15, 'guide_vacances' => 15,
@@ -37,45 +37,59 @@ class WarmupScaleCommand extends Command
             'outreach_avocats' => 0, 'outreach_expats' => 0, 'testimonial' => 0, 'brand_content' => 0,
         ], 'countries' => ['FR', 'US', 'GB', 'ES', 'DE', 'TH', 'PT']],
 
+        // Phase 2: + Villes + Longue traîne + Témoignages
         ['week' => 4, 'target' => 8, 'rss' => 8, 'dist' => [
-            'qa' => 0, 'art_mots_cles' => 12, 'art_longues_traines' => 10,
-            'guide' => 15, 'guide_expat' => 12, 'guide_vacances' => 12,
-            'guide_city' => 10, 'comparative' => 12, 'affiliation' => 0,
+            'qa' => 5, 'art_mots_cles' => 12, 'art_longues_traines' => 10,
+            'guide' => 12, 'guide_expat' => 10, 'guide_vacances' => 10,
+            'guide_city' => 8, 'comparative' => 10, 'affiliation' => 5,
             'outreach_chatters' => 0, 'outreach_influenceurs' => 0, 'outreach_admin_groupes' => 0,
-            'outreach_avocats' => 0, 'outreach_expats' => 0, 'testimonial' => 7, 'brand_content' => 0,
+            'outreach_avocats' => 0, 'outreach_expats' => 0, 'testimonial' => 5, 'brand_content' => 3,
         ], 'countries' => ['FR', 'US', 'GB', 'ES', 'DE', 'TH', 'PT', 'CA', 'AU', 'IT']],
 
-        ['week' => 8, 'target' => 12, 'rss' => 10, 'dist' => [
-            'qa' => 10, 'art_mots_cles' => 10, 'art_longues_traines' => 8,
-            'guide' => 10, 'guide_expat' => 8, 'guide_vacances' => 8,
+        // Phase 3: + Q/R + Affiliation + Brand Content
+        ['week' => 8, 'target' => 15, 'rss' => 10, 'dist' => [
+            'qa' => 8, 'art_mots_cles' => 10, 'art_longues_traines' => 8,
+            'guide' => 8, 'guide_expat' => 6, 'guide_vacances' => 6,
             'guide_city' => 8, 'comparative' => 8, 'affiliation' => 5,
-            'outreach_chatters' => 0, 'outreach_influenceurs' => 0, 'outreach_admin_groupes' => 0,
-            'outreach_avocats' => 0, 'outreach_expats' => 0, 'testimonial' => 5, 'brand_content' => 5,
+            'outreach_chatters' => 3, 'outreach_influenceurs' => 3, 'outreach_admin_groupes' => 2,
+            'outreach_avocats' => 2, 'outreach_expats' => 2, 'testimonial' => 5, 'brand_content' => 4,
         ], 'countries' => ['FR', 'US', 'GB', 'ES', 'DE', 'TH', 'PT', 'CA', 'AU', 'IT', 'AE', 'JP']],
 
-        ['week' => 12, 'target' => 18, 'rss' => 15, 'dist' => [
-            'qa' => 10, 'art_mots_cles' => 8, 'art_longues_traines' => 8,
-            'guide' => 8, 'guide_expat' => 6, 'guide_vacances' => 6,
+        // Phase 4: Tous types actifs — 16/16
+        ['week' => 12, 'target' => 25, 'rss' => 15, 'dist' => [
+            'qa' => 8, 'art_mots_cles' => 8, 'art_longues_traines' => 8,
+            'guide' => 7, 'guide_expat' => 5, 'guide_vacances' => 5,
             'guide_city' => 8, 'comparative' => 7, 'affiliation' => 5,
             'outreach_chatters' => 4, 'outreach_influenceurs' => 4, 'outreach_admin_groupes' => 3,
             'outreach_avocats' => 3, 'outreach_expats' => 3, 'testimonial' => 5, 'brand_content' => 4,
         ], 'countries' => ['FR', 'US', 'GB', 'ES', 'DE', 'TH', 'PT', 'CA', 'AU', 'IT', 'AE', 'JP', 'SG', 'MA']],
 
-        ['week' => 16, 'target' => 25, 'rss' => 15, 'dist' => [
-            'qa' => 10, 'art_mots_cles' => 8, 'art_longues_traines' => 8,
-            'guide' => 7, 'guide_expat' => 5, 'guide_vacances' => 5,
-            'guide_city' => 8, 'comparative' => 7, 'affiliation' => 5,
-            'outreach_chatters' => 4, 'outreach_influenceurs' => 4, 'outreach_admin_groupes' => 3,
-            'outreach_avocats' => 3, 'outreach_expats' => 3, 'testimonial' => 5, 'brand_content' => 5,
-        ], 'countries' => ['FR', 'US', 'GB', 'ES', 'DE', 'TH', 'PT', 'CA', 'AU', 'IT', 'AE', 'JP', 'SG', 'MA', 'BR', 'MX']],
-
-        ['week' => 999, 'target' => 40, 'rss' => 20, 'dist' => [
-            'qa' => 10, 'art_mots_cles' => 8, 'art_longues_traines' => 8,
+        // Phase 5: Montée en puissance
+        ['week' => 16, 'target' => 40, 'rss' => 20, 'dist' => [
+            'qa' => 8, 'art_mots_cles' => 8, 'art_longues_traines' => 7,
             'guide' => 6, 'guide_expat' => 5, 'guide_vacances' => 5,
             'guide_city' => 8, 'comparative' => 7, 'affiliation' => 5,
             'outreach_chatters' => 4, 'outreach_influenceurs' => 4, 'outreach_admin_groupes' => 3,
+            'outreach_avocats' => 3, 'outreach_expats' => 3, 'testimonial' => 5, 'brand_content' => 4,
+        ], 'countries' => ['FR', 'US', 'GB', 'ES', 'DE', 'TH', 'PT', 'CA', 'AU', 'IT', 'AE', 'JP', 'SG', 'MA', 'BR', 'MX']],
+
+        // Phase 6: Haute vitesse
+        ['week' => 20, 'target' => 65, 'rss' => 25, 'dist' => [
+            'qa' => 8, 'art_mots_cles' => 7, 'art_longues_traines' => 7,
+            'guide' => 6, 'guide_expat' => 5, 'guide_vacances' => 5,
+            'guide_city' => 8, 'comparative' => 7, 'affiliation' => 5,
+            'outreach_chatters' => 4, 'outreach_influenceurs' => 4, 'outreach_admin_groupes' => 3,
+            'outreach_avocats' => 3, 'outreach_expats' => 3, 'testimonial' => 5, 'brand_content' => 4,
+        ], 'countries' => ['FR', 'US', 'GB', 'ES', 'DE', 'TH', 'PT', 'CA', 'AU', 'IT', 'AE', 'JP', 'SG', 'MA', 'BR', 'MX', 'NL', 'BE']],
+
+        // Phase 7: Vitesse de croisière — 100/jour
+        ['week' => 999, 'target' => 100, 'rss' => 30, 'dist' => [
+            'qa' => 8, 'art_mots_cles' => 7, 'art_longues_traines' => 7,
+            'guide' => 5, 'guide_expat' => 4, 'guide_vacances' => 4,
+            'guide_city' => 8, 'comparative' => 7, 'affiliation' => 5,
+            'outreach_chatters' => 4, 'outreach_influenceurs' => 4, 'outreach_admin_groupes' => 3,
             'outreach_avocats' => 3, 'outreach_expats' => 3, 'testimonial' => 5, 'brand_content' => 5,
-        ], 'countries' => ['FR', 'US', 'GB', 'ES', 'DE', 'TH', 'PT', 'CA', 'AU', 'IT', 'AE', 'JP', 'SG', 'MA', 'BR', 'MX', 'NL', 'BE', 'CH']],
+        ], 'countries' => ['FR', 'US', 'GB', 'ES', 'DE', 'TH', 'PT', 'CA', 'AU', 'IT', 'AE', 'JP', 'SG', 'MA', 'BR', 'MX', 'NL', 'BE', 'CH', 'LU']],
     ];
 
     public function handle(): int
