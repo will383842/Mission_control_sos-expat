@@ -8,15 +8,15 @@
 7,Visa & Immigration,Visa touriste,visa touriste {pays} : faut-il un visa et comment l'obtenir,informationnel,all_countries (197),197
 8,Cout de la vie,Budget global,cout de la vie en {pays} : budget mensuel pour expatrie,informationnel,all_countries (197),197
 9,Cout de la vie,Logement,prix des loyers en {pays} : combien coute un appartement,informationnel,all_countries (197),197
-10,Cout de la vie,Comparatif,cout de la vie en {pays} vs France : comparatif detaille,informationnel,all_countries (197),197
-11,Juridique,Avocat francophone,avocat francophone en {pays} : trouver un avocat qui parle francais,transactionnel,all_countries (197),197
+10,Cout de la vie,Comparatif,cout de la vie en {pays} : comparatif detaille par rapport a l'Europe et l'Amerique,informationnel,all_countries (197),197
+11,Juridique,Avocat pour expatries,trouver un avocat pour expatries en {pays} : aide juridique dans votre langue,transactionnel,all_countries (197),197
 12,Juridique,Droit du travail,droit du travail en {pays} : droits des travailleurs etrangers,informationnel,all_countries (197),197
 13,Juridique,Licenciement,licenciement expatrie en {pays} : droits et recours,urgence,all_countries (197),197
 14,Sante,Systeme de sante,"systeme de sante en {pays} : hopitaux, assurance et couts",informationnel,all_countries (197),197
 15,Sante,Assurance sante,assurance sante expatrie {pays} : quelle couverture choisir,transactionnel,all_countries (197),197
 16,Sante,Urgence medicale,"urgence medicale en {pays} : numeros, hopitaux et demarches",urgence,all_countries (197),197
 17,Fiscalite,Impots expatrie,impots expatrie en {pays} : fiscalite et obligations declaratives,informationnel,all_countries (197),197
-18,Fiscalite,Double imposition,convention fiscale France {pays} : eviter la double imposition,informationnel,all_countries (197),197
+18,Fiscalite,Double imposition,double imposition en {pays} : conventions fiscales et comment l'eviter,informationnel,all_countries (197),197
 19,Fiscalite,Statut fiscal,statut fiscal expatrie {pays} : resident ou non-resident,informationnel,all_countries (197),197
 20,Logement,Trouver un logement,trouver un logement en {pays} : guide expatrie,informationnel,all_countries (197),197
 21,Logement,Achat immobilier,acheter un bien immobilier en {pays} en tant qu'etranger,transactionnel,all_countries (197),197
@@ -25,14 +25,14 @@
 24,Education,Ecoles internationales,ecoles internationales en {pays} : guide pour familles expatriees,informationnel,all_countries (197),197
 25,Education,Etudes superieures,"etudier en {pays} : universites, couts et bourses",informationnel,all_countries (197),197
 26,Securite,Securite generale,securite en {pays} : zones a eviter et conseils pour expatries,informationnel,all_countries (197),197
-27,Securite,Ambassade,"ambassade de France en {pays} : adresse, contact et services",transactionnel,all_countries (197),197
-28,Transport,Permis de conduire,permis de conduire en {pays} : validite du permis francais et echange,informationnel,all_countries (197),197
+27,Securite,Ambassade,"ambassades et consulats en {pays} : adresses, contacts et services consulaires",transactionnel,all_countries (197),197
+28,Transport,Permis de conduire,permis de conduire en {pays} : validite du permis etranger et procedure d'echange,informationnel,all_countries (197),197
 29,Transport,Immatriculation,immatriculer une voiture en {pays} en tant qu'expatrie,informationnel,all_countries (197),197
 30,Entrepreneuriat,Creer entreprise,creer une entreprise en {pays} : formes juridiques et couts,informationnel,all_countries (197),197
 31,Entrepreneuriat,Freelance,"devenir freelance en {pays} : statut, fiscalite et demarches",informationnel,all_countries (197),197
-32,Retraite,Retraite expatrie,prendre sa retraite en {pays} : guide complet pour retraites francais,informationnel,all_countries (197),197
+32,Retraite,Retraite expatrie,prendre sa retraite en {pays} : guide complet pour retraites etrangers,informationnel,all_countries (197),197
 33,Demenagement,Demenager,demenager en {pays} : checklist complete pour expatries,informationnel,all_countries (197),197
-34,Communaute,Communaute francaise,communaute francaise en {pays} : associations et groupes d'expatries,informationnel,all_countries (197),197
+34,Communaute,Communaute expatriee,communaute expatriee en {pays} : associations et groupes internationaux,informationnel,all_countries (197),197
 35,Urgences,Numeros urgence,"numeros d'urgence en {pays} : police, ambulance, pompiers, ambassade",urgence,all_countries (197),197
 36,Urgences,Perte passeport,passeport perdu ou vole en {pays} : que faire en urgence,urgence,all_countries (197),197
 37,Urgences,Arrestation,arrete par la police en {pays} : droits et demarches,urgence,all_countries (197),197

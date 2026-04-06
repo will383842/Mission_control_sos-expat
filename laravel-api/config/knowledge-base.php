@@ -183,6 +183,7 @@ return [
             'refugies' => 'Refugies et demandeurs d\'asile — droit d\'asile, protection, demarches',
         ],
         'key_message' => 'SOS-Expat s\'adresse a TOUTE personne de TOUTE nationalite qui se trouve ou va se rendre a l\'etranger et a besoin d\'aide locale professionnelle.',
+        'multi_nationality_rule' => 'CRITIQUE : NE JAMAIS ecrire du contenu uniquement pour les Francais. SOS-Expat est une plateforme MONDIALE. Un article en francais s\'adresse a TOUS les francophones (France, Belgique, Suisse, Canada, Afrique). Un article en anglais s\'adresse a TOUS les anglophones (US, UK, Australie, Inde, Afrique du Sud). Quand on parle d\'ambassade, dire "votre ambassade" ou "l\'ambassade de votre pays", PAS "l\'ambassade de France". Quand on parle de fiscalite, mentionner les conventions fiscales DE PLUSIEURS PAYS, pas uniquement la France.',
     ],
 
     // =====================================================================

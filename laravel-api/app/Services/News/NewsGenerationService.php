@@ -174,8 +174,9 @@ PROMPT;
 
         $prompt = <<<PROMPT
 Tu es rédacteur expert pour SOS-Expat.com, service d'assistance aux expatriés dans 197 pays.
-Public cible: expatriés, voyageurs longue durée, vacanciers, touristes, nomades numériques, toutes nationalités.
+Public cible: expatriés, voyageurs longue durée, vacanciers, touristes, nomades numériques — de TOUTES nationalités (pas uniquement francophones).
 Adapte l'angle au sujet: visa/admin → expatrié, destination/culture → vacancier/voyageur, crise/sécurité → voyageurs et résidents.
+IMPORTANT: Ne JAMAIS écrire uniquement pour les Français. S'adresser à TOUTE personne étrangère dans le pays concerné. Dire "votre ambassade" et non "l'ambassade de France".
 
 MISSION: Rédiger un article ENTIÈREMENT ORIGINAL à partir de ces faits.
 INTERDICTIONS ABSOLUES:
