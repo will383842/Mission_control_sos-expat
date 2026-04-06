@@ -4,6 +4,7 @@ namespace App\Services\News;
 
 use App\Models\RssFeedItem;
 use App\Services\Content\GenerationGuardService;
+use App\Services\Content\GenerationSchedulerService;
 use App\Services\Content\KnowledgeBaseService;
 use App\Services\News\SimilarityCheckerService;
 use Illuminate\Support\Facades\Http;
@@ -17,6 +18,7 @@ class NewsGenerationService
     public function __construct(
         private KnowledgeBaseService $knowledgeBase,
         private GenerationGuardService $guard,
+        private GenerationSchedulerService $scheduler,
     ) {}
 
     /**
@@ -29,6 +31,13 @@ class NewsGenerationService
 
         if (! $anthropicKey) {
             $item->update(['status' => 'failed', 'error_message' => 'ANTHROPIC_API_KEY manquant']);
+            return false;
+        }
+
+        // ── Rate limiting ──
+        $scheduleCheck = $this->scheduler->canGenerate('news');
+        if (!$scheduleCheck['allowed']) {
+            $item->update(['status' => 'skipped', 'error_message' => 'Rate limit: ' . $scheduleCheck['reason']]);
             return false;
         }
 
@@ -112,6 +121,9 @@ class NewsGenerationService
             'generated_at'      => now(),
             'error_message'     => null,
         ]);
+
+        // Record generation for rate limiting
+        $this->scheduler->recordGeneration('news');
 
         return true;
     }

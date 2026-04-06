@@ -26,5 +26,8 @@ class DatabaseSeeder extends Seeder
         $this->call(GenerationPresetSeeder::class);
         $this->call(PublishingEndpointSeeder::class);
         $this->call(AffiliateProgramSeeder::class);
+        $this->call(ComparativeSeoSeeder::class);
+        $this->call(AffiliateComparativeSeeder::class);
+        $this->call(NativeKeywordsSeeder::class);
     }
 }

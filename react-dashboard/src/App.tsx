@@ -261,6 +261,8 @@ export default function App() {
             <Route path="content/comparatives" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ComparativesList /></React.Suspense></AdminRoute>} />
             <Route path="content/comparatives/new" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ComparativeCreate /></React.Suspense></AdminRoute>} />
             <Route path="content/comparatives/:id" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ComparativeDetail /></React.Suspense></AdminRoute>} />
+            <Route path="content/affiliate-comparatives" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ComparativesList filter="affiliate" /></React.Suspense></AdminRoute>} />
+            <Route path="content/affiliate-programs" element={<AdminRoute><AffiliateDashboard /></AdminRoute>} />
             <Route path="content/campaigns" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><CampaignsList /></React.Suspense></AdminRoute>} />
             <Route path="content/campaigns/new" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><CampaignCreate /></React.Suspense></AdminRoute>} />
             <Route path="content/campaigns/:id" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><CampaignDetail /></React.Suspense></AdminRoute>} />

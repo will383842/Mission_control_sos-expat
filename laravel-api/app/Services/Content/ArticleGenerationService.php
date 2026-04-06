@@ -49,6 +49,8 @@ class ArticleGenerationService
         private GeoMetaService $geoMeta,
         private KnowledgeBaseService $knowledgeBase,
         private GenerationGuardService $guard,
+        private QualityGuardService $qualityGuard,
+        private GenerationSchedulerService $scheduler,
     ) {}
 
     /**
@@ -63,6 +65,14 @@ class ArticleGenerationService
         $typeConfig = ContentTypeConfig::get($contentType);
         $language = $params['language'] ?? 'fr';
         $country = $params['country'] ?? null;
+
+        // Rate limiting check
+        if (empty($params['force_generate'])) {
+            $scheduleCheck = $this->scheduler->canGenerate($contentType);
+            if (!$scheduleCheck['allowed']) {
+                throw new \RuntimeException("Rate limit: {$scheduleCheck['reason']}");
+            }
+        }
 
         // Load Knowledge Base prompt for this content type (injected into all AI phases)
         $this->kbPrompt = $this->knowledgeBase->getSystemPrompt($contentType, $country, $language);
@@ -472,6 +482,24 @@ class ArticleGenerationService
                 'seo_score' => $article->seo_score,
                 'quality_score' => $article->quality_score,
             ]);
+
+            // Post-generation quality check
+            try {
+                $qualityReport = $this->qualityGuard->check($article->fresh());
+                if (!$qualityReport['passed']) {
+                    Log::warning('QualityGuard: article failed quality checks', [
+                        'article_id' => $article->id,
+                        'score' => $qualityReport['score'],
+                        'issues' => $qualityReport['issues'],
+                        'warnings' => $qualityReport['warnings'],
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                Log::error('QualityGuard check failed', ['error' => $e->getMessage()]);
+            }
+
+            // Record generation for rate limiting
+            $this->scheduler->recordGeneration($contentType, $article->generation_cost_cents ?? 0);
 
             // Send Telegram success notification
             $this->sendTelegramSuccess($article);
