@@ -93,6 +93,15 @@ const TYPE_CONFIG: Record<string, {
     titleTemplate: 'Expatrie en {pays} ? Aidez d\'autres expatries et gagnez un revenu complementaire',
     instructions: 'Article pour attirer des expatries experimentes comme aidants. Avantages: partager son experience, revenu complementaire, flexibilite, aider la communaute. Missions: assistance telephonique, conseils pratiques. CTA vers inscription expat aidant.',
   },
+  testimonial: {
+    emoji: '💬', title: 'Temoignages', slug: 'temoignages',
+    description: 'Temoignages d\'expatries par pays — recits personnels et conseils vecus',
+    gradient: 'from-pink/20 to-pink/5',
+    contentType: 'testimonial',
+    autoExpand: true,
+    titleTemplate: 'Temoignage expatrie en {pays} : mon experience et mes conseils',
+    instructions: 'Temoignage simule d\'un expatrie installe dans le pays. Style narratif a la premiere personne. Inclure: contexte de depart, defis rencontres, bonnes surprises, conseils concrets. NE PAS inventer de donnees chiffrees precises. Ton personnel et authentique. CTA vers SOS-Expat.com pour une aide personnalisee.',
+  },
 };
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {

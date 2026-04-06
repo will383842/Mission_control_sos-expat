@@ -385,6 +385,27 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ============================================================
+    // CONTENT SCHEDULER / ORCHESTRATOR
+    // ============================================================
+    Route::prefix('content/scheduler')->middleware('role:admin')->group(function () {
+        Route::get('/today', function () {
+            $scheduler = app(\App\Services\Content\GenerationSchedulerService::class);
+            return response()->json($scheduler->getTodayStats());
+        });
+        Route::get('/next-batch', function (\Illuminate\Http\Request $request) {
+            $scheduler = app(\App\Services\Content\GenerationSchedulerService::class);
+            return response()->json($scheduler->getNextBatch((int) $request->query('limit', 10)));
+        });
+        Route::get('/stats', function (\Illuminate\Http\Request $request) {
+            $scheduler = app(\App\Services\Content\GenerationSchedulerService::class);
+            return response()->json($scheduler->getStats(
+                $request->query('from', now()->subDays(30)->toDateString()),
+                $request->query('to', now()->toDateString()),
+            ));
+        });
+    });
+
+    // ============================================================
     // COUNTRY DIRECTORY (Annuaire pays — liens officiels expatries)
     // ============================================================
     Route::prefix('country-directory')->middleware('role:admin')->group(function () {

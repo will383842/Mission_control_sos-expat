@@ -94,6 +94,7 @@ const DataCleanupDashboard = React.lazy(() => import('./pages/content/DataCleanu
 const GenerationSources = React.lazy(() => import('./pages/content/GenerationSources'));
 const SourceDetail = React.lazy(() => import('./pages/content/SourceDetail'));
 const ContentCommandCenter = React.lazy(() => import('./pages/content/ContentCommandCenter'));
+const ContentOrchestrator = React.lazy(() => import('./pages/content/ContentOrchestrator'));
 const CountryDirectoryPage = React.lazy(() => import('./pages/content/CountryDirectoryPage'));
 const SondagesList = React.lazy(() => import('./pages/content/SondagesList'));
 const SondagesResultats = React.lazy(() => import('./pages/content/SondagesResultats'));
@@ -242,6 +243,7 @@ export default function App() {
             <Route path="affiliates" element={<AdminRoute><AffiliateDashboard /></AdminRoute>} />
             <Route path="content/data-cleanup" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><DataCleanupDashboard /></React.Suspense></AdminRoute>} />
             <Route path="content/command-center" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ContentCommandCenter /></React.Suspense></AdminRoute>} />
+            <Route path="content/orchestrator" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ContentOrchestrator /></React.Suspense></AdminRoute>} />
             <Route path="content/sources" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><GenerationSources /></React.Suspense></AdminRoute>} />
             <Route path="content/sources/:sourceType" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><SourceDetail /></React.Suspense></AdminRoute>} />
             <Route path="content/countries" element={<AdminRoute><CountryProfiles /></AdminRoute>} />
@@ -290,6 +292,7 @@ export default function App() {
             <Route path="content/admin-groupes" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ContentGenerator type="admin-groupes" /></React.Suspense></AdminRoute>} />
             <Route path="content/avocats" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ContentGenerator type="avocats" /></React.Suspense></AdminRoute>} />
             <Route path="content/expats-aidants" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ContentGenerator type="expats-aidants" /></React.Suspense></AdminRoute>} />
+            <Route path="content/temoignages" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ContentGenerator type="testimonial" /></React.Suspense></AdminRoute>} />
             <Route path="content/art-mots-cles" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ArtMotsCles /></React.Suspense></AdminRoute>} />
             <Route path="content/templates" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ContentTemplates /></React.Suspense></AdminRoute>} />
             <Route path="content/templates/:id" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ContentTemplateDetail /></React.Suspense></AdminRoute>} />

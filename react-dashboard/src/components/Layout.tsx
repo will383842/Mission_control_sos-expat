@@ -492,6 +492,9 @@ export default function Layout() {
                   onToggle={() => toggleGroup('contentEngine')}
                 >
                   <NavSubGroup label="Piloter" isOpen={openSubGroups.content_piloter} onToggle={() => toggleSubGroup('content_piloter')}>
+                    <NavLink to="/content/orchestrator" className={subNavClass} onClick={handleNavClick}>
+                      🎯 Orchestrator
+                    </NavLink>
                     <NavLink to="/content/command-center" className={subNavClass} onClick={handleNavClick}>
                       ⚡ Command Center
                     </NavLink>
@@ -539,6 +542,9 @@ export default function Layout() {
                     </NavLink>
                     <NavLink to="/content/comparatives" className={subNavClass} onClick={handleNavClick}>
                       ⚖️ Comparatifs SEO
+                    </NavLink>
+                    <NavLink to="/content/temoignages" className={subNavClass} onClick={handleNavClick}>
+                      💬 Temoignages
                     </NavLink>
                     <NavLink to="/content/sondages" className={subNavClass} onClick={handleNavClick}>
                       📊 Sondages
