@@ -21,9 +21,9 @@ class AffiliateComparativeSeeder extends Seeder
     {
         $topics = [
             // ── ASSURANCES ──────────────────────────────────────────
-            ['title' => 'Top 7 assurances sante pour expatries en 2026', 'category' => 'insurance', 'programs' => 'SafetyWing,World Nomads,Cigna Global,AXA Expat,Allianz Care,iHi Bupa,Heymondo', 'keywords' => 'meilleure assurance expatrie 2026, comparatif assurance sante internationale'],
+            ['title' => 'Top 7 assurances sante pour expatries en 2026', 'category' => 'insurance', 'programs' => 'SafetyWing,World Nomads,Cigna Global Health,AXA Expat,Allianz Care,iHi Bupa,Heymondo', 'keywords' => 'meilleure assurance expatrie 2026, comparatif assurance sante internationale'],
             ['title' => 'Meilleures assurances voyage longue duree pour digital nomads', 'category' => 'insurance', 'programs' => 'SafetyWing,World Nomads,Heymondo', 'keywords' => 'assurance digital nomad, assurance voyage longue duree pas cher'],
-            ['title' => 'CFE ou assurance privee : quel choix pour un expatrie francais ?', 'category' => 'insurance', 'programs' => 'AXA Expat,Cigna Global,Allianz Care', 'keywords' => 'cfe vs assurance privee, securite sociale expatrie'],
+            ['title' => 'CFE ou assurance privee : quel choix pour un expatrie francais ?', 'category' => 'insurance', 'programs' => 'AXA Expat,Cigna Global Health,Allianz Care', 'keywords' => 'cfe vs assurance privee, securite sociale expatrie'],
             ['title' => 'Assurance PVT : comparatif 2026 Canada, Australie, Japon', 'category' => 'insurance', 'programs' => 'Heymondo,World Nomads', 'keywords' => 'assurance pvt comparatif, working holiday visa assurance'],
 
             // ── BANQUES & TRANSFERTS ────────────────────────────────
@@ -74,8 +74,8 @@ class AffiliateComparativeSeeder extends Seeder
             // ── MULTI-CATEGORIE (hub articles) ──────────────────────
             ['title' => 'Pack complet expatriation 2026 : les 10 services indispensables', 'category' => 'other', 'programs' => 'Wise (TransferWise),SafetyWing,NordVPN,Airalo (eSIM),Revolut', 'keywords' => 'services indispensables expatrie, outils expatriation 2026'],
             ['title' => 'Digital nomad starter pack : les 8 outils essentiels', 'category' => 'other', 'programs' => 'SafetyWing,Wise (TransferWise),NordVPN,Surfshark,Airalo (eSIM)', 'keywords' => 'outils digital nomad, starter pack nomade numerique'],
-            ['title' => 'Retraite a l\'etranger : les 7 services pour bien preparer', 'category' => 'other', 'programs' => 'Wise (TransferWise),Cigna Global,AXA Expat,Sirelo', 'keywords' => 'preparer retraite etranger, services retraite expatrie'],
-            ['title' => 'Famille expatriee : les 10 services essentiels pour s\'installer', 'category' => 'other', 'programs' => 'Cigna Global,HousingAnywhere,Babbel,Booking.com', 'keywords' => 'famille expatriee services, installation famille etranger'],
+            ['title' => 'Retraite a l\'etranger : les 7 services pour bien preparer', 'category' => 'other', 'programs' => 'Wise (TransferWise),Cigna Global Health,AXA Expat,Sirelo', 'keywords' => 'preparer retraite etranger, services retraite expatrie'],
+            ['title' => 'Famille expatriee : les 10 services essentiels pour s\'installer', 'category' => 'other', 'programs' => 'Cigna Global Health,HousingAnywhere,Babbel,Booking.com', 'keywords' => 'famille expatriee services, installation famille etranger'],
             ['title' => 'Budget expatriation 2026 : combien coute de s\'installer a l\'etranger', 'category' => 'other', 'programs' => 'Wise (TransferWise),SafetyWing,Sirelo', 'keywords' => 'budget expatriation, combien coute expatrier'],
         ];
 
@@ -109,7 +109,7 @@ class AffiliateComparativeSeeder extends Seeder
                 'parent_id' => null,
                 'status' => 'draft',
                 'published_at' => null,
-                'created_by' => 'seeder',
+                'created_by' => null,
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);

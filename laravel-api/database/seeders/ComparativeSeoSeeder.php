@@ -144,7 +144,7 @@ class ComparativeSeoSeeder extends Seeder
                 'parent_id' => null,
                 'status' => 'draft',
                 'published_at' => null,
-                'created_by' => 'seeder',
+                'created_by' => null,
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);
