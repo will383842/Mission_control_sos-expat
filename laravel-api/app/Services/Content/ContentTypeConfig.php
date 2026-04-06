@@ -228,6 +228,40 @@ class ContentTypeConfig
                     . "Structurer autour de l'intention exacte de l'internaute.",
             ],
 
+            // TUTORIAL (guides pratiques pas-à-pas pour démarches expatriés)
+            'tutorial' => [
+                'model' => 'gpt-4o',
+                'research_model' => 'sonar',
+                'temperature' => 0.6,
+                'min_words' => 1500,
+                'max_words' => 3000,
+                'target_words' => 2000,
+                'target_words_range' => '1500-3000',
+                'length' => 'medium',
+                'faq_count' => 6,
+                'max_tokens_content' => 6000,
+                'max_tokens_title' => 100,
+                'internal_links' => 5,
+                'external_links' => 3,
+                'images_count' => 2,
+                'featured_snippet' => true,
+                'comparison_table' => false,
+                'numbered_steps' => true,
+                'research_depth' => 'standard',
+                'quality_threshold' => 85,
+                'h2_count' => [4, 7],
+                'include_charts_data' => false,
+                'include_key_figures' => true,
+                'eeat_signals' => true,
+                'prompt_suffix' => "Guide pratique pas-à-pas sur une démarche administrative ou pratique pour expatrié. "
+                    . "Structure OBLIGATOIRE : introduction (contexte + pourquoi ce guide), pré-requis, "
+                    . "étapes numérotées en <ol> (min 5, max 8 étapes) avec sous-détails concrets, "
+                    . "délais et coûts réels, erreurs fréquentes à éviter, FAQ 6 questions. "
+                    . "Chaque étape doit être actionnable immédiatement. "
+                    . "Données chiffrées vérifiées (délais officiels, montants réels). "
+                    . "CTA vers SOS-Expat.com pour aide personnalisée.",
+            ],
+
             // PARTNER LEGAL (contenus partenaires avocats — expertise juridique)
             'partner_legal' => [
                 'model' => 'gpt-4o',
