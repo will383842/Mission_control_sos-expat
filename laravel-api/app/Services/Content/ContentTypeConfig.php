@@ -377,4 +377,84 @@ class ContentTypeConfig
             ],
         };
     }
+
+    /**
+     * Apply search intent overrides to the base content type config.
+     * Intent changes the content FORMAT without changing the content TYPE.
+     */
+    public static function withIntent(string $type, ?string $intent): array
+    {
+        $config = self::get($type);
+
+        if (!$intent) {
+            return $config;
+        }
+
+        return match ($intent) {
+            'informational' => array_merge($config, [
+                'featured_snippet' => true,
+                'comparison_table' => false,
+                'numbered_steps' => true,
+                'faq_count' => max($config['faq_count'], 6),
+                'h2_count' => [6, 10],
+                'prompt_suffix' => ($config['prompt_suffix'] ?? '') . "\n\nINTENTION INFORMATIONNELLE : L'utilisateur veut APPRENDRE. "
+                    . "Structure pedagogique : du simple au complexe. "
+                    . "Chaque H2 = une sous-question. Premier paragraphe = definition directe 40-60 mots. "
+                    . "Inclure des listes a puces, encadres 'Bon a savoir', et donnees chiffrees.",
+            ]),
+            'commercial_investigation' => array_merge($config, [
+                'featured_snippet' => true,
+                'comparison_table' => true,
+                'include_charts_data' => true,
+                'faq_count' => max($config['faq_count'], 5),
+                'h2_count' => [5, 8],
+                'prompt_suffix' => ($config['prompt_suffix'] ?? '') . "\n\nINTENTION INVESTIGATION COMMERCIALE : L'utilisateur veut COMPARER avant de decider. "
+                    . "OBLIGATOIRE : tableau comparatif <table> avec <thead>/<tbody> EN HAUT de l'article. "
+                    . "Colonnes = options comparees. Lignes = criteres (prix, couverture, avantages, inconvenients, note). "
+                    . "Puis section pros/cons pour chaque option. Puis verdict argumente. "
+                    . "Premier paragraphe = verdict direct ('En 2026, le meilleur X est Y pour Z raison').",
+            ]),
+            'transactional' => array_merge($config, [
+                'min_words' => min($config['min_words'], 1200),
+                'max_words' => min($config['max_words'], 1800),
+                'target_words' => min($config['target_words'] ?? 1500, 1500),
+                'target_words_range' => '800-1500',
+                'length' => 'short',
+                'featured_snippet' => true,
+                'faq_count' => 3,
+                'h2_count' => [3, 5],
+                'prompt_suffix' => ($config['prompt_suffix'] ?? '') . "\n\nINTENTION TRANSACTIONNELLE : L'utilisateur veut AGIR maintenant. "
+                    . "COURT (800-1500 mots). Encadre PRIX en haut (<div class='pricing-box'>). "
+                    . "Etapes concretes en <ol> (max 5-7). Encadre confiance (197 pays, 24/7, avis). "
+                    . "2-3 CTA vers SOS-Expat. Zero jargon.",
+            ]),
+            'local' => array_merge($config, [
+                'featured_snippet' => true,
+                'comparison_table' => true,
+                'faq_count' => 4,
+                'h2_count' => [4, 6],
+                'prompt_suffix' => ($config['prompt_suffix'] ?? '') . "\n\nINTENTION LOCALE : L'utilisateur cherche un service dans un lieu precis. "
+                    . "Tableau <table> avec Nom, Adresse, Contact, Langues, Horaires. "
+                    . "Listes de ressources officielles (ambassade, consulat). "
+                    . "SOS-Expat comme alternative rapide ('mise en relation en 5 min').",
+            ]),
+            'urgency' => array_merge($config, [
+                'min_words' => min($config['min_words'], 1200),
+                'max_words' => min($config['max_words'], 1500),
+                'target_words' => min($config['target_words'] ?? 1200, 1200),
+                'target_words_range' => '800-1500',
+                'length' => 'short',
+                'featured_snippet' => true,
+                'numbered_steps' => true,
+                'faq_count' => 3,
+                'h2_count' => [3, 5],
+                'prompt_suffix' => ($config['prompt_suffix'] ?? '') . "\n\nINTENTION URGENCE : L'utilisateur a un probleme MAINTENANT. "
+                    . "Encadre URGENCE en haut (<div class='emergency-box'>) avec numeros (police, ambulance, ambassade). "
+                    . "Etapes numerotees en <ol> — chaque etape = 1 phrase d'action. "
+                    . "CTA urgent ('Besoin d'un avocat MAINTENANT ? SOS-Expat : 5 min, 24h/24'). "
+                    . "Ton calme, directif, chaque phrase = une action concrete.",
+            ]),
+            default => $config,
+        };
+    }
 }

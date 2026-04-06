@@ -78,6 +78,7 @@ jobs:
             docker exec inf-app php artisan db:seed --class=ComparativeSeoSeeder --force
             docker exec inf-app php artisan db:seed --class=AffiliateComparativeSeeder --force
             docker exec inf-app php artisan db:seed --class=NativeKeywordsSeeder --force
+            docker exec inf-app php artisan db:seed --class=LongTailKeywordsSeeder --force
 
             # Run keyword cleanup analysis (dry-run — writes report to logs)
             docker exec inf-app php artisan keywords:clean-duplicates || true

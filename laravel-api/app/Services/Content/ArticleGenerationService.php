@@ -60,9 +60,10 @@ class ArticleGenerationService
     {
         $startTime = microtime(true);
 
-        // Load content-type-specific AI configuration
+        // Load content-type-specific AI configuration (with search intent override)
         $contentType = $params['content_type'] ?? 'article';
-        $typeConfig = ContentTypeConfig::get($contentType);
+        $searchIntent = $params['search_intent'] ?? $params['intent'] ?? null;
+        $typeConfig = ContentTypeConfig::withIntent($contentType, $searchIntent);
         $language = $params['language'] ?? 'fr';
         $country = $params['country'] ?? null;
 
@@ -74,8 +75,9 @@ class ArticleGenerationService
             }
         }
 
-        // Load Knowledge Base prompt for this content type (injected into all AI phases)
-        $this->kbPrompt = $this->knowledgeBase->getSystemPrompt($contentType, $country, $language);
+        // Load Knowledge Base prompt with search intent (injected into all AI phases)
+        $searchIntent = $params['search_intent'] ?? $params['intent'] ?? null;
+        $this->kbPrompt = $this->knowledgeBase->getSystemPrompt($contentType, $country, $language, $searchIntent);
 
         // Generation Guard: dedup + cross-source check
         if (empty($params['force_generate'])) {

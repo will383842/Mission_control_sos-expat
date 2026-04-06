@@ -735,6 +735,153 @@ return [
     // 20. ANTI-CANNIBALIZATION RULES (for content generators)
     // =====================================================================
 
+    // =====================================================================
+    // 21. SEARCH INTENT → CONTENT FORMAT (Google ranking factor #1)
+    // =====================================================================
+
+    'search_intent' => [
+        'informational' => [
+            'name' => 'Informationnelle',
+            'description' => 'L\'utilisateur veut APPRENDRE ou COMPRENDRE. Ex: "qu\'est-ce qu\'un visa digital nomad", "comment fonctionne la CFE"',
+            'format' => [
+                'structure' => 'Guide explicatif structure en sections H2 (chaque H2 = une sous-question)',
+                'featured_snippet' => 'OBLIGATOIRE — premier paragraphe = definition directe 40-60 mots, commence par reformulation du sujet',
+                'longueur' => '1500-3000 mots',
+                'elements_html' => [
+                    '<h2> pour chaque sous-question (minimum 6)',
+                    '<p> premier paragraphe = reponse directe avant le developpement',
+                    '<ul>/<ol> listes a puces pour les etapes ou criteres',
+                    '<blockquote> pour les encadres "Bon a savoir" ou "Attention"',
+                    '<table> si comparaison de donnees (prix, durees, conditions)',
+                    '<strong> pour les termes cles et chiffres importants',
+                ],
+                'faq_count' => 6,
+                'cta' => '1 CTA naturel en fin d\'article vers SOS-Expat',
+                'tone' => 'Pedagogique, structure, progressif (du simple au complexe)',
+            ],
+        ],
+        'commercial_investigation' => [
+            'name' => 'Investigation commerciale',
+            'description' => 'L\'utilisateur veut COMPARER avant de decider. Ex: "meilleure assurance expatrie 2026", "Wise vs Revolut pour expatries"',
+            'format' => [
+                'structure' => 'Comparatif structure avec tableau, pros/cons, et verdict argumente',
+                'featured_snippet' => 'OBLIGATOIRE — premier paragraphe = verdict direct ("En 2026, la meilleure assurance expatrie est X pour Y raison")',
+                'longueur' => '2000-3500 mots',
+                'elements_html' => [
+                    '<table> OBLIGATOIRE en haut de page avec <thead>/<tbody> — criteres en lignes, options en colonnes',
+                    '<h2> pour chaque option comparee + "Notre verdict" + "Comment choisir"',
+                    'Encadres pros/cons pour chaque option (<div class="pros"> et <div class="cons">)',
+                    '<strong> pour les prix et les notes',
+                    '<ol> pour le classement final (Top 1, Top 2, Top 3)',
+                    '<blockquote> pour le verdict et les recommandations par profil',
+                ],
+                'faq_count' => 5,
+                'cta' => '1 CTA naturel ("Besoin d\'aide pour choisir ? Un expert SOS-Expat vous guide")',
+                'tone' => 'Objectif, factuel, donnees chiffrees, comparaison honnete',
+            ],
+        ],
+        'transactional' => [
+            'name' => 'Transactionnelle',
+            'description' => 'L\'utilisateur veut AGIR ou ACHETER maintenant. Ex: "acheter assurance voyage expatrie", "prendre rdv avocat immigration"',
+            'format' => [
+                'structure' => 'Page orientee action avec prix, etapes, et CTA clair',
+                'featured_snippet' => 'OBLIGATOIRE — premier paragraphe = reponse a "combien ca coute" ou "comment faire" en 1 phrase',
+                'longueur' => '800-1500 mots (COURT — l\'utilisateur veut agir, pas lire)',
+                'elements_html' => [
+                    'Encadre PRIX en haut de page (<div class="pricing-box">) avec montant, duree, ce qui est inclus',
+                    '<ol> etapes concretes pour passer a l\'action (maximum 5-7 etapes)',
+                    '<table> recapitulatif des options si plusieurs formules',
+                    '<strong> pour prix et delais',
+                    'Encadre confiance : "197 pays, 24/7, 9 langues, avis verifies"',
+                    '<blockquote> temoignage ou avis client',
+                ],
+                'faq_count' => 3,
+                'cta' => '2-3 CTA vers SOS-Expat (haut, milieu, fin — l\'utilisateur veut agir)',
+                'tone' => 'Direct, rassurant, oriente action, zero jargon',
+            ],
+        ],
+        'local' => [
+            'name' => 'Locale',
+            'description' => 'L\'utilisateur cherche un service DANS un pays/ville precis. Ex: "avocat francais Bangkok", "medecin francophone Lisbonne"',
+            'format' => [
+                'structure' => 'Fiche locale avec informations pratiques geographiques',
+                'featured_snippet' => 'OBLIGATOIRE — "Pour trouver un {service} a {ville/pays}, voici les options disponibles en 2026"',
+                'longueur' => '1000-2000 mots',
+                'elements_html' => [
+                    '<h2> par type de ressource (ambassade, professionnels prives, organismes officiels)',
+                    '<table> avec colonnes : Nom, Adresse, Contact, Langues, Horaires',
+                    '<ul> liens utiles officiels (ambassade, consulat, associations)',
+                    '<blockquote> conseil pratique local',
+                    'Mention de SOS-Expat comme alternative rapide (mise en relation en 5 min)',
+                ],
+                'faq_count' => 4,
+                'cta' => '1 CTA ("Pas le temps de chercher ? SOS-Expat vous connecte en 5 min")',
+                'tone' => 'Pratique, local, concret, avec donnees de contact',
+            ],
+        ],
+        'urgency' => [
+            'name' => 'Urgence',
+            'description' => 'L\'utilisateur a un probleme MAINTENANT. Ex: "passeport vole Thailande que faire", "accident voiture a l\'etranger"',
+            'format' => [
+                'structure' => 'Guide d\'urgence avec etapes numerotees IMMEDIATEMENT actionnables',
+                'featured_snippet' => 'OBLIGATOIRE — "En cas de {urgence} a {pays}, appelez immediatement le {numero}. Voici les 5 etapes a suivre."',
+                'longueur' => '800-1500 mots (COURT — urgence = pas le temps de lire)',
+                'elements_html' => [
+                    '<div class="emergency-box"> en HAUT de page avec numeros d\'urgence (police, ambulance, ambassade)',
+                    '<ol> etapes numerotees (maximum 7) — chaque etape = 1 phrase d\'action',
+                    '<strong> pour CHAQUE numero de telephone et adresse',
+                    '<blockquote class="warning"> pour les erreurs a NE PAS commettre',
+                    '<table> numeros utiles (police, ambulance, pompiers, ambassade) si pays specifique',
+                    'Lien direct vers l\'ambassade du pays',
+                ],
+                'faq_count' => 3,
+                'cta' => '1 CTA urgent ("Besoin d\'un avocat MAINTENANT ? SOS-Expat : mise en relation en moins de 5 minutes, 24h/24")',
+                'tone' => 'Calme, rassurant, DIRECTIF — chaque phrase = une action concrete',
+            ],
+        ],
+        'navigational' => [
+            'name' => 'Navigationnelle',
+            'description' => 'L\'utilisateur cherche un SITE ou une PAGE specifique. Ex: "SOS-Expat connexion", "sos-expat.com"',
+            'format' => [
+                'generate' => false,
+                'reason' => 'Pas de contenu a generer — ces requetes menent directement a l\'app SOS-Expat',
+            ],
+        ],
+    ],
+
+    // =====================================================================
+    // 22. LONG-TAIL CONTENT RULES (requetes specifiques a fort taux de conversion)
+    // =====================================================================
+
+    'long_tail_rules' => [
+        'definition' => 'Requete de 4+ mots avec intention tres precise. Moins de volume, mais BEAUCOUP plus facile a ranker et meilleur taux de conversion.',
+        'avantages' => [
+            'Moins de concurrence que les requetes courtes',
+            'Intention plus claire = meilleur match de contenu',
+            'Meilleur taux de conversion (l\'utilisateur sait ce qu\'il veut)',
+            'Plus facile d\'obtenir le featured snippet (position 0)',
+        ],
+        'regles_generation' => [
+            'Le titre DOIT reprendre la requete longue traine EXACTEMENT (ou tres proche)',
+            'Le premier paragraphe DOIT repondre directement a la requete en 40-60 mots',
+            'Le contenu DOIT etre SPECIFIQUE — pas de generalites, pas de remplissage',
+            'Chaque H2 doit approfondir UN aspect de la requete',
+            'Les FAQ doivent etre des VARIANTES de la requete principale',
+            'Le maillage interne DOIT lier vers la fiche pays + l\'article general sur le sujet',
+        ],
+        'exemples' => [
+            'informational' => 'comment ouvrir un compte bancaire au Portugal en tant que francais sans NIE',
+            'commercial' => 'assurance sante digital nomad thailande moins de 100 euros par mois comparatif',
+            'transactional' => 'prendre rendez-vous avocat immigration canada en ligne',
+            'local' => 'medecin generaliste francophone a Lisbonne quartier Baixa',
+            'urgency' => 'passeport francais vole a Bangkok que faire en urgence etapes',
+        ],
+    ],
+
+    // =====================================================================
+    // 23. ANTI-CANNIBALIZATION RULES (for content generators)
+    // =====================================================================
+
     'anti_cannibalization' => [
         'rule_1' => 'FICHE PAYS ≠ FICHE EXPAT ≠ FICHE VACANCES — 3 angles DISTINCTS, jamais de repetition',
         'rule_2' => 'ARTICLE MOT-CLE = 1 sujet precis en PROFONDEUR — jamais un guide general du pays',

@@ -25,7 +25,7 @@ class KnowledgeBaseService
     /**
      * Get the complete system prompt with Knowledge Base for a content type.
      */
-    public function getSystemPrompt(string $contentType, ?string $country = null, ?string $language = null): string
+    public function getSystemPrompt(string $contentType, ?string $country = null, ?string $language = null, ?string $searchIntent = null): string
     {
         $blocks = [
             $this->getIdentityBlock(),
@@ -46,6 +46,8 @@ class KnowledgeBaseService
         $contentRule = $this->getContentRule($contentType);
         $seoRules = $this->getSeoRulesBlock();
 
+        $intentBlock = $searchIntent ? $this->getIntentBlock($searchIntent) : '';
+
         $countryContext = $country
             ? "\nCONTEXTE PAYS : Cet article concerne specifiquement {$country}. Toutes les donnees, lois, prix, procedures doivent etre specifiques a ce pays.\n"
             : '';
@@ -64,7 +66,7 @@ class KnowledgeBaseService
 {$contentRule}
 
 {$seoRules}
-{$countryContext}{$langContext}
+{$intentBlock}{$countryContext}{$langContext}
 === FIN KNOWLEDGE BASE ===
 
 REGLES CRITIQUES :
@@ -499,6 +501,46 @@ BLOCK;
         $lines = ["SCHEMA MARKUP OBLIGATOIRE :"];
         foreach ($schema as $rule) {
             $lines[] = "- {$rule}";
+        }
+
+        return implode("\n", $lines);
+    }
+
+    private function getIntentBlock(string $intent): string
+    {
+        $intents = $this->kb['search_intent'] ?? [];
+        $intentData = $intents[$intent] ?? null;
+
+        if (!$intentData || !isset($intentData['format']) || ($intentData['format']['generate'] ?? true) === false) {
+            return '';
+        }
+
+        $format = $intentData['format'];
+        $lines = [
+            "\n=== INTENTION DE RECHERCHE : {$intentData['name']} ===",
+            "Description : {$intentData['description']}",
+            "Structure : {$format['structure']}",
+            "Featured snippet : {$format['featured_snippet']}",
+            "Longueur : {$format['longueur']}",
+            "Ton : {$format['tone']}",
+            "CTA : {$format['cta']}",
+            "FAQ : {$format['faq_count']} questions",
+            "",
+            "ELEMENTS HTML OBLIGATOIRES :",
+        ];
+
+        foreach ($format['elements_html'] as $element) {
+            $lines[] = "- {$element}";
+        }
+
+        // Long-tail rules if applicable
+        $longTail = $this->kb['long_tail_rules'] ?? [];
+        if (!empty($longTail['regles_generation'])) {
+            $lines[] = "";
+            $lines[] = "REGLES LONGUE TRAINE (requetes specifiques) :";
+            foreach ($longTail['regles_generation'] as $rule) {
+                $lines[] = "- {$rule}";
+            }
         }
 
         return implode("\n", $lines);

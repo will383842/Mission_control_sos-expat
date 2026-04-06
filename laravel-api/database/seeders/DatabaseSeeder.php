@@ -30,5 +30,6 @@ class DatabaseSeeder extends Seeder
         $this->call(ComparativeSeoSeeder::class);
         $this->call(AffiliateComparativeSeeder::class);
         $this->call(NativeKeywordsSeeder::class);
+        $this->call(LongTailKeywordsSeeder::class);
     }
 }
