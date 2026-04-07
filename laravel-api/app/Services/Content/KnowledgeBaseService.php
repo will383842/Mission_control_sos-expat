@@ -41,12 +41,14 @@ class KnowledgeBaseService
             $this->getAeoBlock(),
             $this->getSchemaBlock(),
             $this->getAntiCannibalizationBlock(),
+            $this->getHelpfulContentBlock(),
         ];
 
         $contentRule = $this->getContentRule($contentType);
         $seoRules = $this->getSeoRulesBlock();
 
         $intentBlock = $searchIntent ? $this->getIntentBlock($searchIntent) : '';
+        $disclaimerBlock = $this->getDisclaimerBlock($searchIntent, $contentType);
 
         $countryContext = $country
             ? "\nCONTEXTE PAYS : Cet article concerne specifiquement {$country}. Toutes les donnees, lois, prix, procedures doivent etre specifiques a ce pays.\n"
@@ -66,7 +68,7 @@ class KnowledgeBaseService
 {$contentRule}
 
 {$seoRules}
-{$intentBlock}{$countryContext}{$langContext}
+{$intentBlock}{$disclaimerBlock}{$countryContext}{$langContext}
 
 {$this->getHtmlTemplatesBlock()}
 
@@ -448,6 +450,41 @@ BLOCK;
         }
 
         return implode("\n", $lines);
+    }
+
+    private function getHelpfulContentBlock(): string
+    {
+        $rules = $this->kb['helpful_content_rules'] ?? [];
+        if (empty($rules)) {
+            return '';
+        }
+
+        $lines = ["GOOGLE HELPFUL CONTENT (OBLIGATOIRE 2026) :"];
+        foreach ($rules as $key => $rule) {
+            $lines[] = "- {$rule}";
+        }
+
+        return implode("\n", $lines);
+    }
+
+    private function getDisclaimerBlock(?string $searchIntent, string $contentType): string
+    {
+        $disclaimers = $this->kb['disclaimers_by_intent'] ?? [];
+        $parts = [];
+
+        if ($searchIntent && isset($disclaimers[$searchIntent])) {
+            $parts[] = $disclaimers[$searchIntent];
+        }
+        // Legal disclaimer for legal content types
+        if (in_array($contentType, ['tutorial', 'guide', 'guide_city', 'pillar']) && isset($disclaimers['legal'])) {
+            $parts[] = $disclaimers['legal'];
+        }
+
+        if (empty($parts)) {
+            return '';
+        }
+
+        return "\nDISCLAIMER OBLIGATOIRE (a inclure en fin d'article dans un <div class=\"disclaimer\">) :\n" . implode("\n", $parts) . "\n";
     }
 
     private function getContentRule(string $contentType): string

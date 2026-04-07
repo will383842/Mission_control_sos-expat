@@ -542,6 +542,22 @@ return [
     // 12b. AEO — ANSWER ENGINE OPTIMIZATION (SearchGPT, Perplexity, Claude)
     // =====================================================================
 
+    // ── Helpful Content Update (Google HCU 2023-2026) ──
+    'helpful_content_rules' => [
+        'people_first' => 'Chaque article DOIT repondre a un VRAI besoin utilisateur. Avant d\'ecrire, demander : "quelqu\'un qui lit cet article repartira-t-il avec une reponse concrete ?"',
+        'no_search_engine_first' => 'NE PAS ecrire pour les moteurs de recherche. Ecrire pour les expatries qui ont un probleme REEL a resoudre.',
+        'demonstrate_experience' => 'Inclure au moins UN exemple concret, etude de cas, ou temoignage par article. Le lecteur doit sentir que l\'auteur CONNAIT le sujet.',
+        'add_unique_value' => 'Chaque article doit apporter AU MOINS UNE information qu\'on ne trouve pas ailleurs : un chiffre exclusif, un conseil pratique inedit, une comparaison originale.',
+        'satisfy_intent' => 'Le lecteur ne doit PAS avoir besoin de retourner sur Google apres avoir lu l\'article. Repondre COMPLETEMENT a la question.',
+    ],
+
+    // ── Disclaimers par intention (YMYL / E-E-A-T) ──
+    'disclaimers_by_intent' => [
+        'urgency' => 'IMPORTANT : En cas d\'urgence medicale, appelez les services d\'urgence locaux (112 en Europe, 911 aux US). SOS-Expat.com met en relation avec des professionnels mais ne se substitue pas aux services d\'urgence.',
+        'transactional' => 'SOS-Expat.com est une plateforme de mise en relation. Les tarifs indiques sont indicatifs et peuvent varier selon le prestataire. Consultez les CGU pour les conditions exactes.',
+        'legal' => 'Cet article a un but informatif et ne constitue pas un avis juridique. Pour une consultation juridique personnalisee, consultez un avocat via SOS-Expat.com.',
+    ],
+
     'aeo_rules' => [
         'ai_summary' => 'Chaque article DOIT avoir un champ ai_summary : 1 phrase factuelle de max 100 caracteres, reponse directe a l\'intention de recherche. Optimise pour etre cite par les moteurs IA.',
         'concise_answers' => 'Chaque section doit commencer par une phrase-reponse directe AVANT le developpement. Les moteurs IA extraient le debut de chaque section.',

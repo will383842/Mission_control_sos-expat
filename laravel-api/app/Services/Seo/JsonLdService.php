@@ -59,7 +59,7 @@ class JsonLdService
             'inLanguage' => $article->language ?? 'fr',
             'speakable' => [
                 '@type' => 'SpeakableSpecification',
-                'cssSelector' => ['.featured-snippet', 'h1'],
+                'cssSelector' => $this->getSpeakableSelectors($article),
             ],
         ];
 
@@ -441,5 +441,37 @@ class JsonLdService
             'valid' => empty($errors),
             'errors' => $errors,
         ];
+    }
+
+    /**
+     * Speakable selectors refined by search intent (SGE / voice search optimization).
+     */
+    private function getSpeakableSelectors($article): array
+    {
+        $selectors = ['.featured-snippet', 'h1'];
+
+        $intent = $article->search_intent ?? null;
+        $contentType = $article->content_type ?? 'article';
+
+        // Refine by intent
+        if ($intent === 'urgency') {
+            $selectors[] = '.emergency-box';
+        }
+        if ($intent === 'commercial_investigation' || $contentType === 'comparative') {
+            $selectors[] = '.cta-box';
+        }
+        if ($intent === 'transactional') {
+            $selectors[] = '.pricing-box';
+        }
+
+        // Refine by content type
+        if ($contentType === 'statistics') {
+            $selectors[] = '.key-figures';
+        }
+        if ($contentType === 'qa' || $contentType === 'qa_needs') {
+            $selectors[] = '.qa-answer';
+        }
+
+        return array_unique($selectors);
     }
 }
