@@ -104,6 +104,7 @@ const SondagesResultats = React.lazy(() => import('./pages/content/SondagesResul
 const PromoToolsAdmin = React.lazy(() => import('./pages/content/PromoToolsAdmin'));
 const OutilsVisiteursAdmin = React.lazy(() => import('./pages/content/OutilsVisiteursAdmin'));
 const NewsHub = React.lazy(() => import('./pages/content/NewsHub'));
+const ArtStatistiques = React.lazy(() => import('./pages/content/ArtStatistiques'));
 
 // ── Shared fallback ────────────────────────────────────────────────────────
 function LoadingFallback() {
@@ -300,6 +301,7 @@ export default function App() {
             <Route path="content/tutoriels" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ContentGenerator type="tutorial" /></React.Suspense></AdminRoute>} />
             <Route path="content/longues-traines" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ArtLonguesTraines /></React.Suspense></AdminRoute>} />
             <Route path="content/brand-content" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><BrandContent /></React.Suspense></AdminRoute>} />
+            <Route path="content/statistiques" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ArtStatistiques /></React.Suspense></AdminRoute>} />
             <Route path="content/art-mots-cles" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ArtMotsCles /></React.Suspense></AdminRoute>} />
             <Route path="content/templates" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ContentTemplates /></React.Suspense></AdminRoute>} />
             <Route path="content/templates/:id" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ContentTemplateDetail /></React.Suspense></AdminRoute>} />
@@ -339,7 +341,7 @@ export default function App() {
             <Route path="settings/api-balance" element={<AdminRoute><React.Suspense fallback={<LoadingFallback />}><ApiBalanceMonitor /></React.Suspense></AdminRoute>} />
 
             {/* Legacy redirects — old routes redirect to new locations */}
-            <Route path="statistiques" element={<Navigate to="/" replace />} />
+            <Route path="statistiques" element={<Navigate to="/content/statistiques" replace />} />
             <Route path="admin" element={<Navigate to="/" replace />} />
 
             {/* 404 catch-all */}

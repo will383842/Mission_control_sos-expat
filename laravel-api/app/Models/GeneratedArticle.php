@@ -33,7 +33,7 @@ class GeneratedArticle extends Model
         'generation_duration_seconds', 'generation_model',
         'status',
         'published_at', 'scheduled_at',
-        'canonical_url',
+        'canonical_url', 'external_url', 'external_id',
         'og_type', 'og_locale', 'og_url', 'og_site_name', 'twitter_card',
         'geo_region', 'geo_placename', 'geo_position', 'icbm',
         'meta_keywords', 'content_language', 'last_reviewed_at',

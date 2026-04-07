@@ -29,6 +29,7 @@ class GenerationSourceCategoriesSeeder extends Seeder
             ['slug' => 'temoignages',             'name' => 'Temoignages',             'icon' => '💬', 'description' => 'Temoignages expatries par pays'],
             ['slug' => 'tutoriels',               'name' => 'Tutoriels',               'icon' => '📖', 'description' => 'Guides pratiques pas-a-pas pour demarches expatries'],
             ['slug' => 'brand-content',           'name' => 'Brand Content',           'icon' => '🏷️', 'description' => 'Articles de marque scores et optimises'],
+            ['slug' => 'statistiques',            'name' => 'Statistiques',            'icon' => '📊', 'description' => 'Articles statistiques expatries/voyageurs/nomades par pays (197 pays x 5 themes)'],
         ];
 
         $now = now();

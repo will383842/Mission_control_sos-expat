@@ -704,6 +704,43 @@ export const saveQrSchedule = (data: QrSchedule) =>
 export const fetchQrGenerated = (params: Record<string, unknown>) =>
   api.get('/content-gen/qr-blog/generated', { params });
 
+// ─── STATISTICS DATASETS ─────────────────────────────────────
+export const fetchStatisticsDatasets = (params?: Record<string, unknown>) =>
+  api.get('/content-gen/statistics', { params });
+
+export const fetchStatisticsStats = () =>
+  api.get('/content-gen/statistics/stats');
+
+export const fetchStatisticsThemes = () =>
+  api.get('/content-gen/statistics/themes');
+
+export const fetchStatisticsCoverage = () =>
+  api.get('/content-gen/statistics/coverage');
+
+export const createStatisticsDataset = (data: Record<string, unknown>) =>
+  api.post('/content-gen/statistics', data);
+
+export const updateStatisticsDataset = (id: number, data: Record<string, unknown>) =>
+  api.put(`/content-gen/statistics/${id}`, data);
+
+export const deleteStatisticsDataset = (id: number) =>
+  api.delete(`/content-gen/statistics/${id}`);
+
+export const researchStatistics = (data: { theme: string; country_code?: string; country_name?: string; language?: string }) =>
+  api.post('/content-gen/statistics/research', data);
+
+export const researchStatisticsBatch = (data: { theme: string; countries: { code: string; name: string }[] }) =>
+  api.post('/content-gen/statistics/research-batch', data);
+
+export const validateStatisticsDataset = (id: number) =>
+  api.post(`/content-gen/statistics/${id}/validate`);
+
+export const generateStatisticsArticle = (id: number) =>
+  api.post(`/content-gen/statistics/${id}/generate`);
+
+export const generateStatisticsBatch = (ids: number[]) =>
+  api.post('/content-gen/statistics/generate-batch', { dataset_ids: ids });
+
 // ─── FICHES PAYS ─────────────────────────────────────────────
 export interface FichesStats {
   covered: number;

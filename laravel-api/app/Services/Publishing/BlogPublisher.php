@@ -191,15 +191,35 @@ class BlogPublisher
             'blog_id'     => $data['data']['id'] ?? $data['id'] ?? null,
         ]);
 
-        // Update Mission Control article status to published
+        $externalId  = (string) ($data['data']['id'] ?? $data['id'] ?? $parentArticle->uuid);
+        $externalUrl = $this->buildArticleUrl($parentArticle, $data);
+
+        // Update Mission Control article with published status + blog URL
         $parentArticle->update([
-            'status' => 'published',
+            'status'       => 'published',
             'published_at' => now(),
+            'external_url' => $externalUrl,
+            'external_id'  => $externalId,
         ]);
 
+        // Also update translations with their respective blog URLs
+        foreach ($parentArticle->translations ?? [] as $translation) {
+            $translationUrl = str_replace(
+                "/{$parentArticle->language}/",
+                "/{$translation->language}/",
+                $externalUrl
+            );
+            $translation->update([
+                'status'       => 'published',
+                'published_at' => now(),
+                'external_url' => $translationUrl,
+                'external_id'  => $externalId,
+            ]);
+        }
+
         return [
-            'external_id'  => (string) ($data['data']['id'] ?? $data['id'] ?? $parentArticle->uuid),
-            'external_url' => $this->buildArticleUrl($parentArticle, $data),
+            'external_id'  => $externalId,
+            'external_url' => $externalUrl,
         ];
     }
 

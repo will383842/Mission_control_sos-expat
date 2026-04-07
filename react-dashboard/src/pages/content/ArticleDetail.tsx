@@ -4,6 +4,7 @@ import {
   fetchArticle,
   updateArticle,
   publishArticle,
+  unpublishArticle,
   duplicateArticle,
   deleteArticle,
   fetchArticleVersions,
@@ -799,6 +800,37 @@ export default function ArticleDetail() {
                       ? 'Planifier la publication'
                       : 'Publier maintenant'}
               </button>
+
+              {/* View on blog + Unpublish */}
+              {article.status === 'published' && (
+                <div className="flex gap-2 mt-2">
+                  {(article as any).external_url && (
+                    <a
+                      href={(article as any).external_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 py-2 text-center bg-violet/20 text-violet-light font-medium rounded-lg hover:bg-violet/30 transition-colors text-sm"
+                    >
+                      Voir sur le blog
+                    </a>
+                  )}
+                  <button
+                    onClick={async () => {
+                      setActionLoading('unpublish');
+                      try {
+                        await unpublishArticle(article.id);
+                        toast.success('Article depublie');
+                        loadArticle();
+                      } catch { toast.error('Erreur depublication'); }
+                      finally { setActionLoading(null); }
+                    }}
+                    disabled={!!actionLoading}
+                    className="flex-1 py-2 bg-danger/20 text-danger font-medium rounded-lg hover:bg-danger/30 transition-colors disabled:opacity-50 text-sm"
+                  >
+                    {actionLoading === 'unpublish' ? '...' : 'Depublier'}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

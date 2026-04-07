@@ -517,6 +517,28 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ============================================================
+    // STATISTICS DATASETS — Research, validate & generate stats articles
+    // ============================================================
+    Route::prefix('content-gen/statistics')->middleware('role:admin')->group(function () {
+        // Stats & themes
+        Route::get('/stats',     [\App\Http\Controllers\StatisticsController::class, 'stats']);
+        Route::get('/themes',    [\App\Http\Controllers\StatisticsController::class, 'themes']);
+        Route::get('/coverage',  [\App\Http\Controllers\StatisticsController::class, 'coverage']);
+        // CRUD (static routes BEFORE parametric)
+        Route::post('/',         [\App\Http\Controllers\StatisticsController::class, 'store']);
+        Route::post('/research',       [\App\Http\Controllers\StatisticsController::class, 'research']);
+        Route::post('/research-batch', [\App\Http\Controllers\StatisticsController::class, 'researchBatch']);
+        Route::post('/generate-batch', [\App\Http\Controllers\StatisticsController::class, 'generateBatch']);
+        Route::get('/',          [\App\Http\Controllers\StatisticsController::class, 'index']);
+        // Parametric routes (after static)
+        Route::get('/{id}',      [\App\Http\Controllers\StatisticsController::class, 'show'])->where('id', '[0-9]+');
+        Route::put('/{id}',      [\App\Http\Controllers\StatisticsController::class, 'update'])->where('id', '[0-9]+');
+        Route::delete('/{id}',   [\App\Http\Controllers\StatisticsController::class, 'destroy'])->where('id', '[0-9]+');
+        Route::post('/{id}/validate', [\App\Http\Controllers\StatisticsController::class, 'validateDataset'])->where('id', '[0-9]+');
+        Route::post('/{id}/generate', [\App\Http\Controllers\StatisticsController::class, 'generate'])->where('id', '[0-9]+');
+    });
+
+    // ============================================================
     // FICHES PAYS — Proxy vers Blog SSR (3 types: general, expatriation, vacances)
     // ============================================================
     Route::prefix('content-gen/fiches/{type}')

@@ -265,6 +265,44 @@ class ContentTypeConfig
                     . "CTA vers SOS-Expat.com pour aide personnalisée.",
             ],
 
+            // STATISTICS (articles data-driven à partir de datasets recherchés)
+            // research_depth = 'none' : les stats sont déjà recherchées via Perplexity en amont
+            'statistics' => [
+                'model' => 'gpt-4o',
+                'research_model' => null,
+                'temperature' => 0.5,
+                'min_words' => 2500,
+                'max_words' => 4000,
+                'target_words' => 3000,
+                'target_words_range' => '2500-4000',
+                'length' => 'long',
+                'faq_count' => 6,
+                'max_tokens_content' => 10000,
+                'max_tokens_title' => 100,
+                'internal_links' => 8,
+                'external_links' => 6,
+                'images_count' => 2,
+                'featured_snippet' => true,
+                'comparison_table' => true,
+                'numbered_steps' => false,
+                'research_depth' => 'none',
+                'quality_threshold' => 85,
+                'h2_count' => [6, 10],
+                'include_charts_data' => true,
+                'include_key_figures' => true,
+                'eeat_signals' => true,
+                'prompt_suffix' => "Article STATISTIQUE data-driven. OBLIGATIONS :\n"
+                    . "1) Chaque statistique DOIT etre citee avec sa source entre parentheses (Organisation, Annee).\n"
+                    . "2) Au moins 2 tableaux <table> avec <thead>/<tbody> comparant les donnees par annee ou par pays.\n"
+                    . "3) Un encadre 'Chiffres cles' en debut d'article avec les 5 statistiques les plus importantes en <strong>.\n"
+                    . "4) Section 'Analyse et tendances' interpretant les donnees (croissance, declin, facteurs explicatifs).\n"
+                    . "5) Section 'Methodologie et sources' en fin d'article listant TOUTES les sources avec URLs.\n"
+                    . "6) S'adresser a TOUTES les nationalites, pas uniquement les Francais.\n"
+                    . "7) Inclure des comparaisons internationales quand les donnees le permettent.\n"
+                    . "8) FAQ orientees 'donnees' (ex: 'Combien de...', 'Quel pourcentage...', 'Quelle evolution...').\n"
+                    . "OBJECTIF : devenir la REFERENCE citee par les medias, chercheurs et institutions sur ce sujet.",
+            ],
+
             // OUTREACH (recrutement : chatters, bloggeurs, admin groups)
             // Objectif : convaincre des candidats potentiels de rejoindre le programme
             // research_depth = 'none' : GPT connaît le programme, Perplexity inutile ici
