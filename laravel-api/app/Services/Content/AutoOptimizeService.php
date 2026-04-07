@@ -313,13 +313,7 @@ class AutoOptimizeService
 
     private function addCta(GeneratedArticle $article): void
     {
-        $cta = <<<'HTML'
-<div class="cta-box">
-<p><strong>Besoin d'aide sur place ?</strong></p>
-<p>Un avocat ou expert local disponible en moins de 5 minutes, 24h/24, dans 197 pays.</p>
-<p><a href="https://sos-expat.com" class="cta-button">Appeler maintenant</a></p>
-</div>
-HTML;
+        $cta = \App\Helpers\CtaHelper::html($article->language ?? 'fr', $article->country);
 
         $html = $article->content_html ?? '';
         // Don't add if already has a CTA

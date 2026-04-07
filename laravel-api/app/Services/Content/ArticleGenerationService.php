@@ -54,6 +54,23 @@ class ArticleGenerationService
     ) {}
 
     /**
+     * Default search intent per content type.
+     * Google ranks content higher when it matches search intent (since 2023).
+     */
+    private static function defaultIntent(string $contentType): string
+    {
+        return match ($contentType) {
+            'guide', 'guide_city', 'pillar'              => 'informational',
+            'article', 'tutorial', 'statistics'           => 'informational',
+            'qa', 'qa_needs'                              => 'informational',
+            'comparative', 'affiliation'                  => 'commercial_investigation',
+            'testimonial'                                 => 'informational',
+            'outreach'                                    => 'transactional',
+            default                                       => 'informational',
+        };
+    }
+
+    /**
      * Generate a full article through the 15-phase pipeline.
      */
     public function generate(array $params): GeneratedArticle
@@ -62,7 +79,7 @@ class ArticleGenerationService
 
         // Load content-type-specific AI configuration (with search intent override)
         $contentType = $params['content_type'] ?? 'article';
-        $searchIntent = $params['search_intent'] ?? $params['intent'] ?? null;
+        $searchIntent = $params['search_intent'] ?? $params['intent'] ?? self::defaultIntent($contentType);
         $typeConfig = ContentTypeConfig::withIntent($contentType, $searchIntent);
         $language = $params['language'] ?? 'fr';
         $country = $params['country'] ?? null;
@@ -76,7 +93,6 @@ class ArticleGenerationService
         }
 
         // Load Knowledge Base prompt with search intent (injected into all AI phases)
-        $searchIntent = $params['search_intent'] ?? $params['intent'] ?? null;
         $this->kbPrompt = $this->knowledgeBase->getSystemPrompt($contentType, $country, $language, $searchIntent);
 
         // Generation Guard: dedup + cross-source check

@@ -107,7 +107,7 @@ class NewsGenerationService
         // ── Ensure CTA present ──
         $html = $content['content_html'] ?? '';
         if (!str_contains($html, 'cta-box') && !str_contains($html, 'sos-expat.com')) {
-            $content['content_html'] = $html . "\n" . '<div class="cta-box"><p><strong>Besoin d\'aide sur place ?</strong></p><p>Un avocat ou expert local disponible en moins de 5 minutes, 24h/24, dans 197 pays.</p><p><a href="https://sos-expat.com" class="cta-button">Appeler maintenant</a></p></div>';
+            $content['content_html'] = $html . "\n" . \App\Helpers\CtaHelper::html($item->language ?? 'fr', $item->country ?? null);
         }
 
         // ── Envoi au Blog ──

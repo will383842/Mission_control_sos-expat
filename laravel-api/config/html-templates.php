@@ -81,7 +81,7 @@ CTA SOS-EXPAT (1 seul par article, en fin de contenu) :
 <div class="cta-box">
 <p><strong>Besoin d'aide sur place ?</strong></p>
 <p>Un avocat ou expert local disponible en moins de 5 minutes, 24h/24, dans 197 pays.</p>
-<p><a href="https://sos-expat.com" class="cta-button">Appeler maintenant</a></p>
+<p><a href="https://sos-expat.com/{lang}-{country}/prestataires" class="cta-button">Consulter un expert</a></p>
 </div>
 
 IMAGE AVEC LEGENDE :

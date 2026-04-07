@@ -261,7 +261,7 @@ class ComparativeGenerationService
             // Ensure CTA is present
             $html = $comparative->content_html ?? '';
             if (!str_contains($html, 'cta-box') && !str_contains($html, 'sos-expat.com')) {
-                $cta = '<div class="cta-box"><p><strong>Besoin d\'aide sur place ?</strong></p><p>Un avocat ou expert local disponible en moins de 5 minutes, 24h/24, dans 197 pays.</p><p><a href="https://sos-expat.com" class="cta-button">Appeler maintenant</a></p></div>';
+                $cta = \App\Helpers\CtaHelper::html($comparative->language ?? 'fr', $comparative->country ?? null);
                 $comparative->update(['content_html' => $html . "\n" . $cta]);
             }
 
