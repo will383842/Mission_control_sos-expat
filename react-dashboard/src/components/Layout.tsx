@@ -546,10 +546,7 @@ export default function Layout() {
                     <NavLink to="/content/tutoriels" className={subNavClass} onClick={handleNavClick}>
                       📖 Tutoriels
                     </NavLink>
-                    <NavLink to="/content/brand-content" className={subNavClass} onClick={handleNavClick}>
-                      ✍️ Brand Content
-                    </NavLink>
-                    <NavLink to="/content/articles" className={subNavClass} onClick={handleNavClick}>
+<NavLink to="/content/articles" className={subNavClass} onClick={handleNavClick}>
                       📝 Art Titre Manuel
                     </NavLink>
                     <NavLink to="/content/comparatives" className={subNavClass} onClick={handleNavClick}>
