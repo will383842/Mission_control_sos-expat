@@ -183,7 +183,8 @@ export default function ContentGenerator({ type }: Props) {
         }),
         api.get('/generation-sources/categories'),
       ]);
-      setItems((itemsRes.data as any).data ?? itemsRes.data ?? []);
+      const raw = itemsRes.data as any;
+      setItems(raw?.items?.data ?? raw?.data ?? (Array.isArray(raw) ? raw : []));
       const cats = (statsRes.data as any) ?? [];
       const myCat = Array.isArray(cats) ? cats.find((c: any) => c.slug === config.slug) : null;
       setStats(myCat ?? null);
