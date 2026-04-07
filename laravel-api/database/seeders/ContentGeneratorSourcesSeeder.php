@@ -204,26 +204,10 @@ class ContentGeneratorSourcesSeeder extends Seeder
             "Harcelement au travail en {pays} expatrie",
         ];
 
-        // Top 50 pays les plus recherchés pour pain points
-        $topPainCountries = DB::table('content_countries')
-            ->select('name', 'slug')
-            ->whereIn('slug', [
-                'allemagne','angleterre','australie','belgique','bresil','canada',
-                'chine','coree-du-sud','emirats-arabes-unis','espagne','etats-unis',
-                'france','grece','inde','indonesie','irlande','italie','japon',
-                'malaisie','maroc','mexique','norvege','nouvelle-zelande','pays-bas',
-                'pologne','portugal','qatar','republique-dominicaine','roumanie',
-                'russie','senegal','singapour','suede','suisse','thailande',
-                'tunisie','turquie','vietnam','colombie','chili','perou','philippines',
-                'afrique-du-sud','costa-rica','panama','egypte','kenya','nigeria',
-                'argentine','autriche',
-            ])
-            ->orderBy('name')
-            ->get();
-
+        // TOUS les 223 pays pour pain points
         $ppCount = 0;
         foreach ($painPointTitles as $template) {
-            foreach ($topPainCountries as $country) {
+            foreach ($countries as $country) {
                 $title = str_replace('{pays}', $country->name, $template);
                 DB::table('generation_source_items')->updateOrInsert(
                     ['category_slug' => 'pain-point', 'title' => $title],
