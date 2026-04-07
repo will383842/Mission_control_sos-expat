@@ -418,7 +418,30 @@ class StatisticsController extends Controller
 
         $dataset->update(['status' => 'generating']);
 
-        $statsFormatted = collect($dataset->stats)->map(function ($stat, $i) {
+        // ── Collect verified data points from DB (APIs officielles) ──
+        $verifiedStats = '';
+        if ($dataset->country_code) {
+            $dbPoints = \App\Models\StatisticsDataPoint::where('country_code', $dataset->country_code)
+                ->whereHas('indicator', fn ($q) => $q->where('theme', $dataset->theme))
+                ->orderByDesc('year')
+                ->get()
+                ->groupBy('indicator_code');
+
+            if ($dbPoints->isNotEmpty()) {
+                $verifiedStats = "\n\nVERIFIED DATA (from official APIs — use these as primary source):\n";
+                foreach ($dbPoints as $code => $points) {
+                    $latest = $points->first();
+                    $verifiedStats .= "- {$latest->indicator_name}: ";
+                    $verifiedStats .= $points->take(3)->map(function ($p) {
+                        return "{$p->value} ({$p->year})";
+                    })->implode(', ');
+                    $verifiedStats .= " — Source: {$latest->source} ({$latest->source_dataset})\n";
+                }
+            }
+        }
+
+        // ── Dataset stats (from Perplexity research) ──
+        $statsFormatted = collect($dataset->stats)->map(function ($stat) {
             $year = $stat['year'] ?? 'N/A';
             $source = $stat['source_name'] ?? 'N/A';
             return "- {$stat['label']}: {$stat['value']} ({$year}) — Source: {$source}";
@@ -429,12 +452,14 @@ class StatisticsController extends Controller
         })->implode("\n");
 
         $topic = "Statistical analysis: {$dataset->title}\n\n"
-            . "Key statistics:\n{$statsFormatted}\n\n"
+            . ($verifiedStats ? "VERIFIED DATA FROM OFFICIAL SOURCES (World Bank, OECD, Eurostat):{$verifiedStats}\n" : '')
+            . "Additional statistics from research:\n{$statsFormatted}\n\n"
             . "Sources:\n{$sourcesFormatted}\n\n"
             . ($dataset->summary ? "Analysis summary: {$dataset->summary}\n\n" : '')
-            . "Write a comprehensive, data-driven article using these verified statistics. "
-            . "Include data visualizations descriptions, trend analysis, and actionable insights. "
-            . "Cite every statistic with its source. "
+            . "IMPORTANT: Prioritize the VERIFIED DATA from official APIs above. "
+            . "Use research statistics only as complement. "
+            . "Cite every statistic with its exact source (World Bank, OECD, Eurostat, etc.). "
+            . "Include trend analysis comparing multiple years when data is available. "
             . "Target audience: people interested in {$dataset->theme} topics"
             . ($dataset->country_name ? " in {$dataset->country_name}" : ' worldwide') . ".";
 

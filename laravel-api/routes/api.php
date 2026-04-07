@@ -517,6 +517,22 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ============================================================
+    // STATISTICS DATA POINTS — Official APIs (World Bank, OECD, Eurostat)
+    // ============================================================
+    Route::prefix('content-gen/statistics-data')->middleware('role:admin')->group(function () {
+        Route::get('/',                  [\App\Http\Controllers\StatisticsDataController::class, 'index']);
+        Route::get('/stats',             [\App\Http\Controllers\StatisticsDataController::class, 'stats']);
+        Route::get('/indicators',        [\App\Http\Controllers\StatisticsDataController::class, 'indicators']);
+        Route::get('/available-indicators', [\App\Http\Controllers\StatisticsDataController::class, 'availableIndicators']);
+        Route::get('/coverage',          [\App\Http\Controllers\StatisticsDataController::class, 'coverage']);
+        Route::get('/country/{code}',    [\App\Http\Controllers\StatisticsDataController::class, 'country']);
+        Route::post('/fetch/world-bank', [\App\Http\Controllers\StatisticsDataController::class, 'fetchWorldBank']);
+        Route::post('/fetch/oecd',       [\App\Http\Controllers\StatisticsDataController::class, 'fetchOecd']);
+        Route::post('/fetch/eurostat',   [\App\Http\Controllers\StatisticsDataController::class, 'fetchEurostat']);
+        Route::post('/fetch/all',        [\App\Http\Controllers\StatisticsDataController::class, 'fetchAll']);
+    });
+
+    // ============================================================
     // STATISTICS DATASETS — Research, validate & generate stats articles
     // ============================================================
     Route::prefix('content-gen/statistics')->middleware('role:admin')->group(function () {

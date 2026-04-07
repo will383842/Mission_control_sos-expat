@@ -10,6 +10,11 @@ import {
   generateStatisticsArticle,
   generateStatisticsBatch,
   deleteStatisticsDataset,
+  fetchStatisticsDataStats,
+  fetchWorldBankData,
+  fetchOecdData,
+  fetchEurostatData,
+  fetchAllStatisticsData,
 } from '../../api/contentApi';
 import { toast } from '../../components/Toast';
 
@@ -88,7 +93,7 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }>
   failed:     { bg: 'bg-danger/10',   text: 'text-danger',      label: 'Echec' },
 };
 
-const TABS = ['datasets', 'rechercher', 'generer', 'couverture'] as const;
+const TABS = ['donnees', 'datasets', 'rechercher', 'generer', 'couverture'] as const;
 type Tab = typeof TABS[number];
 
 // ── Top 20 countries for quick research ────────────────────
@@ -103,7 +108,7 @@ const TOP_COUNTRIES = [
 ];
 
 export default function ArtStatistiques() {
-  const [tab, setTab] = useState<Tab>('datasets');
+  const [tab, setTab] = useState<Tab>('donnees');
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [overview, setOverview] = useState<StatsOverview | null>(null);
   const [themes, setThemes] = useState<ThemeInfo[]>([]);
@@ -130,6 +135,10 @@ export default function ArtStatistiques() {
 
   // Generation
   const [generatingIds, setGeneratingIds] = useState<Set<number>>(new Set());
+
+  // Data points (APIs officielles)
+  const [dataStats, setDataStats] = useState<any>(null);
+  const [fetching, setFetching] = useState<string | null>(null);
 
   // ── Load data ──────────────────────────────────────────────
   const loadDatasets = useCallback(async () => {
@@ -167,6 +176,31 @@ export default function ArtStatistiques() {
       setCoverage(Array.isArray(res.data) ? res.data : []);
     } catch { /* silent */ }
   }, []);
+
+  const loadDataStats = useCallback(async () => {
+    try {
+      const res = await fetchStatisticsDataStats();
+      setDataStats(res.data);
+    } catch { /* silent */ }
+  }, []);
+
+  // Fetch from a specific source
+  const handleFetchSource = async (source: 'world-bank' | 'oecd' | 'eurostat' | 'all') => {
+    setFetching(source);
+    try {
+      const fetchFn = source === 'world-bank' ? fetchWorldBankData
+        : source === 'oecd' ? fetchOecdData
+        : source === 'eurostat' ? fetchEurostatData
+        : fetchAllStatisticsData;
+      const res = await fetchFn({});
+      toast.success(`${res.data.total_stored} data points recuperes`);
+      await loadDataStats();
+    } catch (e: any) {
+      toast.error(e?.response?.data?.error || `Erreur fetch ${source}`);
+    } finally {
+      setFetching(null);
+    }
+  };
 
   useEffect(() => { loadDatasets(); }, [loadDatasets]);
   useEffect(() => { loadOverview(); }, [loadOverview]);
@@ -331,6 +365,7 @@ export default function ArtStatistiques() {
       {/* Tabs */}
       <div className="flex gap-1 bg-surface/40 backdrop-blur rounded-xl p-1 border border-border/20">
         {([
+          ['donnees',    '🏛️', 'Donnees'],
           ['datasets',   '📦', 'Datasets'],
           ['rechercher', '🔍', 'Rechercher'],
           ['generer',    '⚡', 'Generer'],
@@ -338,7 +373,7 @@ export default function ArtStatistiques() {
         ] as [Tab, string, string][]).map(([t, emoji, label]) => (
           <button
             key={t}
-            onClick={() => { setTab(t); if (t === 'couverture') loadCoverage(); }}
+            onClick={() => { setTab(t); if (t === 'couverture') loadCoverage(); if (t === 'donnees') loadDataStats(); }}
             className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
               tab === t ? 'bg-violet/20 text-violet-light border border-violet/30' : 'text-muted hover:text-white'
             }`}
@@ -347,6 +382,91 @@ export default function ArtStatistiques() {
           </button>
         ))}
       </div>
+
+      {/* ═══ TAB: DONNEES (APIs officielles) ═══ */}
+      {tab === 'donnees' && (
+        <div className="space-y-4">
+          {/* Stats cards */}
+          {dataStats && (
+            <div className="grid grid-cols-4 gap-3">
+              {[
+                { label: 'Data points', value: dataStats.total_data_points?.toLocaleString() ?? '0', color: 'text-white' },
+                { label: 'Pays couverts', value: dataStats.countries_covered ?? 0, color: 'text-cyan' },
+                { label: 'Indicateurs', value: dataStats.indicators_count ?? 0, color: 'text-violet-light' },
+                { label: 'Dernier fetch', value: dataStats.last_fetched_at ? new Date(dataStats.last_fetched_at).toLocaleDateString() : 'Jamais', color: 'text-muted' },
+              ].map(s => (
+                <div key={s.label} className="bg-surface/60 backdrop-blur border border-border/30 rounded-xl p-3 text-center">
+                  <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+                  <p className="text-[10px] text-muted uppercase tracking-wider">{s.label}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Sources breakdown */}
+          {dataStats?.by_source && (
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { key: 'world_bank', icon: '🏦', label: 'World Bank', desc: 'Migration, tourisme, IDE, remittances' },
+                { key: 'oecd',       icon: '🏛️', label: 'OECD',       desc: 'Immigration, etudiants, IDE (38 pays)' },
+                { key: 'eurostat',   icon: '🇪🇺', label: 'Eurostat',   desc: 'Migration UE, asile, permis (27 pays)' },
+              ].map(src => (
+                <div key={src.key} className="bg-surface/40 border border-border/20 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xl">{src.icon}</span>
+                    <div>
+                      <p className="text-sm text-white font-medium">{src.label}</p>
+                      <p className="text-[10px] text-muted">{src.desc}</p>
+                    </div>
+                  </div>
+                  <p className="text-lg font-bold text-white">{(dataStats.by_source[src.key] ?? 0).toLocaleString()}</p>
+                  <p className="text-[10px] text-muted">data points</p>
+                  <button
+                    onClick={() => handleFetchSource(src.key as any)}
+                    disabled={fetching !== null}
+                    className="mt-2 w-full px-3 py-1.5 text-[10px] bg-violet/20 text-violet-light rounded-lg hover:bg-violet/30 disabled:opacity-50 transition-all"
+                  >
+                    {fetching === src.key ? '🔄 Recuperation...' : 'Recuperer les donnees'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Fetch all button */}
+          <div className="bg-gradient-to-br from-violet/20 to-violet/5 border border-border/30 rounded-2xl p-6">
+            <h3 className="text-sm font-bold text-white mb-2">🚀 Recuperer toutes les sources</h3>
+            <p className="text-xs text-muted mb-4">
+              Lance la recuperation depuis World Bank + OECD + Eurostat.
+              ~19 indicateurs x 197 pays x 10 ans. Gratuit, sans risque de ban (APIs publiques officielles).
+            </p>
+            <button
+              onClick={() => handleFetchSource('all')}
+              disabled={fetching !== null}
+              className="px-5 py-2.5 bg-gradient-to-r from-violet to-violet-light text-white text-sm font-semibold rounded-xl shadow-lg shadow-violet/20 hover:shadow-violet/40 transition-all disabled:opacity-50"
+            >
+              {fetching === 'all' ? '🔄 Recuperation en cours (peut prendre 2-3 min)...' : '🏛️ Recuperer toutes les donnees'}
+            </button>
+          </div>
+
+          {/* Info */}
+          <div className="bg-surface/40 border border-border/20 rounded-2xl p-6">
+            <h3 className="text-sm font-bold text-white mb-3">ℹ️ Sources de donnees</h3>
+            <ul className="text-xs text-muted space-y-2">
+              <li><strong>World Bank</strong> — 19 indicateurs: migration, remittances, tourisme, IDE, PIB, inflation (197 pays, 2015-2024)</li>
+              <li><strong>OECD</strong> — 5 indicateurs: immigration, population etrangere, etudiants, IDE (38 pays OCDE)</li>
+              <li><strong>Eurostat</strong> — 7 indicateurs: immigration/emigration, asile, permis, tourisme, etudiants (27 pays UE)</li>
+              <li><strong>Perplexity</strong> — Complement pour les donnees non couvertes (nomades digitaux, rapports specifiques)</li>
+            </ul>
+            <div className="mt-3 p-3 bg-success/5 border border-success/20 rounded-lg">
+              <p className="text-[10px] text-success">
+                100% gratuit. APIs publiques officielles. Aucun risque de ban.
+                Les donnees sont stockees en base et reutilisables pour generer N articles.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ═══ TAB: DATASETS ═══ */}
       {tab === 'datasets' && (

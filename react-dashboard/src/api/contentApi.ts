@@ -741,6 +741,34 @@ export const generateStatisticsArticle = (id: number) =>
 export const generateStatisticsBatch = (ids: number[]) =>
   api.post('/content-gen/statistics/generate-batch', { dataset_ids: ids });
 
+// ─── STATISTICS DATA POINTS (APIs officielles) ──────────────
+export const fetchStatisticsDataPoints = (params?: Record<string, unknown>) =>
+  api.get('/content-gen/statistics-data', { params });
+
+export const fetchStatisticsDataStats = () =>
+  api.get('/content-gen/statistics-data/stats');
+
+export const fetchStatisticsIndicators = () =>
+  api.get('/content-gen/statistics-data/indicators');
+
+export const fetchStatisticsDataCoverage = () =>
+  api.get('/content-gen/statistics-data/coverage');
+
+export const fetchStatisticsCountryData = (countryCode: string) =>
+  api.get(`/content-gen/statistics-data/country/${countryCode}`);
+
+export const fetchWorldBankData = (params?: Record<string, unknown>) =>
+  api.post('/content-gen/statistics-data/fetch/world-bank', params);
+
+export const fetchOecdData = (params?: Record<string, unknown>) =>
+  api.post('/content-gen/statistics-data/fetch/oecd', params);
+
+export const fetchEurostatData = (params?: Record<string, unknown>) =>
+  api.post('/content-gen/statistics-data/fetch/eurostat', params);
+
+export const fetchAllStatisticsData = (params?: Record<string, unknown>) =>
+  api.post('/content-gen/statistics-data/fetch/all', params);
+
 // ─── FICHES PAYS ─────────────────────────────────────────────
 export interface FichesStats {
   covered: number;
