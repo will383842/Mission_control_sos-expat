@@ -102,20 +102,21 @@ class WorldBankDataService
                     $countryName = $record['country']['value'] ?? null;
                     $year = (int) ($record['date'] ?? 0);
 
-                    // Skip aggregates (regions, world)
-                    if (!$countryCode || strlen($countryCode) !== 2 && strlen($countryCode) !== 3) continue;
+                    // Skip aggregates (regions, world) — only accept 2 or 3-char country codes
+                    if (!$countryCode) continue;
+                    if (strlen($countryCode) !== 2 && strlen($countryCode) !== 3) continue;
                     if ($year < $startYear) continue;
 
-                    // Use 2-letter code when possible
-                    $iso2 = $record['countryiso3code'] ?? $countryCode;
-                    if (strlen($iso2) === 3) {
-                        $iso2 = $this->iso3toIso2($iso2) ?? $iso2;
-                    }
+                    // Normalize to 2-letter ISO code
+                    $iso3 = $record['countryiso3code'] ?? $countryCode;
+                    $iso2 = (strlen($iso3) === 3) ? ($this->iso3toIso2($iso3) ?? $iso3) : $iso3;
+                    $iso2 = strtoupper(substr($iso2, 0, 2));
 
+                    try {
                     StatisticsDataPoint::updateOrCreate(
                         [
                             'indicator_id' => $indicator->id,
-                            'country_code' => strtoupper(substr($iso2, 0, 3)),
+                            'country_code' => $iso2,
                             'year'         => $year,
                         ],
                         [
@@ -131,6 +132,11 @@ class WorldBankDataService
                         ]
                     );
                     $stored++;
+                    } catch (\Illuminate\Database\QueryException $e) {
+                        if (!str_contains($e->getMessage(), 'Duplicate') && !str_contains($e->getMessage(), 'UNIQUE')) {
+                            throw $e;
+                        }
+                    }
                 }
 
                 $page++;

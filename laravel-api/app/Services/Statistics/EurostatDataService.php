@@ -160,59 +160,79 @@ class EurostatDataService
             return 0;
         }
 
-        // Calculate the stride for the time dimension
-        // Eurostat flattens multi-dimensional data; we need to compute offsets
+        // Calculate strides for the flattened multi-dimensional array
+        // Eurostat JSON-stat stores values in a flat array indexed by dimension positions
         $dimensionIds = array_keys($json['dimension'] ?? []);
         $geoPos = array_search('geo', $dimensionIds);
         $timePos = array_search('time', $dimensionIds);
 
         if ($geoPos === false || $timePos === false) return 0;
 
-        // Calculate strides for each dimension
-        $strides = [];
-        $stride = 1;
-        for ($i = count($sizes) - 1; $i >= 0; $i--) {
-            $strides[$i] = $stride;
-            $stride *= $sizes[$i];
+        // Strides: stride[i] = product of sizes[i+1] * sizes[i+2] * ... * sizes[n-1]
+        $numDims = count($sizes);
+        $strides = array_fill(0, $numDims, 1);
+        for ($i = $numDims - 2; $i >= 0; $i--) {
+            $strides[$i] = $strides[$i + 1] * $sizes[$i + 1];
+        }
+
+        // Log if more than 2 dimensions (our filtering should reduce others to size 1)
+        if ($numDims > 2) {
+            $extraDims = [];
+            foreach ($dimensionIds as $pos => $dimId) {
+                if ($pos !== $geoPos && $pos !== $timePos && ($sizes[$pos] ?? 1) > 1) {
+                    $extraDims[$dimId] = $sizes[$pos];
+                }
+            }
+            if (!empty($extraDims)) {
+                Log::warning("Eurostat: extra dimensions with size > 1, data may be imprecise", [
+                    'dataset' => $datasetCode,
+                    'extra'   => $extraDims,
+                ]);
+            }
         }
 
         foreach ($geoIndex as $geoCode => $geoIdx) {
             $countryName = $geoLabels[$geoCode] ?? $geoCode;
 
-            // Skip aggregate regions
+            // Skip aggregate regions (EU27_2020, EA19, etc.)
             if (strlen($geoCode) > 2) continue;
 
             foreach ($timeIndex as $timeLabel => $timeIdx) {
                 $year = (int) $timeLabel;
                 if ($year < 2000) continue;
 
-                // Calculate flat index
+                // Calculate flat index: sum of (index_i * stride_i) for each dimension
+                // Other dimensions default to index 0 (we filtered to TOTAL/T in API params)
                 $flatIndex = ($geoIdx * $strides[$geoPos]) + ($timeIdx * $strides[$timePos]);
 
-                // For other dimensions, use index 0 (we filtered to TOTAL in params)
-                // This is simplified — works when other dims have single values
                 $value = $values[$flatIndex] ?? null;
                 if ($value === null) continue;
 
-                StatisticsDataPoint::updateOrCreate(
-                    [
-                        'indicator_id' => $indicator->id,
-                        'country_code' => strtoupper($geoCode),
-                        'year'         => $year,
-                    ],
-                    [
-                        'indicator_code' => $datasetCode,
-                        'indicator_name' => $config['name'],
-                        'country_name'   => $countryName,
-                        'value'          => $value,
-                        'unit'           => $config['unit'],
-                        'source'         => 'eurostat',
-                        'source_dataset' => $datasetCode,
-                        'source_url'     => $url,
-                        'fetched_at'     => now(),
-                    ]
-                );
-                $stored++;
+                try {
+                    StatisticsDataPoint::updateOrCreate(
+                        [
+                            'indicator_id' => $indicator->id,
+                            'country_code' => strtoupper($geoCode),
+                            'year'         => $year,
+                        ],
+                        [
+                            'indicator_code' => $datasetCode,
+                            'indicator_name' => $config['name'],
+                            'country_name'   => $countryName,
+                            'value'          => $value,
+                            'unit'           => $config['unit'],
+                            'source'         => 'eurostat',
+                            'source_dataset' => $datasetCode,
+                            'source_url'     => $url,
+                            'fetched_at'     => now(),
+                        ]
+                    );
+                    $stored++;
+                } catch (\Illuminate\Database\QueryException $e) {
+                    if (!str_contains($e->getMessage(), 'Duplicate') && !str_contains($e->getMessage(), 'UNIQUE')) {
+                        throw $e;
+                    }
+                }
             }
         }
 

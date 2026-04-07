@@ -51,7 +51,8 @@ class OecdDataService
             'dataflow' => 'OECD.DAF.INV,DSD_FDI@DF_FDI_FLOW_PARTNER,1.0',
             'name'     => 'FDI flows by partner country',
             'theme'    => 'investisseurs',
-            'unit'     => 'usd_millions',
+            'unit'     => 'usd',
+            'multiply' => 1_000_000, // OECD reports in millions
         ],
     ];
 
@@ -177,30 +178,43 @@ class OecdDataService
             if (!$countryCode || !$year || $value === null) continue;
             if (strlen($countryCode) > 3) continue; // Skip aggregate regions
 
+            // Normalize to ISO2 (OECD uses ISO3 sometimes)
+            $normalizedCode = strtoupper(substr($countryCode, 0, 3));
+            if (strlen($normalizedCode) > 2) {
+                // Skip 3-char codes we can't normalize (they're likely regions like "OECD", "EU27")
+                continue;
+            }
+
             // Handle localized names
             if (is_array($countryName)) {
                 $countryName = $countryName['en'] ?? reset($countryName);
             }
 
-            StatisticsDataPoint::updateOrCreate(
-                [
-                    'indicator_id' => $indicator->id,
-                    'country_code' => strtoupper($countryCode),
-                    'year'         => $year,
-                ],
-                [
-                    'indicator_code' => $indicatorKey,
-                    'indicator_name' => $config['name'],
-                    'country_name'   => $countryName,
-                    'value'          => $value,
-                    'unit'           => $config['unit'],
-                    'source'         => 'oecd',
-                    'source_dataset' => $config['dataflow'],
-                    'source_url'     => $url,
-                    'fetched_at'     => now(),
-                ]
-            );
-            $stored++;
+            try {
+                StatisticsDataPoint::updateOrCreate(
+                    [
+                        'indicator_id' => $indicator->id,
+                        'country_code' => $normalizedCode,
+                        'year'         => $year,
+                    ],
+                    [
+                        'indicator_code' => $indicatorKey,
+                        'indicator_name' => $config['name'],
+                        'country_name'   => $countryName,
+                        'value'          => $value * ($config['multiply'] ?? 1),
+                        'unit'           => $config['unit'],
+                        'source'         => 'oecd',
+                        'source_dataset' => $config['dataflow'],
+                        'source_url'     => $url,
+                        'fetched_at'     => now(),
+                    ]
+                );
+                $stored++;
+            } catch (\Illuminate\Database\QueryException $e) {
+                if (!str_contains($e->getMessage(), 'Duplicate') && !str_contains($e->getMessage(), 'UNIQUE')) {
+                    throw $e;
+                }
+            }
         }
 
         return $stored;
