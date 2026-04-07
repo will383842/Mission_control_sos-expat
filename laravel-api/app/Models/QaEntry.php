@@ -27,7 +27,8 @@ class QaEntry extends Model
         'source_type', 'status',
         'generation_cost_cents',
         'parent_qa_id', 'related_qa_ids', 'sources',
-        'published_at', 'created_by',
+        'published_at', 'external_url', 'external_id',
+        'created_by',
     ];
 
     protected $casts = [

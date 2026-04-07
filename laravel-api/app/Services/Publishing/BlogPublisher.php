@@ -22,8 +22,12 @@ class BlogPublisher
      */
     public function publish(Model $content, PublishingEndpoint $endpoint): array
     {
-        if (!$content instanceof GeneratedArticle) {
-            throw new \RuntimeException('BlogPublisher only supports GeneratedArticle models');
+        // Support GeneratedArticle, Comparative, and QaEntry
+        if (!$content instanceof GeneratedArticle
+            && !$content instanceof \App\Models\Comparative
+            && !$content instanceof \App\Models\QaEntry
+        ) {
+            throw new \RuntimeException('BlogPublisher supports GeneratedArticle, Comparative, and QaEntry models');
         }
 
         $config   = $endpoint->config ?? [];
@@ -33,6 +37,16 @@ class BlogPublisher
         if (empty($blogUrl)) {
             throw new \RuntimeException('Blog API URL is required — set BLOG_API_URL in .env or blog_api_url in endpoint config');
         }
+
+        // For Comparative and QaEntry, use simplified publish flow
+        if ($content instanceof \App\Models\Comparative) {
+            return $this->publishComparative($content, $blogUrl, $apiToken);
+        }
+        if ($content instanceof \App\Models\QaEntry) {
+            return $this->publishQaEntry($content, $blogUrl, $apiToken);
+        }
+
+        // ── GeneratedArticle flow (full, with translations/faqs/images) ──
 
         // Resolve the parent article (if this is a translation child, go up)
         $parentArticle = $content->parent_article_id
@@ -287,6 +301,146 @@ class BlogPublisher
         }
 
         return $code === 'ch' ? 'zh' : $code;
+    }
+
+    // ── Comparative publish (simplified payload) ────────────────
+    private function publishComparative(\App\Models\Comparative $comparative, string $blogUrl, string $apiToken): array
+    {
+        $lang = $this->normalizeLanguageCode($comparative->language) ?? 'fr';
+
+        $translations = [];
+        $translations[$lang] = [
+            'title'            => $comparative->title,
+            'slug'             => $comparative->slug,
+            'content_html'     => $comparative->content_html,
+            'excerpt'          => $comparative->excerpt,
+            'meta_title'       => $comparative->meta_title,
+            'meta_description' => $comparative->meta_description,
+            'json_ld'          => $comparative->json_ld,
+        ];
+
+        // Include child translations if any
+        if (method_exists($comparative, 'translations') && $comparative->translations) {
+            foreach ($comparative->translations as $child) {
+                $childLang = $this->normalizeLanguageCode($child->language) ?? $lang;
+                $translations[$childLang] = [
+                    'title'            => $child->title,
+                    'slug'             => $child->slug,
+                    'content_html'     => $child->content_html,
+                    'excerpt'          => $child->excerpt,
+                    'meta_title'       => $child->meta_title,
+                    'meta_description' => $child->meta_description,
+                    'json_ld'          => $child->json_ld,
+                ];
+            }
+        }
+
+        $payload = [
+            'idempotency_key' => $comparative->uuid ?? 'comp_' . $comparative->id,
+            'external_id'     => $comparative->uuid,
+            'content_type'    => 'comparative',
+            'category_slug'   => 'fiches-thematiques',
+            'status'          => 'draft',
+            'seo_score'       => $comparative->seo_score,
+            'quality_score'   => $comparative->quality_score,
+            'translations'    => $translations,
+            'faqs'            => [],
+            'sources'         => [],
+            'images'          => [],
+            'tags'            => [],
+            'countries'       => $comparative->country ? [strtoupper($comparative->country)] : [],
+        ];
+
+        return $this->sendPayload($payload, $blogUrl, $apiToken, $comparative);
+    }
+
+    // ── QaEntry publish (simplified payload) ────────────────────
+    private function publishQaEntry(\App\Models\QaEntry $entry, string $blogUrl, string $apiToken): array
+    {
+        $lang = $this->normalizeLanguageCode($entry->language) ?? 'fr';
+
+        $translations = [];
+        $translations[$lang] = [
+            'title'            => $entry->question,
+            'slug'             => $entry->slug,
+            'content_html'     => $entry->answer_detailed_html,
+            'excerpt'          => $entry->answer_short,
+            'meta_title'       => $entry->meta_title ?? $entry->question,
+            'meta_description' => $entry->meta_description ?? $entry->answer_short,
+            'json_ld'          => $entry->json_ld,
+        ];
+
+        // Include child translations if any
+        if (method_exists($entry, 'translations') && $entry->translations) {
+            foreach ($entry->translations as $child) {
+                $childLang = $this->normalizeLanguageCode($child->language) ?? $lang;
+                $translations[$childLang] = [
+                    'title'            => $child->question,
+                    'slug'             => $child->slug,
+                    'content_html'     => $child->answer_detailed_html,
+                    'excerpt'          => $child->answer_short,
+                    'meta_title'       => $child->meta_title ?? $child->question,
+                    'meta_description' => $child->meta_description ?? $child->answer_short,
+                    'json_ld'          => $child->json_ld,
+                ];
+            }
+        }
+
+        $payload = [
+            'idempotency_key' => $entry->uuid ?? 'qa_' . $entry->id,
+            'external_id'     => $entry->uuid,
+            'content_type'    => 'qa',
+            'category_slug'   => 'fiches-thematiques',
+            'status'          => 'draft',
+            'seo_score'       => $entry->seo_score,
+            'quality_score'   => null,
+            'keywords_primary' => $entry->keywords_primary,
+            'translations'    => $translations,
+            'faqs'            => [],
+            'sources'         => is_array($entry->sources) ? $entry->sources : [],
+            'images'          => [],
+            'tags'            => [],
+            'countries'       => $entry->country ? [strtoupper($entry->country)] : [],
+        ];
+
+        return $this->sendPayload($payload, $blogUrl, $apiToken, $entry);
+    }
+
+    // ── Shared: send payload to blog API ────────────────────────
+    private function sendPayload(array $payload, string $blogUrl, string $apiToken, Model $content): array
+    {
+        $timestamp = (string) time();
+        $body = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $signature = hash_hmac('sha256', $timestamp . '.' . $body, $apiToken);
+
+        $response = Http::withHeaders([
+            'X-Webhook-Timestamp' => $timestamp,
+            'X-Webhook-Signature' => $signature,
+            'Content-Type'        => 'application/json',
+        ])->timeout(30)->withBody($body, 'application/json')
+          ->post(rtrim($blogUrl, '/') . '/api/v1/articles');
+
+        if (!$response->successful()) {
+            throw new \RuntimeException('Blog API error: HTTP ' . $response->status() . ' — ' . mb_substr($response->body(), 0, 500));
+        }
+
+        $data = $response->json();
+        $externalId  = (string) ($data['data']['id'] ?? $data['id'] ?? $content->uuid ?? $content->id);
+        $externalUrl = $data['data']['url'] ?? $data['url'] ?? null;
+
+        $content->update([
+            'status'       => 'published',
+            'published_at' => now(),
+            'external_url' => $externalUrl,
+            'external_id'  => $externalId,
+        ]);
+
+        Log::info('BlogPublisher: published ' . class_basename($content), [
+            'id'          => $content->id,
+            'external_id' => $externalId,
+        ]);
+
+        return ['external_id' => $externalId, 'external_url' => $externalUrl];
     }
 
     /**

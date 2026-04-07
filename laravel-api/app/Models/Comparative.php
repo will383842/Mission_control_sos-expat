@@ -25,7 +25,7 @@ class Comparative extends Model
         'seo_score', 'quality_score', 'generation_cost_cents',
         'generation_tokens_input', 'generation_tokens_output',
         'status',
-        'published_at',
+        'published_at', 'external_url', 'external_id',
         'created_by',
     ];
 

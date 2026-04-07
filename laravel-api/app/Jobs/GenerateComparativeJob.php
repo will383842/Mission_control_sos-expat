@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Jobs\PublishContentJob;
 use App\Models\Comparative;
 use App\Models\PublicationQueueItem;
 use App\Models\PublishingEndpoint;
