@@ -42,40 +42,12 @@ class TranslationService
         ]);
 
         try {
-            // Translate title (plain text — strip any HTML from source)
+            // Translate title using dedicated short-text method (NOT the generic translateText)
             $cleanTitle = strip_tags($original->title);
-            $translatedTitle = strip_tags($this->translateText($cleanTitle, $fromLang, $targetLanguage));
-            $translatedTitle = preg_replace('/^```\w*\s*|\s*```$/m', '', $translatedTitle);
-            $translatedTitle = trim($translatedTitle, " \t\n\r\"'");
-            // If translation returned empty, keep original
-            if (empty($translatedTitle)) {
-                $translatedTitle = $cleanTitle;
-            }
-            // If translation is identical to source (translator failed), retry with explicit prompt
-            if ($translatedTitle === $cleanTitle && $fromLang !== $targetLanguage) {
-                Log::warning('Translation title identical to source, retrying', [
-                    'from' => $fromLang, 'to' => $targetLanguage, 'title' => $cleanTitle,
-                ]);
-                $langNames = ['fr'=>'français','en'=>'English','es'=>'español','de'=>'Deutsch',
-                    'pt'=>'português','ru'=>'русский','zh'=>'中文','ar'=>'العربية','hi'=>'हिन्दी'];
-                $toName = $langNames[$targetLanguage] ?? $targetLanguage;
-                $retryResult = $this->openAi->complete(
-                    "Translate this title to {$toName}. Return ONLY the translated title, nothing else.",
-                    $cleanTitle,
-                    ['temperature' => 0.3, 'max_tokens' => 200]
-                );
-                if ($retryResult['success']) {
-                    $retried = strip_tags(trim($retryResult['content'], " \t\n\r\"'"));
-                    if (!empty($retried) && $retried !== $cleanTitle) {
-                        $translatedTitle = $retried;
-                    }
-                }
-            }
+            $translatedTitle = $this->translateShortText($cleanTitle, $fromLang, $targetLanguage, 'title');
 
-            // Translate excerpt (plain text)
-            $translatedExcerpt = strip_tags($this->translateText(strip_tags($original->excerpt ?? ''), $fromLang, $targetLanguage));
-            $translatedExcerpt = preg_replace('/^```\w*\s*|\s*```$/m', '', $translatedExcerpt);
-            $translatedExcerpt = trim($translatedExcerpt, " \t\n\r\"'");
+            // Translate excerpt (plain text — short text method)
+            $translatedExcerpt = $this->translateShortText(strip_tags($original->excerpt ?? ''), $fromLang, $targetLanguage, 'excerpt');
 
             // Translate content HTML (preserving structure)
             $translatedContent = $this->translateText($original->content_html ?? '', $fromLang, $targetLanguage);
@@ -88,13 +60,9 @@ class TranslationService
             $translatedContent = preg_replace('/<h1[^>]*>.*?<\/h1>/is', '', $translatedContent);
             $translatedContent = trim($translatedContent);
 
-            // Translate meta tags (plain text — strip HTML + markdown fences, enforce SEO lengths)
-            $translatedMetaTitle = strip_tags($this->translateText(strip_tags($original->meta_title ?? ''), $fromLang, $targetLanguage));
-            $translatedMetaTitle = preg_replace('/^```\w*\s*|\s*```$/m', '', $translatedMetaTitle);
-            $translatedMetaTitle = trim($translatedMetaTitle, " \t\n\r\"'");
-            $translatedMetaDescription = strip_tags($this->translateText(strip_tags($original->meta_description ?? ''), $fromLang, $targetLanguage));
-            $translatedMetaDescription = preg_replace('/^```\w*\s*|\s*```$/m', '', $translatedMetaDescription);
-            $translatedMetaDescription = trim($translatedMetaDescription, " \t\n\r\"'");
+            // Translate meta tags (plain text — short text method with SEO context)
+            $translatedMetaTitle = $this->translateShortText(strip_tags($original->meta_title ?? ''), $fromLang, $targetLanguage, 'meta_title');
+            $translatedMetaDescription = $this->translateShortText(strip_tags($original->meta_description ?? ''), $fromLang, $targetLanguage, 'meta_description');
 
             // Generate localized slug
             $slug = $this->slugService->generateSlug($translatedTitle, $targetLanguage);
@@ -209,11 +177,11 @@ class TranslationService
         ]);
 
         try {
-            $translatedTitle = $this->translateText($original->title, $fromLang, $targetLanguage);
-            $translatedExcerpt = $this->translateText($original->excerpt ?? '', $fromLang, $targetLanguage);
+            $translatedTitle = $this->translateShortText(strip_tags($original->title), $fromLang, $targetLanguage, 'title');
+            $translatedExcerpt = $this->translateShortText(strip_tags($original->excerpt ?? ''), $fromLang, $targetLanguage, 'excerpt');
             $translatedContent = $this->translateText($original->content_html ?? '', $fromLang, $targetLanguage);
-            $translatedMetaTitle = $this->translateText($original->meta_title ?? '', $fromLang, $targetLanguage);
-            $translatedMetaDescription = $this->translateText($original->meta_description ?? '', $fromLang, $targetLanguage);
+            $translatedMetaTitle = $this->translateShortText(strip_tags($original->meta_title ?? ''), $fromLang, $targetLanguage, 'meta_title');
+            $translatedMetaDescription = $this->translateShortText(strip_tags($original->meta_description ?? ''), $fromLang, $targetLanguage, 'meta_description');
 
             $slug = $this->slugService->generateSlug($translatedTitle, $targetLanguage);
             $slug = $this->slugService->ensureUnique($slug, $targetLanguage, 'comparatives');
@@ -310,6 +278,114 @@ class TranslationService
             'from' => $from,
             'to' => $to,
         ]);
+
+        return $text;
+    }
+
+    /**
+     * Translate a short text (title, excerpt, meta) with a dedicated prompt and length guard.
+     * Unlike translateText(), this uses max_tokens limit and validates output length.
+     */
+    private function translateShortText(string $text, string $from, string $to, string $field = 'title'): string
+    {
+        if (empty(trim($text))) {
+            return '';
+        }
+
+        $langNames = [
+            'fr' => 'français', 'en' => 'English', 'es' => 'español', 'de' => 'Deutsch',
+            'pt' => 'português', 'ru' => 'русский', 'zh' => '中文', 'ar' => 'العربية', 'hi' => 'हिन्दी',
+        ];
+        $toName = $langNames[$to] ?? $to;
+
+        $maxTokensByField = [
+            'title' => 150,
+            'excerpt' => 300,
+            'meta_title' => 100,
+            'meta_description' => 200,
+        ];
+        $maxTokens = $maxTokensByField[$field] ?? 200;
+
+        // Max acceptable length ratio: translated text should not exceed 3x the original
+        $maxLenRatio = 3.0;
+
+        $prompt = match ($field) {
+            'title' => "Translate this article TITLE to {$toName}. Return ONLY the translated title on a single line. No explanation, no HTML, no extra text.",
+            'meta_title' => "Translate this SEO meta title to {$toName}. Return ONLY the translated meta title (max 60 characters). No explanation.",
+            'meta_description' => "Translate this SEO meta description to {$toName}. Return ONLY the translated meta description (max 155 characters). No explanation.",
+            'excerpt' => "Translate this article excerpt to {$toName}. Return ONLY the translated excerpt. No explanation, no HTML.",
+            default => "Translate this text to {$toName}. Return ONLY the translation, nothing else.",
+        };
+
+        $result = $this->openAi->complete($prompt, $text, [
+            'temperature' => 0.3,
+            'max_tokens' => $maxTokens,
+        ]);
+
+        if ($result['success']) {
+            $translated = strip_tags(trim($result['content']));
+            $translated = preg_replace('/^```\w*\s*|\s*```$/m', '', $translated);
+            $translated = trim($translated, " \t\n\r\"'");
+
+            // Take only the first line (guard against multi-line responses)
+            $firstLine = explode("\n", $translated)[0];
+            $translated = trim($firstLine);
+
+            // Length guard: if translated text is suspiciously long, it's contaminated
+            $originalLen = mb_strlen($text);
+            if ($originalLen > 0 && mb_strlen($translated) > $originalLen * $maxLenRatio) {
+                Log::warning("Translation {$field} too long — likely contaminated, retrying", [
+                    'from' => $from, 'to' => $to, 'original_len' => $originalLen,
+                    'translated_len' => mb_strlen($translated), 'field' => $field,
+                ]);
+
+                // Retry with even stricter prompt
+                $retryResult = $this->openAi->complete(
+                    "Translate to {$toName}. Output ONLY the translation. ONE LINE. NOTHING ELSE.",
+                    $text,
+                    ['temperature' => 0.2, 'max_tokens' => $maxTokens]
+                );
+
+                if ($retryResult['success']) {
+                    $retried = strip_tags(trim($retryResult['content'], " \t\n\r\"'"));
+                    $retried = explode("\n", $retried)[0];
+                    if (!empty($retried) && mb_strlen($retried) <= $originalLen * $maxLenRatio) {
+                        $translated = trim($retried);
+                    }
+                }
+            }
+
+            // If still empty or identical to source, keep original
+            if (empty($translated)) {
+                return $text;
+            }
+            if ($translated === $text && $from !== $to) {
+                // Identical to source — one last retry
+                $lastResult = $this->openAi->complete(
+                    "Translate this {$field} to {$toName}. Return ONLY the translated {$field}, nothing else.",
+                    $text,
+                    ['temperature' => 0.3, 'max_tokens' => $maxTokens]
+                );
+                if ($lastResult['success']) {
+                    $last = strip_tags(trim($lastResult['content'], " \t\n\r\"'"));
+                    if (!empty($last) && $last !== $text) {
+                        return $last;
+                    }
+                }
+            }
+
+            return $translated;
+        }
+
+        // Fallback: Claude
+        if ($this->claude->isConfigured()) {
+            $fallback = $this->claude->translate($text, $from, $to);
+            if ($fallback['success']) {
+                $translated = strip_tags(trim($fallback['content']));
+                $firstLine = explode("\n", $translated)[0];
+                return trim($firstLine, " \t\n\r\"'");
+            }
+        }
 
         return $text;
     }

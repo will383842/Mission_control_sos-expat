@@ -88,6 +88,7 @@ services:
       - app_storage:/var/www/html/storage
     networks:
       - internal
+      - shared-network
 
   queue:
     build:
@@ -110,6 +111,7 @@ services:
       - app_storage:/var/www/html/storage
     networks:
       - internal
+      - shared-network
 
   email-worker:
     build:
