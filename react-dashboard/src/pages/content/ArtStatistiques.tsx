@@ -93,7 +93,7 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }>
   failed:     { bg: 'bg-danger/10',   text: 'text-danger',      label: 'Echec' },
 };
 
-const TABS = ['donnees', 'datasets', 'rechercher', 'generer', 'couverture'] as const;
+const TABS = ['sources', 'generation', 'generated'] as const;
 type Tab = typeof TABS[number];
 
 // ── Top 20 countries for quick research ────────────────────
@@ -108,7 +108,9 @@ const TOP_COUNTRIES = [
 ];
 
 export default function ArtStatistiques() {
-  const [tab, setTab] = useState<Tab>('donnees');
+  const [tab, setTab] = useState<Tab>('sources');
+  // Sub-tabs for the Sources section
+  const [sourceSubTab, setSourceSubTab] = useState<'donnees' | 'datasets' | 'rechercher'>('donnees');
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [overview, setOverview] = useState<StatsOverview | null>(null);
   const [themes, setThemes] = useState<ThemeInfo[]>([]);
@@ -365,15 +367,13 @@ export default function ArtStatistiques() {
       {/* Tabs */}
       <div className="flex gap-1 bg-surface/40 backdrop-blur rounded-xl p-1 border border-border/20">
         {([
-          ['donnees',    '🏛️', 'Donnees'],
-          ['datasets',   '📦', 'Datasets'],
-          ['rechercher', '🔍', 'Rechercher'],
-          ['generer',    '⚡', 'Generer'],
-          ['couverture', '🗺️', 'Couverture'],
+          ['sources',    '📋', 'Sources'],
+          ['generation', '⚡', 'Génération'],
+          ['generated',  '✅', 'Contenus générés'],
         ] as [Tab, string, string][]).map(([t, emoji, label]) => (
           <button
             key={t}
-            onClick={() => { setTab(t); if (t === 'couverture') loadCoverage(); if (t === 'donnees') loadDataStats(); }}
+            onClick={() => { setTab(t); if (t === 'generated') loadCoverage(); if (t === 'sources') loadDataStats(); }}
             className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
               tab === t ? 'bg-violet/20 text-violet-light border border-violet/30' : 'text-muted hover:text-white'
             }`}
@@ -384,7 +384,22 @@ export default function ArtStatistiques() {
       </div>
 
       {/* ═══ TAB: DONNEES (APIs officielles) ═══ */}
-      {tab === 'donnees' && (
+      {tab === 'sources' && (<>
+      {/* Sub-tabs for Sources */}
+      <div className="flex gap-1">
+        {([['donnees', '🏛️', 'Données'], ['datasets', '📦', 'Datasets'], ['rechercher', '🔍', 'Rechercher']] as ['donnees' | 'datasets' | 'rechercher', string, string][]).map(([st, emoji, label]) => (
+          <button
+            key={st}
+            onClick={() => { setSourceSubTab(st); if (st === 'donnees') loadDataStats(); }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              sourceSubTab === st ? 'bg-surface2/60 text-white border border-border/30' : 'text-muted hover:text-white'
+            }`}
+          >
+            <span>{emoji}</span> {label}
+          </button>
+        ))}
+      </div>
+      {sourceSubTab === 'donnees' && (
         <div className="space-y-4">
           {/* Stats cards */}
           {dataStats && (
@@ -468,8 +483,8 @@ export default function ArtStatistiques() {
         </div>
       )}
 
-      {/* ═══ TAB: DATASETS ═══ */}
-      {tab === 'datasets' && (
+      {/* ═══ SUB-TAB: DATASETS ═══ */}
+      {sourceSubTab === 'datasets' && (
         <div className="space-y-4">
           {/* Filters */}
           <div className="flex gap-2 flex-wrap">
@@ -575,8 +590,8 @@ export default function ArtStatistiques() {
         </div>
       )}
 
-      {/* ═══ TAB: RECHERCHER ═══ */}
-      {tab === 'rechercher' && (
+      {/* ═══ SUB-TAB: RECHERCHER ═══ */}
+      {sourceSubTab === 'rechercher' && (
         <div className="space-y-4">
           {/* Single research */}
           <div className="bg-gradient-to-br from-violet/20 to-violet/5 border border-border/30 rounded-2xl p-6">
@@ -694,8 +709,10 @@ export default function ArtStatistiques() {
         </div>
       )}
 
-      {/* ═══ TAB: GENERER ═══ */}
-      {tab === 'generer' && (
+      </>)}
+
+      {/* ═══ TAB: GÉNÉRATION ═══ */}
+      {tab === 'generation' && (
         <div className="space-y-4">
           {validatedCount + draftCount > 0 ? (
             <div className="bg-gradient-to-br from-violet/20 to-violet/5 border border-border/30 rounded-2xl p-6">
@@ -763,8 +780,8 @@ export default function ArtStatistiques() {
         </div>
       )}
 
-      {/* ═══ TAB: COUVERTURE ═══ */}
-      {tab === 'couverture' && (
+      {/* ═══ TAB: CONTENUS GÉNÉRÉS ═══ */}
+      {tab === 'generated' && (
         <div className="space-y-4">
           <div className="bg-surface/40 border border-border/20 rounded-2xl p-6">
             <h3 className="text-sm font-bold text-white mb-3">🗺️ Matrice de couverture pays x themes</h3>

@@ -65,9 +65,17 @@ const TYPE_COLORS: Record<ContentType, string> = {
 
 type SortField = 'title' | 'seo_score' | 'quality_score' | 'word_count' | 'created_at';
 
+type ArticlesTab = 'sources' | 'generation' | 'generated';
+const ARTICLES_TABS: { key: ArticlesTab; label: string; emoji: string }[] = [
+  { key: 'sources', label: 'Sources', emoji: '📋' },
+  { key: 'generation', label: 'Génération', emoji: '⚡' },
+  { key: 'generated', label: 'Contenus générés', emoji: '✅' },
+];
+
 // ── Component ───────────────────────────────────────────────
 export default function ArticlesList() {
   const navigate = useNavigate();
+  const [tab, setTab] = useState<ArticlesTab>('generated');
   const [articles, setArticles] = useState<GeneratedArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -213,6 +221,61 @@ export default function ArticlesList() {
         </button>
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-1 bg-surface/40 backdrop-blur rounded-xl p-1 border border-border/20">
+        {ARTICLES_TABS.map(t => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+              tab === t.key
+                ? 'bg-violet/20 text-violet-light border border-violet/30 shadow-lg shadow-violet/5'
+                : 'text-muted hover:text-white'
+            }`}
+          >
+            <span>{t.emoji}</span> {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* 📋 Sources */}
+      {tab === 'sources' && (
+        <div className="bg-surface border border-border rounded-xl p-6 space-y-4">
+          <h3 className="text-lg font-semibold text-white">Source des articles</h3>
+          <p className="text-sm text-muted">Les articles sont créés manuellement ou générés depuis les autres pages de contenu (mots-clés, longues traînes, Q/R, fiches pays, etc.).</p>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-surface2/30 border border-border/20 rounded-xl p-4 text-center">
+              <div className="text-2xl font-bold text-white">{pagination.total}</div>
+              <div className="text-xs text-muted">Total articles</div>
+            </div>
+            <div className="bg-surface2/30 border border-border/20 rounded-xl p-4 text-center">
+              <div className="text-2xl font-bold text-success">{articles.filter(a => a.status === 'published').length}</div>
+              <div className="text-xs text-muted">Publiés (page)</div>
+            </div>
+            <div className="bg-surface2/30 border border-border/20 rounded-xl p-4 text-center">
+              <div className="text-2xl font-bold text-amber">{articles.filter(a => a.status === 'draft').length}</div>
+              <div className="text-xs text-muted">Brouillons (page)</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ⚡ Génération */}
+      {tab === 'generation' && (
+        <div className="bg-surface border border-border rounded-xl p-6 space-y-4">
+          <h3 className="text-lg font-semibold text-white">Créer un article</h3>
+          <p className="text-sm text-muted">Créez un article manuellement avec le formulaire ou utilisez les autres pages de contenu pour une génération automatisée.</p>
+          <button
+            onClick={() => navigate('/content/articles/new')}
+            className="px-6 py-3 rounded-xl bg-violet text-white font-semibold hover:bg-violet/80 transition-all"
+          >
+            + Nouvel article
+          </button>
+        </div>
+      )}
+
+      {/* ✅ Contenus générés */}
+      {tab === 'generated' && (<>
       {/* Filter bar */}
       <div className="flex items-center gap-3 flex-wrap">
         <input
@@ -364,6 +427,7 @@ export default function ArticlesList() {
           </div>
         )}
       </div>
+      </>)}
 
       <ConfirmModal
         open={!!confirmAction}

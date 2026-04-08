@@ -27,7 +27,7 @@ const INTENT_STYLES: Record<string, { cls: string; label: string }> = {
   informational:  { cls: 'bg-cyan/10 text-cyan',           label: 'Informationnel' },
 };
 
-const TABS = ['items', 'import', 'generer'] as const;
+const TABS = ['sources', 'generation', 'generated'] as const;
 type Tab = typeof TABS[number];
 
 function deriveStatus(kw: KeywordItem): 'pending' | 'generating' | 'published' | 'failed' {
@@ -44,7 +44,7 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }>
 };
 
 export default function ArtMotsCles() {
-  const [tab, setTab] = useState<Tab>('items');
+  const [tab, setTab] = useState<Tab>('sources');
   const [keywords, setKeywords] = useState<KeywordItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [filterCluster, setFilterCluster] = useState('');
@@ -265,7 +265,7 @@ export default function ArtMotsCles() {
 
       {/* Tabs */}
       <div className="flex gap-1 bg-surface/40 backdrop-blur rounded-xl p-1 border border-border/20">
-        {([['items', '📦', 'Mots-cles'], ['import', '📥', 'Importer'], ['generer', '⚡', 'Generer']] as [Tab, string, string][]).map(([t, emoji, label]) => (
+        {([['sources', '📋', 'Sources'], ['generation', '⚡', 'Génération'], ['generated', '✅', 'Contenus générés']] as [Tab, string, string][]).map(([t, emoji, label]) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -278,8 +278,8 @@ export default function ArtMotsCles() {
         ))}
       </div>
 
-      {/* Tab: Items */}
-      {tab === 'items' && (
+      {/* Tab: Sources (keywords list + import) */}
+      {tab === 'sources' && (
         <div className="space-y-4">
           {/* Filters */}
           <div className="flex gap-2 flex-wrap">
@@ -365,12 +365,8 @@ export default function ArtMotsCles() {
               </div>
             )}
           </div>
-        </div>
-      )}
 
-      {/* Tab: Import */}
-      {tab === 'import' && (
-        <div className="space-y-4">
+          {/* Import section */}
           {/* CSV file upload */}
           <div className="bg-gradient-to-br from-violet/20 to-violet/5 border border-border/30 rounded-2xl p-6">
             <h3 className="text-sm font-bold text-white mb-2">📥 Importer un fichier CSV</h3>
@@ -422,8 +418,8 @@ export default function ArtMotsCles() {
         </div>
       )}
 
-      {/* Tab: Generer */}
-      {tab === 'generer' && (
+      {/* Tab: Génération */}
+      {tab === 'generation' && (
         <div className="space-y-4">
           {pendingCount > 0 ? (
             <div className="bg-gradient-to-br from-violet/20 to-violet/5 border border-border/30 rounded-2xl p-6">
@@ -474,6 +470,43 @@ export default function ArtMotsCles() {
               <li>5. Les mots-cles sont persistés en base de données</li>
             </ul>
           </div>
+        </div>
+      )}
+
+      {/* Tab: Contenus générés */}
+      {tab === 'generated' && (
+        <div className="space-y-4">
+          {generatedCount > 0 ? (
+            <div className="bg-surface/40 backdrop-blur border border-border/20 rounded-2xl overflow-hidden">
+              <div className="divide-y divide-border/10 max-h-[600px] overflow-y-auto">
+                {keywords.filter(k => deriveStatus(k) === 'published').map(kw => {
+                  const st = STATUS_STYLES[deriveStatus(kw)];
+                  const intent = INTENT_STYLES[kw.search_intent];
+                  return (
+                    <div key={kw.id} className="flex items-center gap-3 px-5 py-2.5 hover:bg-surface2/20 transition-colors">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-white truncate">{kw.keyword}</p>
+                        {kw.cluster && <p className="text-[10px] text-muted truncate">{kw.cluster.replace(/^\d+\.\s*/, '')}</p>}
+                      </div>
+                      {intent && (
+                        <span className={`shrink-0 px-2 py-0.5 rounded text-[9px] font-medium uppercase ${intent.cls}`}>
+                          {intent.label.slice(0, 5)}
+                        </span>
+                      )}
+                      <span className={`shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-semibold ${st.bg} ${st.text}`}>
+                        {st.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="bg-surface/40 border border-border/20 rounded-2xl p-6 text-center">
+              <p className="text-3xl mb-2">📭</p>
+              <p className="text-sm text-muted">Aucun article genere. Lancez la generation dans l'onglet "Generation".</p>
+            </div>
+          )}
         </div>
       )}
     </div>

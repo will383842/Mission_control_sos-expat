@@ -35,13 +35,13 @@ const INTENT_STYLES: Record<string, { bg: string; text: string; label: string }>
 };
 
 const TABS = [
-  { id: 'keywords', label: 'Mots-cles', icon: '🔑' },
-  { id: 'generate', label: 'Generer', icon: '⚡' },
-  { id: 'discover', label: 'Decouvrir', icon: '🔍' },
+  { id: 'sources', label: 'Sources', icon: '📋' },
+  { id: 'generation', label: 'Génération', icon: '⚡' },
+  { id: 'generated', label: 'Contenus générés', icon: '✅' },
 ];
 
 export default function ArtLonguesTraines() {
-  const [tab, setTab] = useState('keywords');
+  const [tab, setTab] = useState('sources');
   const [keywords, setKeywords] = useState<Keyword[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState({ intent: '', category: '', search: '' });
@@ -155,8 +155,8 @@ export default function ArtLonguesTraines() {
       {/* Tabs */}
       <UnifiedContentTab tabs={TABS} activeTab={tab} onTabChange={setTab} />
 
-      {/* Keywords Tab */}
-      {tab === 'keywords' && (
+      {/* Sources Tab (keywords + discover) */}
+      {tab === 'sources' && (
         <div className="space-y-4">
           {/* Filters */}
           <div className="flex flex-wrap gap-3">
@@ -224,11 +224,27 @@ export default function ArtLonguesTraines() {
             </div>
           </div>
           <p className="text-muted text-xs">{filtered.length} resultats</p>
+
+          {/* Discover section */}
+          <div className="bg-surface/60 border border-border/20 rounded-xl p-6 space-y-4">
+            <h2 className="text-lg font-semibold text-white">Decouverte automatique</h2>
+            <p className="text-muted text-sm">
+              Analyse les articles publies et decouvre de nouvelles requetes longue traine via l'IA.
+              Les doublons sont automatiquement filtres.
+            </p>
+            <button onClick={handleDiscover}
+              className="px-6 py-3 rounded-xl bg-violet text-white font-semibold hover:bg-violet/80 transition-all">
+              🔍 Lancer la decouverte
+            </button>
+            {discoverResult && (
+              <p className="text-sm text-emerald-400 bg-emerald-500/10 px-4 py-2 rounded-lg">{discoverResult}</p>
+            )}
+          </div>
         </div>
       )}
 
-      {/* Generate Tab */}
-      {tab === 'generate' && (
+      {/* Génération Tab */}
+      {tab === 'generation' && (
         <div className="bg-surface/60 border border-border/20 rounded-xl p-6 space-y-4">
           <h2 className="text-lg font-semibold text-white">Generer des articles depuis la selection</h2>
           <p className="text-muted text-sm">
@@ -241,20 +257,48 @@ export default function ArtLonguesTraines() {
         </div>
       )}
 
-      {/* Discover Tab */}
-      {tab === 'discover' && (
-        <div className="bg-surface/60 border border-border/20 rounded-xl p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-white">Decouverte automatique</h2>
-          <p className="text-muted text-sm">
-            Analyse les articles publies et decouvre de nouvelles requetes longue traine via l'IA.
-            Les doublons sont automatiquement filtres.
-          </p>
-          <button onClick={handleDiscover}
-            className="px-6 py-3 rounded-xl bg-violet text-white font-semibold hover:bg-violet/80 transition-all">
-            🔍 Lancer la decouverte
-          </button>
-          {discoverResult && (
-            <p className="text-sm text-emerald-400 bg-emerald-500/10 px-4 py-2 rounded-lg">{discoverResult}</p>
+      {/* Contenus générés Tab */}
+      {tab === 'generated' && (
+        <div className="space-y-4">
+          {keywords.filter(k => k.articles_using_count > 0).length > 0 ? (
+            <div className="bg-surface/60 border border-border/20 rounded-xl overflow-hidden">
+              <div className="max-h-[600px] overflow-y-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-bg/80 sticky top-0">
+                    <tr>
+                      <th className="px-3 py-3 text-left text-muted font-medium">Mot-cle</th>
+                      <th className="px-3 py-3 text-left text-muted font-medium">Intention</th>
+                      <th className="px-3 py-3 text-left text-muted font-medium">Categorie</th>
+                      <th className="px-3 py-3 text-center text-muted font-medium">Articles</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/10">
+                    {keywords.filter(k => k.articles_using_count > 0).map(kw => {
+                      const intent = INTENT_STYLES[kw.search_intent ?? ''];
+                      return (
+                        <tr key={kw.id} className="hover:bg-surface/40 transition-colors">
+                          <td className="px-3 py-2.5 text-white">{truncate(kw.keyword, 80)}</td>
+                          <td className="px-3 py-2.5">
+                            {intent && (
+                              <span className={`px-2 py-0.5 rounded-full text-[11px] ${intent.bg} ${intent.text}`}>
+                                {intent.label}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2.5 text-muted">{kw.category ?? '—'}</td>
+                          <td className="px-3 py-2.5 text-center text-emerald-400">{kw.articles_using_count}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-surface/60 border border-border/20 rounded-xl p-6 text-center">
+              <p className="text-3xl mb-2">📭</p>
+              <p className="text-sm text-muted">Aucun article genere. Selectionnez des mots-cles et lancez la generation.</p>
+            </div>
           )}
         </div>
       )}

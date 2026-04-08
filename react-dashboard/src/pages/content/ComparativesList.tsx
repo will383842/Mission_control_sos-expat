@@ -40,9 +40,17 @@ function formatDate(d: string): string {
   return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+type CompTab = 'sources' | 'generation' | 'generated';
+const COMP_TABS: { key: CompTab; label: string; emoji: string }[] = [
+  { key: 'sources', label: 'Sources', emoji: '📋' },
+  { key: 'generation', label: 'Génération', emoji: '⚡' },
+  { key: 'generated', label: 'Contenus générés', emoji: '✅' },
+];
+
 // ── Component ───────────────────────────────────────────────
 export default function ComparativesList() {
   const navigate = useNavigate();
+  const [tab, setTab] = useState<CompTab>('generated');
   const [comparatives, setComparatives] = useState<Comparative[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -122,16 +130,57 @@ export default function ComparativesList() {
         </button>
       </div>
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map(card => (
-          <div key={card.label} className="bg-surface border border-border rounded-xl p-5">
-            <span className="text-xs text-muted uppercase tracking-wide">{card.label}</span>
-            <p className="text-2xl font-bold text-white mt-2">{card.value}</p>
-          </div>
+      {/* Tabs */}
+      <div className="flex gap-1 bg-surface/40 backdrop-blur rounded-xl p-1 border border-border/20">
+        {COMP_TABS.map(t => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+              tab === t.key
+                ? 'bg-violet/20 text-violet-light border border-violet/30 shadow-lg shadow-violet/5'
+                : 'text-muted hover:text-white'
+            }`}
+          >
+            <span>{t.emoji}</span> {t.label}
+          </button>
         ))}
       </div>
 
+      {/* 📋 Sources */}
+      {tab === 'sources' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {statCards.map(card => (
+              <div key={card.label} className="bg-surface border border-border rounded-xl p-5">
+                <span className="text-xs text-muted uppercase tracking-wide">{card.label}</span>
+                <p className="text-2xl font-bold text-white mt-2">{card.value}</p>
+              </div>
+            ))}
+          </div>
+          <div className="bg-surface border border-border rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-white mb-2">Source des comparatifs</h3>
+            <p className="text-sm text-muted">Les comparatifs SEO comparent des entités (pays, services, villes) pour créer du contenu optimisé. Chaque comparatif est créé manuellement.</p>
+          </div>
+        </div>
+      )}
+
+      {/* ⚡ Génération */}
+      {tab === 'generation' && (
+        <div className="bg-surface border border-border rounded-xl p-6 space-y-4">
+          <h3 className="text-lg font-semibold text-white">Créer un comparatif</h3>
+          <p className="text-sm text-muted">Créez un comparatif SEO en sélectionnant les entités à comparer.</p>
+          <button
+            onClick={() => navigate('/content/comparatives/new')}
+            className="px-6 py-3 rounded-xl bg-violet text-white font-semibold hover:bg-violet/80 transition-all"
+          >
+            + Nouveau comparatif
+          </button>
+        </div>
+      )}
+
+      {/* ✅ Contenus générés */}
+      {tab === 'generated' && (<>
       {/* Filters */}
       <div className="flex items-center gap-3 flex-wrap">
         <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher..." className={inputClass + ' w-48'} />
@@ -256,6 +305,7 @@ export default function ComparativesList() {
           </div>
         )}
       </div>
+      </>)}
 
       <ConfirmModal
         open={!!confirmAction}

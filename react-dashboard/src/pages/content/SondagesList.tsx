@@ -62,7 +62,15 @@ function emptyForm(): SondageFormData & { _questions: LocalQuestion[] } {
   };
 }
 
+type SondageTab = 'sources' | 'generation' | 'generated';
+const SONDAGE_TABS: { key: SondageTab; label: string; emoji: string }[] = [
+  { key: 'sources', label: 'Sources', emoji: '📋' },
+  { key: 'generation', label: 'Génération', emoji: '⚡' },
+  { key: 'generated', label: 'Contenus générés', emoji: '✅' },
+];
+
 export default function SondagesList() {
+  const [tab, setTab] = useState<SondageTab>('generated');
   const [sondages, setSondages] = useState<Sondage[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -267,6 +275,61 @@ export default function SondagesList() {
         </button>
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-1 bg-surface/40 backdrop-blur rounded-xl p-1 border border-border/20">
+        {SONDAGE_TABS.map(t => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+              tab === t.key
+                ? 'bg-violet/20 text-violet-light border border-violet/30 shadow-lg shadow-violet/5'
+                : 'text-muted hover:text-white'
+            }`}
+          >
+            <span>{t.emoji}</span> {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* 📋 Sources */}
+      {tab === 'sources' && (
+        <div className="bg-surface border border-border rounded-xl p-6 space-y-4">
+          <h3 className="text-lg font-semibold text-white">Source des sondages</h3>
+          <p className="text-sm text-muted">Les sondages sont créés manuellement et publiés sur le Blog SEO. Chaque sondage contient des questions avec différents types de réponses.</p>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-surface2/30 border border-border/20 rounded-xl p-4 text-center">
+              <div className="text-2xl font-bold text-white">{total}</div>
+              <div className="text-xs text-muted">Total sondages</div>
+            </div>
+            <div className="bg-surface2/30 border border-border/20 rounded-xl p-4 text-center">
+              <div className="text-2xl font-bold text-success">{sondages.filter(s => s.status === 'active').length}</div>
+              <div className="text-xs text-muted">Actifs</div>
+            </div>
+            <div className="bg-surface2/30 border border-border/20 rounded-xl p-4 text-center">
+              <div className="text-2xl font-bold text-emerald-400">{sondages.filter(s => s.synced_to_blog).length}</div>
+              <div className="text-xs text-muted">Sync Blog</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ⚡ Génération */}
+      {tab === 'generation' && (
+        <div className="bg-surface border border-border rounded-xl p-6 space-y-4">
+          <h3 className="text-lg font-semibold text-white">Créer un sondage</h3>
+          <p className="text-sm text-muted">Créez un nouveau sondage avec des questions personnalisées.</p>
+          <button
+            onClick={openCreate}
+            className="px-6 py-3 rounded-xl bg-violet text-white font-semibold hover:bg-violet/80 transition-all"
+          >
+            + Nouveau sondage
+          </button>
+        </div>
+      )}
+
+      {/* ✅ Contenus générés */}
+      {tab === 'generated' && (<>
       {/* Liste */}
       <div className="bg-surface border border-border rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
@@ -352,6 +415,8 @@ export default function SondagesList() {
           <button onClick={() => setPage(p => Math.min(lastPage, p + 1))} disabled={page === lastPage} className="px-3 py-1.5 text-xs bg-surface2 text-muted hover:text-white rounded-lg disabled:opacity-30 transition-colors">Suivant</button>
         </div>
       )}
+
+      </>)}
 
       {/* ── Modal formulaire ─────────────────────────────────────── */}
       {showForm && (

@@ -1317,7 +1317,7 @@ function GeneratedTab() {
 
 // ── NewsHub (page principale) ───────────────────────────────
 export default function NewsHub() {
-  const [activeTab, setActiveTab] = useState<'feeds' | 'items' | 'generated'>('feeds');
+  const [activeTab, setActiveTab] = useState<'sources' | 'generation' | 'generated'>('sources');
   const [stats, setStats] = useState<NewsStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
 
@@ -1337,10 +1337,10 @@ export default function NewsHub() {
   const quotaUsed = stats?.quota?.generated_today ?? 0;
   const quotaLimit = stats?.quota?.daily_limit ?? 0;
 
-  const tabs: { key: 'feeds' | 'items' | 'generated'; label: string }[] = [
-    { key: 'feeds', label: 'Flux RSS' },
-    { key: 'items', label: 'À traiter' },
-    { key: 'generated', label: 'Générés' },
+  const tabs: { key: 'sources' | 'generation' | 'generated'; label: string; emoji: string }[] = [
+    { key: 'sources', label: 'Sources', emoji: '📋' },
+    { key: 'generation', label: 'Génération', emoji: '⚡' },
+    { key: 'generated', label: 'Contenus générés', emoji: '✅' },
   ];
 
   return (
@@ -1402,8 +1402,8 @@ export default function NewsHub() {
                   : 'border-transparent text-muted hover:text-gray-300'
               }`}
             >
-              {tab.label}
-              {tab.key === 'items' && pending > 0 && (
+              <span>{tab.emoji}</span> {tab.label}
+              {tab.key === 'generation' && pending > 0 && (
                 <span className="ml-1.5 bg-blue-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
                   {pending}
                 </span>
@@ -1415,8 +1415,8 @@ export default function NewsHub() {
 
       {/* Tab content */}
       <div>
-        {activeTab === 'feeds' && <FeedsTab onStatsRefresh={loadStats} />}
-        {activeTab === 'items' && <ItemsTab stats={stats} onStatsRefresh={loadStats} />}
+        {activeTab === 'sources' && <FeedsTab onStatsRefresh={loadStats} />}
+        {activeTab === 'generation' && <ItemsTab stats={stats} onStatsRefresh={loadStats} />}
         {activeTab === 'generated' && <GeneratedTab />}
       </div>
     </div>

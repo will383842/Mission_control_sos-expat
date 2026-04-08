@@ -143,13 +143,12 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }>
   skipped:    { bg: 'bg-muted/10', text: 'text-muted/40', label: 'Ignore' },
 };
 
-const TABS = ['sources', 'items', 'generer', 'stats'] as const;
+const TABS = ['sources', 'generation', 'generated'] as const;
 type Tab = typeof TABS[number];
 const TAB_LABELS: Record<Tab, { emoji: string; label: string }> = {
-  sources: { emoji: '📋', label: 'Sources' },
-  items:   { emoji: '📦', label: 'Items' },
-  generer: { emoji: '⚡', label: 'Generer' },
-  stats:   { emoji: '📊', label: 'Stats' },
+  sources:   { emoji: '📋', label: 'Sources' },
+  generation:{ emoji: '⚡', label: 'Génération' },
+  generated: { emoji: '✅', label: 'Contenus générés' },
 };
 
 // ─── COMPONENT ───────────────────────────────────────────
@@ -160,7 +159,7 @@ interface Props {
 
 export default function ContentGenerator({ type }: Props) {
   const config = TYPE_CONFIG[type];
-  const [tab, setTab] = useState<Tab>('items');
+  const [tab, setTab] = useState<Tab>('sources');
   const [items, setItems] = useState<SourceItem[]>([]);
   const [stats, setStats] = useState<CategoryStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -189,7 +188,7 @@ export default function ContentGenerator({ type }: Props) {
       const myCat = Array.isArray(cats) ? cats.find((c: any) => c.slug === config.slug) : null;
       setStats(myCat ?? null);
       // Load logs for stats tab
-      if (tab === 'stats') {
+      if (tab === 'generated') {
         try {
           const logsRes = await api.get('/content/orchestrator/logs', { params: { days: 30 } });
           const allLogs: any[] = Array.isArray(logsRes.data) ? logsRes.data : [];
@@ -423,11 +422,8 @@ export default function ContentGenerator({ type }: Props) {
             <h3 className="text-sm font-bold text-white mb-3">Instructions IA</h3>
             <p className="text-sm text-muted leading-relaxed">{config.instructions}</p>
           </div>
-        </div>
-      )}
 
-      {tab === 'items' && (
-        <div className="space-y-4">
+          {/* Items list */}
           {/* Status filter */}
           <div className="flex gap-1.5">
             {[
@@ -500,7 +496,7 @@ export default function ContentGenerator({ type }: Props) {
         </div>
       )}
 
-      {tab === 'generer' && (
+      {tab === 'generation' && (
         <div className="space-y-4">
           {/* Auto-expand */}
           {config.autoExpand && (
@@ -607,7 +603,7 @@ export default function ContentGenerator({ type }: Props) {
         </div>
       )}
 
-      {tab === 'stats' && (
+      {tab === 'generated' && (
         <div className="space-y-6">
           {/* KPIs */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
