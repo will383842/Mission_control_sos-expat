@@ -424,25 +424,19 @@ export default function ContentGenerator({ type }: Props) {
           </div>
 
           {/* Items list */}
-          {/* Status filter */}
-          <div className="flex gap-1.5">
-            {[
-              { key: '', label: 'Tous' },
-              { key: 'ready', label: 'Prets' },
-              { key: 'processing', label: 'En cours' },
-              { key: 'used', label: 'Generes' },
-              { key: 'raw', label: 'Bruts' },
-            ].map(f => (
-              <button
-                key={f.key}
-                onClick={() => setFilterStatus(f.key)}
-                className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
-                  filterStatus === f.key ? 'bg-violet/20 text-violet-light' : 'bg-surface2/30 text-muted hover:text-white'
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted">Filtrer :</span>
+            <select
+              value={filterStatus}
+              onChange={e => setFilterStatus(e.target.value)}
+              className="bg-bg/60 border border-border/40 rounded-lg px-3 py-1.5 text-white text-xs focus:outline-none focus:border-violet/50 transition-all"
+            >
+              <option value="">Tous les statuts</option>
+              <option value="ready">Prets</option>
+              <option value="processing">En cours</option>
+              <option value="used">Generes</option>
+              <option value="raw">Bruts</option>
+            </select>
           </div>
 
           {/* Items list */}
