@@ -42,18 +42,32 @@ class TranslationService
         ]);
 
         try {
-            // Translate title
-            $translatedTitle = $this->translateText($original->title, $fromLang, $targetLanguage);
+            // Translate title (plain text — strip any HTML from source)
+            $cleanTitle = strip_tags($original->title);
+            $translatedTitle = strip_tags($this->translateText($cleanTitle, $fromLang, $targetLanguage));
+            $translatedTitle = preg_replace('/^```\w*\s*|\s*```$/m', '', $translatedTitle);
+            $translatedTitle = trim($translatedTitle, " \t\n\r\"'");
 
-            // Translate excerpt
-            $translatedExcerpt = $this->translateText($original->excerpt ?? '', $fromLang, $targetLanguage);
+            // Translate excerpt (plain text)
+            $translatedExcerpt = strip_tags($this->translateText(strip_tags($original->excerpt ?? ''), $fromLang, $targetLanguage));
+            $translatedExcerpt = trim($translatedExcerpt, " \t\n\r\"'");
 
             // Translate content HTML (preserving structure)
             $translatedContent = $this->translateText($original->content_html ?? '', $fromLang, $targetLanguage);
+            // Clean markdown fences and full HTML wrappers from translated content
+            $translatedContent = preg_replace('/^```(?:html)?\s*\n?/i', '', $translatedContent);
+            $translatedContent = preg_replace('/\n?```\s*$/i', '', $translatedContent);
+            $translatedContent = preg_replace('/<html[^>]*>|<\/html>/i', '', $translatedContent);
+            $translatedContent = preg_replace('/<head>.*?<\/head>/is', '', $translatedContent);
+            $translatedContent = preg_replace('/<body[^>]*>|<\/body>/i', '', $translatedContent);
+            $translatedContent = preg_replace('/<h1[^>]*>.*?<\/h1>/is', '', $translatedContent);
+            $translatedContent = trim($translatedContent);
 
-            // Translate meta tags
-            $translatedMetaTitle = $this->translateText($original->meta_title ?? '', $fromLang, $targetLanguage);
-            $translatedMetaDescription = $this->translateText($original->meta_description ?? '', $fromLang, $targetLanguage);
+            // Translate meta tags (plain text — strip HTML, enforce SEO lengths)
+            $translatedMetaTitle = strip_tags($this->translateText(strip_tags($original->meta_title ?? ''), $fromLang, $targetLanguage));
+            $translatedMetaTitle = trim($translatedMetaTitle, " \t\n\r\"'");
+            $translatedMetaDescription = strip_tags($this->translateText(strip_tags($original->meta_description ?? ''), $fromLang, $targetLanguage));
+            $translatedMetaDescription = trim($translatedMetaDescription, " \t\n\r\"'");
 
             // Generate localized slug
             $slug = $this->slugService->generateSlug($translatedTitle, $targetLanguage);
@@ -120,8 +134,8 @@ class TranslationService
                 foreach ($translatedFaqs as $index => $faq) {
                     GeneratedArticleFaq::create([
                         'article_id' => $translatedArticle->id,
-                        'question' => $faq['question'],
-                        'answer' => $faq['answer'],
+                        'question' => mb_substr(strip_tags($faq['question'] ?? ''), 0, 255),
+                        'answer' => $faq['answer'] ?? '',
                         'sort_order' => $index,
                     ]);
                 }

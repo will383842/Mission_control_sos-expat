@@ -256,7 +256,7 @@ class ArticleGenerationService
                         foreach ($faqs as $index => $faq) {
                             GeneratedArticleFaq::create([
                                 'article_id' => $article->id,
-                                'question' => $faq['question'] ?? '',
+                                'question' => mb_substr(strip_tags($faq['question'] ?? ''), 0, 255),
                                 'answer' => $faq['answer'] ?? '',
                                 'sort_order' => $index,
                             ]);
@@ -847,6 +847,11 @@ class ArticleGenerationService
         if ($result['success']) {
             $title = trim($result['content'], " \t\n\r\0\x0B\"'");
 
+            // Strip any HTML/markdown that GPT might have included
+            $title = strip_tags($title);
+            $title = preg_replace('/^```\w*\s*|\s*```$/m', '', $title);
+            $title = trim($title);
+
             // Validation: si le titre est trop long, on tronque intelligemment
             if (mb_strlen($title) > 60) {
                 // Chercher le dernier espace avant 60 chars
@@ -1250,8 +1255,8 @@ class ArticleGenerationService
 
         if ($result['success']) {
             $parsed = json_decode($result['content'], true);
-            $metaTitle = $parsed['meta_title'] ?? $title;
-            $metaDesc = $parsed['meta_description'] ?? $excerpt;
+            $metaTitle = strip_tags($parsed['meta_title'] ?? $title);
+            $metaDesc = strip_tags($parsed['meta_description'] ?? $excerpt);
 
             // Validation meta_title : tronquer intelligemment à 60 chars
             if (mb_strlen($metaTitle) > 60) {
