@@ -10,6 +10,8 @@ enum ContactType: string
     case Ecole = 'ecole';
     case InstitutCulturel = 'institut_culturel';
     case ChambreCommerce = 'chambre_commerce';
+    case AllianceFrancaise = 'alliance_francaise';
+    case Ufe = 'ufe';
 
     // Médias & Influence
     case Presse = 'presse';

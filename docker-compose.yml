@@ -211,7 +211,7 @@ services:
       dockerfile: deploy/Dockerfile.api
     container_name: inf-publication-worker
     restart: unless-stopped
-    command: ["php", "artisan", "queue:work", "redis", "--queue=publication", "--sleep=5", "--tries=5", "--timeout=120", "--memory=256"]
+    command: ["php", "artisan", "queue:work", "redis", "--queue=publication", "--sleep=5", "--tries=0", "--timeout=120", "--memory=256"]
     mem_limit: 512m
     memswap_limit: 512m
     env_file:

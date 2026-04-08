@@ -22,7 +22,15 @@ class PublishContentJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $timeout = 120;
-    public int $tries = 5;
+
+    /**
+     * Use retryUntil instead of $tries to avoid release() counting as attempts.
+     * This gives the job 24 hours to succeed (schedule/rate-limit delays won't exhaust retries).
+     */
+    public function retryUntil(): \DateTime
+    {
+        return now()->addHours(24);
+    }
 
     /**
      * Exponential backoff in seconds.
