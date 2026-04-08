@@ -191,9 +191,18 @@ class ClaudeService
      */
     public function translate(string $text, string $fromLang, string $toLang, array $options = []): array
     {
-        $systemPrompt = "You are a professional translator. Translate the following content from {$fromLang} to {$toLang}. "
+        $langNames = [
+            'fr' => 'French', 'en' => 'English', 'es' => 'Spanish', 'de' => 'German',
+            'pt' => 'Portuguese', 'ru' => 'Russian', 'zh' => 'Chinese (Simplified)',
+            'ar' => 'Arabic', 'hi' => 'Hindi', 'it' => 'Italian', 'ja' => 'Japanese',
+        ];
+        $fromName = $langNames[$fromLang] ?? $fromLang;
+        $toName   = $langNames[$toLang] ?? $toLang;
+
+        $systemPrompt = "You are a professional translator. Translate the following content from {$fromName} to {$toName}. "
+            . "CRITICAL: The entire output MUST be in {$toName}. Do NOT return the original {$fromName} text. "
             . "Maintain the same HTML formatting, structure, and tone. "
-            . "Do not translate brand names, URLs, or code. Preserve all HTML tags exactly.";
+            . "Do not translate brand names (SOS-Expat), URLs, or code. Preserve all HTML tags exactly.";
 
         return $this->complete($systemPrompt, $text, array_merge($options, [
             'model'       => $options['model'] ?? 'claude-haiku-4-5-20251001',

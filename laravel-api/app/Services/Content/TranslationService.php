@@ -47,9 +47,29 @@ class TranslationService
             $translatedTitle = strip_tags($this->translateText($cleanTitle, $fromLang, $targetLanguage));
             $translatedTitle = preg_replace('/^```\w*\s*|\s*```$/m', '', $translatedTitle);
             $translatedTitle = trim($translatedTitle, " \t\n\r\"'");
-            // Fallback: if translation returned empty or identical to source, keep original
+            // If translation returned empty, keep original
             if (empty($translatedTitle)) {
                 $translatedTitle = $cleanTitle;
+            }
+            // If translation is identical to source (translator failed), retry with explicit prompt
+            if ($translatedTitle === $cleanTitle && $fromLang !== $targetLanguage) {
+                Log::warning('Translation title identical to source, retrying', [
+                    'from' => $fromLang, 'to' => $targetLanguage, 'title' => $cleanTitle,
+                ]);
+                $langNames = ['fr'=>'français','en'=>'English','es'=>'español','de'=>'Deutsch',
+                    'pt'=>'português','ru'=>'русский','zh'=>'中文','ar'=>'العربية','hi'=>'हिन्दी'];
+                $toName = $langNames[$targetLanguage] ?? $targetLanguage;
+                $retryResult = $this->openAi->complete(
+                    "Translate this title to {$toName}. Return ONLY the translated title, nothing else.",
+                    $cleanTitle,
+                    ['temperature' => 0.3, 'max_tokens' => 200]
+                );
+                if ($retryResult['success']) {
+                    $retried = strip_tags(trim($retryResult['content'], " \t\n\r\"'"));
+                    if (!empty($retried) && $retried !== $cleanTitle) {
+                        $translatedTitle = $retried;
+                    }
+                }
             }
 
             // Translate excerpt (plain text)
