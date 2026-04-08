@@ -92,15 +92,32 @@ class BlogPublisher
         }
 
         // Map content_type → blog category_slug (7-category taxonomy)
-        $categorySlug = match ($parentArticle->content_type) {
-            'guide', 'pillar'                                         => 'fiches-pays',
-            'guide_city'                                              => 'fiches-pays',
-            'article', 'tutorial'                                     => 'fiches-pratiques',
-            'qa', 'comparative', 'news', 'testimonial', 'qa_needs',
-                'press', 'press_release'                              => 'fiches-thematiques',
-            'outreach'                                                => 'programme',
-            'affiliation', 'landing'                                  => 'affiliation',
-            default                                                   => 'fiches-pratiques',
+        // Category mapping — considers both content_type AND country
+        // Articles about a specific country → fiches-pays
+        // Articles about a city → fiches-pratiques (practical guides)
+        // Generic/thematic articles → fiches-pratiques or fiches-thematiques
+        $hasSpecificCountry = !empty($parentArticle->country)
+            && mb_strlen($parentArticle->country) === 2
+            && !in_array($parentArticle->content_type, ['outreach', 'affiliation', 'landing', 'news']);
+
+        $categorySlug = match (true) {
+            $parentArticle->content_type === 'guide' || $parentArticle->content_type === 'pillar'
+                => 'fiches-pays',
+            $parentArticle->content_type === 'guide_city'
+                => 'fiches-pratiques',
+            $parentArticle->content_type === 'outreach'
+                => 'programme',
+            in_array($parentArticle->content_type, ['affiliation', 'landing'])
+                => 'affiliation',
+            in_array($parentArticle->content_type, ['qa', 'comparative', 'qa_needs'])
+                => 'fiches-thematiques',
+            in_array($parentArticle->content_type, ['news', 'press', 'press_release', 'testimonial'])
+                => 'fiches-thematiques',
+            // Country-specific articles (expatriation Dubai, coût de vie Portugal) → fiches-pays
+            $hasSpecificCountry && in_array($parentArticle->content_type, ['article', 'statistics'])
+                => 'fiches-pays',
+            // Generic articles/tutorials → fiches-pratiques
+            default => 'fiches-pratiques',
         };
 
         // ── Build sources array ──────────────────────────────────
