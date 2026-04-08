@@ -583,7 +583,7 @@ export default function ArtStatistiques() {
             ) : (
               <div className="px-5 py-12 text-center">
                 <p className="text-3xl mb-2">📊</p>
-                <p className="text-sm text-muted">Aucun dataset. Utilisez l'onglet "Rechercher" pour lancer la recherche de statistiques.</p>
+                <p className="text-sm text-muted">Aucun dataset. Utilisez le sous-onglet "Rechercher" dans Sources pour lancer la recherche de statistiques.</p>
               </div>
             )}
           </div>
@@ -740,7 +740,7 @@ export default function ArtStatistiques() {
               <p className="text-3xl mb-2">✅</p>
               <p className="text-sm text-muted">
                 {datasets.length === 0
-                  ? 'Lancez une recherche dans l\'onglet "Rechercher" pour commencer.'
+                  ? 'Lancez une recherche dans le sous-onglet "Rechercher" (Sources) pour commencer.'
                   : 'Tous les datasets ont ete generes !'}
               </p>
             </div>

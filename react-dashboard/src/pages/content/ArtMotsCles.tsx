@@ -361,7 +361,7 @@ export default function ArtMotsCles() {
             ) : (
               <div className="px-5 py-12 text-center">
                 <p className="text-3xl mb-2">🔑</p>
-                <p className="text-sm text-muted">Aucun mot-cle. Allez dans l'onglet "Importer" pour charger vos mots-cles.</p>
+                <p className="text-sm text-muted">Aucun mot-cle. Utilisez les sections d'import ci-dessous pour charger vos mots-cles.</p>
               </div>
             )}
           </div>
@@ -454,7 +454,7 @@ export default function ArtMotsCles() {
               <p className="text-3xl mb-2">✅</p>
               <p className="text-sm text-muted">
                 {keywords.length === 0
-                  ? 'Importez des mots-cles dans l\'onglet "Importer" pour commencer.'
+                  ? 'Importez des mots-cles dans l\'onglet "Sources" pour commencer.'
                   : 'Tous les mots-cles ont ete generes !'}
               </p>
             </div>

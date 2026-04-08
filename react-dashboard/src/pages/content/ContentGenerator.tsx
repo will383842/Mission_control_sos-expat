@@ -211,9 +211,9 @@ export default function ContentGenerator({ type }: Props) {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // Load logs when switching to stats tab
+  // Load logs when switching to generated tab
   useEffect(() => {
-    if (tab !== 'stats') return;
+    if (tab !== 'generated') return;
     setLogsLoading(true);
     api.get('/content/orchestrator/logs', { params: { days: 30 } })
       .then(res => {
@@ -489,7 +489,7 @@ export default function ContentGenerator({ type }: Props) {
             ) : (
               <div className="px-5 py-12 text-center">
                 <p className="text-3xl mb-2">📭</p>
-                <p className="text-sm text-muted">Aucun item. Cliquez sur l'onglet "Generer" pour lancer l'expansion pays.</p>
+                <p className="text-sm text-muted">Aucun item. Cliquez sur l'onglet "Génération" pour lancer l'expansion pays.</p>
               </div>
             )}
           </div>
