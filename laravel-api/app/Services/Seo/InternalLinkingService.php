@@ -34,10 +34,11 @@ class InternalLinkingService
 
             foreach ($candidates as $candidate) {
                 $score = 0;
+                $sameCountry = !empty($article->country) && $article->country === $candidate->country;
 
-                // Same country: +3
-                if (!empty($article->country) && $article->country === $candidate->country) {
-                    $score += 3;
+                // Same country: +5 (strong preference — users want local info)
+                if ($sameCountry) {
+                    $score += 5;
                 }
 
                 // Same content type: +1
@@ -45,9 +46,9 @@ class InternalLinkingService
                     $score += 1;
                 }
 
-                // Same pillar: +2
+                // Same pillar: +3
                 if (!empty($article->pillar_article_id) && $article->pillar_article_id === $candidate->pillar_article_id) {
-                    $score += 2;
+                    $score += 3;
                 }
 
                 // Keyword overlap: +2 per shared keyword
@@ -64,7 +65,12 @@ class InternalLinkingService
                     $score += 1;
                 }
 
-                if ($score > 0) {
+                // Only include if minimum relevance met:
+                // - Same country articles: score >= 3 (always relevant)
+                // - Different country: score >= 6 (must have strong keyword overlap)
+                $minScore = $sameCountry ? 3 : 6;
+
+                if ($score >= $minScore) {
                     $scored[] = [
                         'target_id' => $candidate->id,
                         'target_title' => $candidate->title,
