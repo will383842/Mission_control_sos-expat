@@ -89,7 +89,7 @@ class GeneratedArticleController extends Controller
             'topic'                => 'required|string|max:500',
             'language'             => 'required|string|in:fr,en,de,es,pt,ru,zh,ar,hi',
             'country'              => 'nullable|string|max:100',
-            'content_type'         => 'nullable|string|in:article,guide,news,tutorial,statistics,pain_point',
+            'content_type'         => 'nullable|string|in:article,guide,guide_city,news,tutorial,statistics,pain_point,comparative,qa,qa_needs,testimonial,outreach,affiliation,landing,press,press_release,pillar',
             'keywords'             => 'nullable|array',
             'keywords.*'           => 'string|max:100',
             'instructions'         => 'nullable|string|max:2000',
