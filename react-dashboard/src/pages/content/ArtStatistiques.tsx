@@ -350,7 +350,7 @@ export default function ArtStatistiques() {
             return (
               <button
                 key={t.key}
-                onClick={() => { setFilterTheme(filterTheme === t.key ? '' : t.key); setTab('datasets'); }}
+                onClick={() => { setFilterTheme(filterTheme === t.key ? '' : t.key); setTab('sources'); setSourceSubTab('datasets'); }}
                 className={`bg-surface/40 border rounded-xl p-2 text-center transition-all ${
                   filterTheme === t.key ? 'border-violet/50 bg-violet/10' : 'border-border/20 hover:border-border/40'
                 }`}
