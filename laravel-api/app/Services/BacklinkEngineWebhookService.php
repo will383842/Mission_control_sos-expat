@@ -39,7 +39,7 @@ class BacklinkEngineWebhookService
      *   source_id: int,
      * } $payload
      */
-    public static function sendContactCreated(array $payload): void
+    public static function sendContactCreated(array $payload): bool
     {
         $url = config('services.backlink_engine.webhook_url');
         $secret = config('services.backlink_engine.webhook_secret');
@@ -49,7 +49,7 @@ class BacklinkEngineWebhookService
                 'source_table' => $payload['source_table'] ?? null,
                 'source_id' => $payload['source_id'] ?? null,
             ]);
-            return;
+            return false;
         }
 
         try {
@@ -61,18 +61,25 @@ class BacklinkEngineWebhookService
                 ->retry(2, 500)
                 ->post($url, $payload);
 
+            $body = $response->json();
+            $synced = $response->successful() && in_array($body['status'] ?? '', ['created', 'duplicate']);
+
             Log::info('BacklinkEngine webhook sent', [
                 'status' => $response->status(),
-                'body' => $response->json(),
+                'body' => $body,
+                'synced' => $synced,
                 'email' => $payload['email'] ?? null,
                 'source_table' => $payload['source_table'] ?? null,
             ]);
+
+            return $synced;
         } catch (\Throwable $e) {
             Log::warning('BacklinkEngine webhook failed', [
                 'error' => $e->getMessage(),
                 'email' => $payload['email'] ?? null,
                 'source_table' => $payload['source_table'] ?? null,
             ]);
+            return false;
         }
     }
 

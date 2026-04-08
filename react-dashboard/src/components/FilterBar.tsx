@@ -118,6 +118,7 @@ export default function FilterBar({ onFilterChange, total, summary, initialFilte
     if (key === 'completeness_min') return `Complétude ≥ ${value}%`;
     if (key === 'source') return SOURCES.find(s => s.value === value)?.label ?? String(value);
     if (key === 'has_reminder') return 'À relancer';
+    if (key === 'backlink_synced') return 'BL Synced';
     if (key === 'assigned_to') return `Assigné: ${team.find(m => m.id === value)?.name ?? value}`;
     return `${key}: ${value}`;
   };
@@ -367,6 +368,7 @@ export default function FilterBar({ onFilterChange, total, summary, initialFilte
               { key: 'is_verified' as const, label: '✅ Vérifié',           activeClass: 'bg-green-500/15 border-green-500/40 text-green-300' },
               { key: 'has_reminder' as const,label: '🔔 À relancer',        activeClass: 'bg-amber-500/15 border-amber-500/40 text-amber-300' },
               { key: 'unsubscribed' as const,label: '🚫 Désabonnés',        activeClass: 'bg-red-500/15 border-red-500/40 text-red-400' },
+              { key: 'backlink_synced' as const, label: 'BL Synced',     activeClass: 'bg-cyan-500/15 border-cyan-500/40 text-cyan-400' },
             ].map(({ key, label, activeClass }) => {
               const isActive = !!filters[key];
               return (

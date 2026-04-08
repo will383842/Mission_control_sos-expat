@@ -13,8 +13,7 @@ class PressContactObserver
             return;
         }
 
-        // PressContacts are always type "presse" which is syncable
-        BacklinkEngineWebhookService::sendContactCreated([
+        $synced = BacklinkEngineWebhookService::sendContactCreated([
             'email' => $contact->email,
             'firstName' => $contact->first_name,
             'lastName' => $contact->last_name,
@@ -27,5 +26,9 @@ class PressContactObserver
             'source_table' => 'press_contacts',
             'source_id' => $contact->id,
         ]);
+
+        if ($synced) {
+            $contact->updateQuietly(['backlink_synced_at' => now()]);
+        }
     }
 }

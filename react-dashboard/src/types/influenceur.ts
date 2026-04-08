@@ -169,6 +169,9 @@ export interface Influenceur {
   scraped_social: Record<string, string> | null;
   scraped_addresses: string[] | null;
 
+  // Backlink Engine sync
+  backlink_synced_at: string | null;
+
   // Méta
   created_by: number;
   created_at: string;
@@ -216,6 +219,9 @@ export interface InfluenceurFilters {
 
   // Origine
   source?: string;
+
+  // Backlink Engine
+  backlink_synced?: boolean;
 
   // Recherche texte
   search?: string;

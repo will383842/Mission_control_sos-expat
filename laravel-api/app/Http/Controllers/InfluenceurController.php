@@ -83,6 +83,10 @@ class InfluenceurController extends Controller
         if ($request->source) {
             $query->where('source', $request->source);
         }
+        if ($request->filled('backlink_synced')) {
+            $synced = filter_var($request->backlink_synced, FILTER_VALIDATE_BOOLEAN);
+            $synced ? $query->whereNotNull('backlink_synced_at') : $query->whereNull('backlink_synced_at');
+        }
 
         // --- Recherche full-text (nom, email, téléphone, entreprise, handle) ---
         if ($request->search) {

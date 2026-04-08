@@ -319,6 +319,14 @@ export default function InfluenceurTable({ influenceurs }: Props) {
                   {/* Actions rapides */}
                   <td className="px-3 py-3">
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {inf.backlink_synced_at && (
+                        <span
+                          className="px-1 py-0.5 bg-cyan-500/15 text-cyan-400 text-[10px] rounded font-bold"
+                          title={`Synced to Backlink Engine: ${new Date(inf.backlink_synced_at).toLocaleDateString('fr-FR')}`}
+                        >
+                          BL
+                        </span>
+                      )}
                       {inf.pending_reminder && (
                         <span className="px-1.5 py-0.5 bg-amber/20 text-amber text-xs rounded font-mono" title="À relancer">
                           🔔

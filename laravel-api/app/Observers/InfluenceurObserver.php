@@ -9,7 +9,6 @@ class InfluenceurObserver
 {
     public function created(Influenceur $influenceur): void
     {
-        // Only sync if has email and is a syncable type
         if (! $influenceur->email) {
             return;
         }
@@ -22,7 +21,7 @@ class InfluenceurObserver
             return;
         }
 
-        BacklinkEngineWebhookService::sendContactCreated([
+        $synced = BacklinkEngineWebhookService::sendContactCreated([
             'email' => $influenceur->email,
             'name' => $influenceur->name,
             'firstName' => $influenceur->first_name,
@@ -35,5 +34,9 @@ class InfluenceurObserver
             'source_table' => 'influenceurs',
             'source_id' => $influenceur->id,
         ]);
+
+        if ($synced) {
+            $influenceur->updateQuietly(['backlink_synced_at' => now()]);
+        }
     }
 }

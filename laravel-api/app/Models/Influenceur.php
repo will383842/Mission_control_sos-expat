@@ -94,6 +94,8 @@ class Influenceur extends Model
         'scraped_at', 'scraper_status',
         'scraped_emails', 'scraped_phones', 'scraped_social', 'scraped_addresses',
         'email_verified_status', 'email_verified_at', 'quality_score',
+        // Backlink Engine sync
+        'backlink_synced_at',
     ];
 
     protected $casts = [
@@ -121,6 +123,7 @@ class Influenceur extends Model
         'unsubscribed_at'     => 'datetime',
         'bounce_count'        => 'integer',
         'data_completeness'   => 'integer',
+        'backlink_synced_at'  => 'datetime',
     ];
 
     // =========================================================================
