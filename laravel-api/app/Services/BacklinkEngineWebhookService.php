@@ -11,15 +11,40 @@ class BacklinkEngineWebhookService
      * Contact types that should be synced to the backlink-engine.
      */
     public const SYNCABLE_TYPES = [
+        // Médias & Influence
         'presse',
         'blog',
         'podcast_radio',
         'influenceur',
         'youtubeur',
         'instagrammeur',
+        // Digital
         'backlink',
         'annuaire',
         'partenaire',
+        // Institutionnel
+        'consulat',
+        'association',
+        'ecole',
+        'institut_culturel',
+        'chambre_commerce',
+        'alliance_francaise',
+        'ufe',
+        // Services B2B
+        'avocat',
+        'immobilier',
+        'assurance',
+        'banque_fintech',
+        'traducteur',
+        'agence_voyage',
+        'emploi',
+        // Communautés
+        'communaute_expat',
+        'groupe_whatsapp_telegram',
+        'coworking_coliving',
+        'logement',
+        'lieu_communautaire',
+        'plateforme_nomad',
     ];
 
     /**
