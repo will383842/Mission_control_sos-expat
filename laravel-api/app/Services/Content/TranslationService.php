@@ -63,10 +63,12 @@ class TranslationService
             $translatedContent = preg_replace('/<h1[^>]*>.*?<\/h1>/is', '', $translatedContent);
             $translatedContent = trim($translatedContent);
 
-            // Translate meta tags (plain text — strip HTML, enforce SEO lengths)
+            // Translate meta tags (plain text — strip HTML + markdown fences, enforce SEO lengths)
             $translatedMetaTitle = strip_tags($this->translateText(strip_tags($original->meta_title ?? ''), $fromLang, $targetLanguage));
+            $translatedMetaTitle = preg_replace('/^```\w*\s*|\s*```$/m', '', $translatedMetaTitle);
             $translatedMetaTitle = trim($translatedMetaTitle, " \t\n\r\"'");
             $translatedMetaDescription = strip_tags($this->translateText(strip_tags($original->meta_description ?? ''), $fromLang, $targetLanguage));
+            $translatedMetaDescription = preg_replace('/^```\w*\s*|\s*```$/m', '', $translatedMetaDescription);
             $translatedMetaDescription = trim($translatedMetaDescription, " \t\n\r\"'");
 
             // Generate localized slug
