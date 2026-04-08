@@ -22,9 +22,9 @@ class FixMissingJsonLdCommand extends Command
         $articles = GeneratedArticle::where('status', 'published')
             ->where(function ($q) {
                 $q->whereNull('json_ld')
-                  ->orWhere('json_ld', '')
-                  ->orWhere('json_ld', '{}')
-                  ->orWhere('json_ld', '[]');
+                  ->orWhereRaw("json_ld::text = '{}'")
+                  ->orWhereRaw("json_ld::text = '[]'")
+                  ->orWhereRaw("json_ld::text = 'null'");
             })
             ->get();
 
