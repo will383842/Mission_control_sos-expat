@@ -102,6 +102,11 @@ return [
         'site_url' => env('BLOG_SITE_URL', 'https://sos-expat.com'),
     ],
 
+    'backlink_engine' => [
+        'webhook_url' => env('BACKLINK_ENGINE_WEBHOOK_URL', ''),
+        'webhook_secret' => env('BACKLINK_ENGINE_WEBHOOK_SECRET', ''),
+    ],
+
     // Machine-to-machine token for automated scripts (Q/R generator, etc.)
     'machine_api_token' => env('MACHINE_API_TOKEN', ''),
 
