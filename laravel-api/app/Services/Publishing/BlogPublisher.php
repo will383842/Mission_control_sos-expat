@@ -118,7 +118,11 @@ class BlogPublisher
         $payload = [
             'idempotency_key'    => $parentArticle->uuid ?? ($parentArticle->id . '_' . now()->timestamp),
             'external_id'        => $parentArticle->uuid,
-            'content_type'       => $parentArticle->content_type ?? 'article',
+            // Map content_type to Blog API accepted values (outreach/affiliation/landing → article)
+            'content_type'       => match ($parentArticle->content_type) {
+                'outreach', 'affiliation', 'landing', 'testimonial', 'press_release' => 'article',
+                default => $parentArticle->content_type ?? 'article',
+            },
             'source_slug'        => $parentArticle->source_slug ?? null,
             'category_slug'      => $categorySlug,
             'status'             => 'published',
@@ -139,7 +143,7 @@ class BlogPublisher
             'sources'            => $sources,
             'images'             => $allImages->unique('url')->values()->toArray(),
             'tags'               => $allTags->unique()->values()->toArray(),
-            'countries'          => $allCountries->unique()->values()->toArray(),
+            'countries'          => $allCountries->unique()->filter(fn ($c) => mb_strlen($c) === 2)->values()->toArray(),
             // Extended SEO / geo / OG / Twitter fields
             'og_type'          => $parentArticle->og_type ?? 'article',
             'og_locale'        => $parentArticle->og_locale ?? null,
@@ -280,7 +284,7 @@ class BlogPublisher
             'title'            => mb_substr(strip_tags($article->title), 0, 255),
             'slug'             => $article->slug,
             'content_html'     => $article->content_html,
-            'excerpt'          => $article->excerpt,
+            'excerpt'          => mb_substr($article->excerpt ?? '', 0, 500) ?: null,
             'meta_title'       => mb_substr($article->meta_title ?? '', 0, 255) ?: null,
             'meta_description' => mb_substr($article->meta_description ?? '', 0, 500) ?: null,
             'og_title'         => mb_substr($article->og_title ?? $article->meta_title ?? '', 0, 255) ?: null,
