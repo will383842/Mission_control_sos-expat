@@ -27,9 +27,9 @@ class GenerateFromSourceJob implements ShouldQueue
     public int $timeout = 300;
     public int $tries   = 2;
 
-    // Pipeline = scraping only. ALL generation managed via dedicated UI tabs.
-    // This job is now disabled for ALL sources — kept for backward compatibility.
-    private const SKIP_ALL_GENERATION = true;
+    // Set to true to disable ALL generation (scraping-only mode).
+    // Set to false to enable auto-generation via orchestrator.
+    private const SKIP_ALL_GENERATION = false;
 
     // Legacy skip list (unused when SKIP_ALL_GENERATION = true)
     private const SKIP_SOURCES = [
