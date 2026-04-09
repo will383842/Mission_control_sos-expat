@@ -52,7 +52,7 @@ class DiagnosePipelineCommand extends Command
                 ->where('status', 'review')
                 ->orderByDesc('created_at')
                 ->limit(20)
-                ->get(['id', 'title', 'quality_score', 'quality_issues', 'word_count', 'content_type', 'language', 'created_at']);
+                ->get(['id', 'title', 'quality_score', 'generation_notes', 'word_count', 'content_type', 'language', 'created_at']);
 
             $reasons = [
                 'low_score' => 0,
@@ -65,7 +65,7 @@ class DiagnosePipelineCommand extends Command
             ];
 
             foreach ($reviews as $r) {
-                $issues = $r->quality_issues;
+                $issues = $r->generation_notes;
                 if (is_string($issues)) {
                     $issues = json_decode($issues, true) ?? [];
                 }
@@ -94,7 +94,7 @@ class DiagnosePipelineCommand extends Command
             $this->newLine();
             $this->line('  <fg=yellow>Last 5 review articles:</>');
             foreach ($reviews->take(5) as $r) {
-                $issues = is_string($r->quality_issues) ? json_decode($r->quality_issues, true) : ($r->quality_issues ?? []);
+                $issues = is_string($r->generation_notes) ? json_decode($r->generation_notes, true) : ($r->generation_notes ?? []);
                 $issueStr = !empty($issues) ? implode(' | ', array_slice($issues, 0, 2)) : 'no issues logged';
                 $this->line(sprintf(
                     '    [%s] score:%d words:%d type:%s lang:%s — %s',
@@ -261,7 +261,7 @@ class DiagnosePipelineCommand extends Command
             $publishable = DB::table('generated_articles')
                 ->where('status', 'review')
                 ->where('quality_score', '>=', 60)
-                ->whereRaw("(quality_issues IS NULL OR quality_issues = '[]' OR quality_issues = 'null')")
+                ->whereRaw("(generation_notes IS NULL OR generation_notes = '[]' OR generation_notes = 'null')")
                 ->where('word_count', '>', 0)
                 ->whereNotNull('content_html')
                 ->whereNull('parent_article_id')
@@ -334,7 +334,7 @@ class DiagnosePipelineCommand extends Command
         $this->newLine();
         $this->line('─────────────────────────────────────────');
         if ($exitCode === self::SUCCESS) {
-            $this->components->info('Pipeline looks healthy. If articles are stuck in review, check their quality_issues above.');
+            $this->components->info('Pipeline looks healthy. If articles are stuck in review, check their generation_notes above.');
         } else {
             $this->components->error('Pipeline has critical issues — see details above.');
         }

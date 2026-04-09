@@ -63,7 +63,7 @@ class GenerateArticleJob implements ShouldQueue
         // Persist quality result on the article
         $article->update([
             'quality_score' => $qualityScore,
-            'quality_issues' => !empty($qualityIssues) ? $qualityIssues : null,
+            'generation_notes' => !empty($qualityIssues) ? json_encode($qualityIssues) : null,
         ]);
 
         // Auto-publish if: score >= 60, no brand compliance issues, has content, is original (not translation)
