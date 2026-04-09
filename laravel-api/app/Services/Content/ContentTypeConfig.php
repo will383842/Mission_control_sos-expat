@@ -380,7 +380,7 @@ class ContentTypeConfig
                     . "Court et factuel (600-1200 mots max).",
             ],
 
-            // OUTREACH (parrainage : chatters, blogueurs, admin groups)
+            // OUTREACH (affiliation : chatters, blogueurs, admin groups)
             // Objectif : convaincre des candidats potentiels de rejoindre le programme
             // research_depth = 'none' : GPT connaît le programme, Perplexity inutile ici
             'outreach' => [
@@ -407,7 +407,7 @@ class ContentTypeConfig
                 'include_charts_data' => false,
                 'include_key_figures' => true,
                 'eeat_signals' => false,
-                'prompt_suffix' => "Article de parrainage / outreach. "
+                'prompt_suffix' => "Article d'affiliation / outreach. "
                     . "Objectif : convaincre le lecteur de rejoindre le programme SOS-Expat. "
                     . "Ton enthousiaste mais honnête. Mettre en avant les avantages concrets (commissions, flexibilité, communauté). "
                     . "Inclure un CTA clair en fin d'article.",

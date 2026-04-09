@@ -190,7 +190,7 @@ PROMPT;
 
         // Milestones
         if (isset($program['milestones'])) {
-            $lines[] = "\nMilestones parrainage :";
+            $lines[] = "\nMilestones affiliation :";
             foreach ($program['milestones'] as $count => $bonus) {
                 $lines[] = "- {$count} filleuls → \$" . ($bonus / 100);
             }
@@ -343,11 +343,11 @@ BLOCK;
 
         return <<<BLOCK
 5 PROGRAMMES AFFILIES SOS-EXPAT :
-- Chatter : \$5/appel avocat, \$3/appel expert, parrainage 2 niveaux (\$1 N1, \$0.50 N2), milestones \$15→\$4000
+- Chatter : \$5/appel avocat, \$3/appel expert, affiliation 2 niveaux (\$1 N1, \$0.50 N2), milestones \$15→\$4000
 - Captain Chatter : 5 niveaux Bronze→Diamant (\$25→\$400/mois)
 - Influenceur : \$5/\$3 par appel + \$5 reduction clients + milestones
-- Blogueur : \$5/\$3 par appel via widget + parrainage prestataires
-- Admin Groupe : \$5/\$3 par appel + parrainage 2 niveaux + affiliation
+- Blogueur : \$5/\$3 par appel via widget + affiliation prestataires
+- Admin Groupe : \$5/\$3 par appel + affiliation 2 niveaux
 - Partenaire B2B : 15% du revenu des appels generes
 - Retrait minimum : \${$this->cents($common['withdrawal_minimum'] ?? 3000)} | Frais : \${$this->cents($common['withdrawal_fee'] ?? 300)} fixe
 BLOCK;
