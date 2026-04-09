@@ -25,10 +25,17 @@ class PublishContentJob implements ShouldQueue
 
     /**
      * Use retryUntil instead of $tries to avoid release() counting as attempts.
-     * This gives the job 24 hours to succeed (schedule/rate-limit delays won't exhaust retries).
+     * Base window is 24h, extended if the item has a future scheduled_at date.
      */
     public function retryUntil(): \DateTime
     {
+        $item = PublicationQueueItem::find($this->queueItemId);
+
+        // If the item is scheduled in the future, extend the retry window to cover it + 24h
+        if ($item?->scheduled_at && $item->scheduled_at->isFuture()) {
+            return $item->scheduled_at->copy()->addHours(24);
+        }
+
         return now()->addHours(24);
     }
 
@@ -67,13 +74,16 @@ class PublishContentJob implements ShouldQueue
 
         // Check schedule constraints
         if (!$this->isWithinSchedule($endpoint->id)) {
-            // Release back to queue with a delay — will be retried when schedule allows
             $this->release(300); // retry in 5 minutes
             return;
         }
 
         // Check rate limits
         if (!$this->isWithinRateLimit($endpoint->id)) {
+            Log::info('PublishContentJob released: rate limit reached', [
+                'queue_item_id' => $this->queueItemId,
+                'endpoint_id' => $endpoint->id,
+            ]);
             $this->release(600); // retry in 10 minutes
             return;
         }
@@ -81,6 +91,11 @@ class PublishContentJob implements ShouldQueue
         // Check scheduled_at (not ready yet)
         if ($item->scheduled_at && $item->scheduled_at->isFuture()) {
             $delay = now()->diffInSeconds($item->scheduled_at);
+            Log::info('PublishContentJob released: scheduled in future', [
+                'queue_item_id' => $this->queueItemId,
+                'scheduled_at' => $item->scheduled_at->toDateTimeString(),
+                'delay_seconds' => min($delay, 3600),
+            ]);
             $this->release(min($delay, 3600)); // max 1h delay
             return;
         }
@@ -169,18 +184,30 @@ class PublishContentJob implements ShouldQueue
 
         $now = now();
 
-        // Check active days — DB stores names ("monday") or ints (0-6)
+        // Check active days — DB may store abbreviations ("mon"), full names ("monday"), or ints (0-6)
         if (!empty($schedule->active_days)) {
-            $todayName = strtolower($now->format('l'));   // "tuesday"
-            $todayNum  = $now->dayOfWeek;                 // 2
-            $allowed   = false;
+            $todayName  = strtolower($now->format('l'));       // "tuesday"
+            $todayShort = substr($todayName, 0, 3);            // "tue"
+            $todayNum   = $now->dayOfWeek;                     // 2
+            $allowed    = false;
             foreach ($schedule->active_days as $day) {
-                if ($day === $todayNum || $day === $todayName || (int) $day === $todayNum) {
+                $dayLower = is_string($day) ? strtolower($day) : $day;
+                if (
+                    $dayLower === $todayName      // "tuesday" === "tuesday"
+                    || $dayLower === $todayShort  // "tue" === "tue"
+                    || $dayLower === $todayNum    // int match
+                    || (is_numeric($day) && (int) $day === $todayNum)
+                ) {
                     $allowed = true;
                     break;
                 }
             }
             if (!$allowed) {
+                Log::warning('PublishContentJob released: outside active days', [
+                    'queue_item_id' => $this->queueItemId,
+                    'today' => $todayName,
+                    'active_days' => $schedule->active_days,
+                ]);
                 return false;
             }
         }
@@ -191,6 +218,11 @@ class PublishContentJob implements ShouldQueue
             $startHour   = (int) $schedule->active_hours_start;
             $endHour     = (int) $schedule->active_hours_end;
             if ($currentHour < $startHour || $currentHour >= $endHour) {
+                Log::warning('PublishContentJob released: outside active hours', [
+                    'queue_item_id' => $this->queueItemId,
+                    'current_hour' => $currentHour,
+                    'active_window' => "{$startHour}:00-{$endHour}:00",
+                ]);
                 return false;
             }
         }
