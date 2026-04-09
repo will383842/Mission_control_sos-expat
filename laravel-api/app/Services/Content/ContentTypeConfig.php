@@ -150,7 +150,7 @@ class ContentTypeConfig
 
             // Q&A (reponses directes, featured snippets)
             'qa' => [
-                'model' => 'gpt-4o-mini',
+                'model' => 'gpt-4o',
                 'research_model' => 'sonar',
                 'temperature' => 0.5,
                 'min_words' => 800,
@@ -179,7 +179,7 @@ class ContentTypeConfig
 
             // TESTIMONIALS (témoignages d'expatriés, social proof)
             'testimonial' => [
-                'model' => 'gpt-4o-mini',
+                'model' => 'gpt-4o',
                 'research_model' => 'sonar',
                 'temperature' => 0.8,
                 'min_words' => 1200,
@@ -211,7 +211,7 @@ class ContentTypeConfig
 
             // Q&A NEEDS (longue traîne — intentions de recherche précises)
             'qa_needs' => [
-                'model' => 'gpt-4o-mini',
+                'model' => 'gpt-4o',
                 'research_model' => 'sonar',
                 'temperature' => 0.5,
                 'min_words' => 600,
@@ -241,7 +241,7 @@ class ContentTypeConfig
 
             // TUTORIAL (guides pratiques pas-à-pas pour démarches expatriés)
             'tutorial' => [
-                'model' => 'gpt-4o-mini',
+                'model' => 'gpt-4o',
                 'research_model' => 'sonar',
                 'temperature' => 0.6,
                 'min_words' => 1500,
@@ -276,7 +276,7 @@ class ContentTypeConfig
             // STATISTICS (articles data-driven à partir de datasets recherchés)
             // research_depth = 'none' : les stats sont déjà recherchées via Perplexity en amont
             'statistics' => [
-                'model' => 'gpt-4o-mini',
+                'model' => 'gpt-4o',
                 'research_model' => null,
                 'temperature' => 0.5,
                 'min_words' => 2500,
@@ -352,7 +352,7 @@ class ContentTypeConfig
 
             // NEWS (articles d'actualité réécrits depuis RSS — informationnels)
             'news' => [
-                'model' => 'gpt-4o-mini',
+                'model' => 'gpt-4o',
                 'research_model' => null,
                 'temperature' => 0.6,
                 'min_words' => 600,
@@ -385,7 +385,7 @@ class ContentTypeConfig
             // Objectif : convaincre des candidats potentiels de rejoindre le programme
             // research_depth = 'none' : GPT connaît le programme, Perplexity inutile ici
             'outreach' => [
-                'model' => 'gpt-4o-mini',
+                'model' => 'gpt-4o',
                 'research_model' => null,          // pas de recherche externe
                 'temperature' => 0.8,
                 'min_words' => 800,
@@ -416,7 +416,7 @@ class ContentTypeConfig
 
             // AFFILIATION (landing pages conversion avec liens affiliés)
             'affiliation' => [
-                'model' => 'gpt-4o-mini',
+                'model' => 'gpt-4o',
                 'research_model' => 'sonar',
                 'temperature' => 0.6,
                 'min_words' => 1000,
@@ -447,7 +447,7 @@ class ContentTypeConfig
 
             // DEFAULT
             default => [
-                'model' => 'gpt-4o-mini',
+                'model' => 'gpt-4o',
                 'research_model' => 'sonar',
                 'temperature' => 0.7,
                 'min_words' => 2000,
