@@ -22,14 +22,18 @@ class GenerationSchedulerService
 {
     // Rate limits per day — appear natural to search engines
     private const DAILY_LIMITS = [
-        'total' => 20,          // Max articles per day (all types combined)
-        'qa' => 8,              // Q/R are lightweight
-        'news' => 5,            // RSS news
-        'article' => 4,         // Deep articles
-        'guide' => 2,           // Country guides are heavy
-        'comparative' => 3,     // Comparatives
-        'pain_point' => 4,      // Pain point — haute conversion
-        'statistics' => 2,      // Statistics — heavy (research)
+        'total' => 50,          // Max articles per day (all types combined)
+        'qa' => 10,             // Q/R are lightweight
+        'news' => 15,           // RSS news
+        'article' => 10,        // Deep articles (covers art_mots_cles + longues_traines)
+        'guide' => 5,           // Country guides
+        'guide_city' => 5,      // City guides
+        'comparative' => 5,     // Comparatives
+        'pain_point' => 8,      // Pain point — haute conversion
+        'statistics' => 5,      // Statistics
+        'outreach' => 5,        // Outreach (all sub-types)
+        'testimonial' => 3,     // Testimonials
+        'affiliation' => 3,     // Affiliation comparatives
     ];
 
     // Priority countries (highest search volume first)

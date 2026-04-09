@@ -82,12 +82,12 @@ class GenerateFromSourceJob implements ShouldQueue
             return;
         }
 
-        // Pick best ready items (highest quality_score first)
+        // Pick ready items randomly (diversifies content instead of always picking the same ones)
         $items = DB::table('generation_source_items')
             ->where('category_slug', $this->sourceSlug)
             ->where('processing_status', 'ready')
             ->where('is_cleaned', true)
-            ->orderByDesc('quality_score')
+            ->inRandomOrder()
             ->limit($effectiveQuota)
             ->get();
 
@@ -96,7 +96,7 @@ class GenerateFromSourceJob implements ShouldQueue
             $items = DB::table('generation_source_items')
                 ->where('category_slug', $this->sourceSlug)
                 ->where('processing_status', 'ready')
-                ->orderByDesc('quality_score')
+                ->inRandomOrder()
                 ->limit($effectiveQuota)
                 ->get();
         }
