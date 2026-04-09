@@ -277,7 +277,7 @@ class PublishContentJob implements ShouldQueue
                     ->orderByDesc('published_at')
                     ->value('published_at');
 
-                if ($lastPublished && now()->diffInMinutes($lastPublished) < $schedule->min_interval_minutes) {
+                if ($lastPublished && now()->diffInMinutes($lastPublished, absolute: true) < $schedule->min_interval_minutes) {
                     return false;
                 }
             }
