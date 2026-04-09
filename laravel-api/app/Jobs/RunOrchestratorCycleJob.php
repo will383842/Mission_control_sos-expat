@@ -256,18 +256,31 @@ class RunOrchestratorCycleJob implements ShouldQueue
     private function triggerGeneration(string $contentType, ?string $sourceSlug, ?string $country): bool
     {
         try {
-            // Find a pending item from the source and generate
+            // Dispatch generation job directly (no HTTP — avoids auth issues)
             if ($sourceSlug) {
-                $response = Http::timeout(300)
-                    ->withToken(config('services.internal_api_key', 'internal'))
-                    ->post(config('app.url') . "/api/generation-sources/{$sourceSlug}/trigger", [
-                        'content_type' => $contentType,
-                        'country' => $country,
-                        'limit' => 1,
-                        'auto_publish' => true,
-                    ]);
+                $category = \Illuminate\Support\Facades\DB::table('generation_source_categories')
+                    ->where('slug', $sourceSlug)
+                    ->first();
 
-                return $response->successful();
+                if (!$category) {
+                    Log::warning("Orchestrator: source '{$sourceSlug}' not found, skipping");
+                    return false;
+                }
+
+                $config = json_decode($category->config_json ?? '{}', true);
+                if ($config['is_paused'] ?? false) {
+                    Log::info("Orchestrator: source '{$sourceSlug}' is paused, skipping");
+                    return false;
+                }
+
+                \App\Jobs\GenerateFromSourceJob::dispatch($sourceSlug, 1);
+                Log::info("Orchestrator: dispatched GenerateFromSourceJob", [
+                    'source' => $sourceSlug,
+                    'content_type' => $contentType,
+                    'country' => $country,
+                ]);
+
+                return true;
             }
 
             // For Q/R: use the dedicated generator
@@ -279,7 +292,7 @@ class RunOrchestratorCycleJob implements ShouldQueue
             return false;
         } catch (\Throwable $e) {
             Log::error("Orchestrator trigger failed: {$contentType}/{$sourceSlug}", ['error' => $e->getMessage()]);
-            throw $e;
+            return false;
         }
     }
 
