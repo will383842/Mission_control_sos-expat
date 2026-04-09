@@ -646,7 +646,7 @@ class ArticleGenerationService
             . "et points essentiels de ce contenu. "
             . "Retourne en JSON : {\"facts\": [\"fait1\", \"fait2\", ...], \"lsi_keywords\": [\"mot1\", \"mot2\", ...]}",
             "Contenu source :\n{$truncated}",
-            ['temperature' => 0.3, 'max_tokens' => 1000, 'json_mode' => true]
+            ['model' => 'gpt-4o-mini', 'temperature' => 0.3, 'max_tokens' => 1000, 'json_mode' => true]
         );
 
         $lsiKeywords = [];
@@ -724,7 +724,7 @@ class ArticleGenerationService
                 $lsiResult = $this->aiComplete(
                     "Extrais 10-15 mots-clés sémantiques (LSI) de ce texte de recherche. Ce sont des termes que Google s'attend à trouver dans un article complet sur le sujet. Retourne en JSON: {\"lsi_keywords\": [\"mot1\", \"mot2\", ...]}",
                     mb_substr($result['text'], 0, 3000),
-                    ['temperature' => 0.3, 'max_tokens' => 300, 'json_mode' => true]
+                    ['model' => 'gpt-4o-mini', 'temperature' => 0.3, 'max_tokens' => 300, 'json_mode' => true]
                 );
                 if ($lsiResult['success']) {
                     $lsiData = json_decode($lsiResult['content'], true);
@@ -912,6 +912,7 @@ class ArticleGenerationService
             . "\nLangue: {$language}. Retourne UNIQUEMENT le texte, sans guillemets.";
 
         $result = $this->aiComplete($systemPrompt, "Titre: {$title}{$factsContext}", [
+            'model' => 'gpt-4o-mini',
             'temperature' => 0.5,
             'max_tokens' => 100,
         ]);
@@ -1152,6 +1153,7 @@ class ArticleGenerationService
             : "Titre de l'article: \"{$article->title}\"\nMot-clé principal: \"{$primaryKeyword}\"\nAnnée: " . date('Y') . "\n\nGénère UNIQUEMENT le paragraphe de définition (40-60 mots, pas de HTML, juste le texte).";
 
         $result = $this->aiComplete($systemPrompt, $userPrompt, [
+            'model' => 'gpt-4o-mini',
             'temperature' => 0.5,
             'max_tokens' => 200,
         ]);
@@ -1200,6 +1202,7 @@ class ArticleGenerationService
             . $faqCountryConstraint;
 
         $result = $this->aiComplete($systemPrompt, "Titre: {$title}\n\nContenu (extrait):\n{$contentExcerpt}", [
+            'model' => 'gpt-4o-mini',
             'temperature' => 0.6,
             'max_tokens' => 3000,
             'json_mode' => true,
@@ -1244,6 +1247,7 @@ class ArticleGenerationService
 
         $result = $this->aiComplete($systemPrompt,
             "Titre: {$title}\nExcerpt: {$excerpt}\nMot-clé: {$primaryKeyword}", [
+                'model' => 'gpt-4o-mini',
                 'temperature' => 0.5,
                 'max_tokens' => 300,
                 'json_mode' => true,
@@ -1324,6 +1328,7 @@ class ArticleGenerationService
 
         try {
             $result = $this->aiComplete($systemPrompt, $userPrompt, [
+                'model' => 'gpt-4o-mini',
                 'temperature' => 0.5,
                 'max_tokens' => 600,
                 'json_mode' => true,
