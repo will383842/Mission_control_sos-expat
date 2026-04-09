@@ -28,6 +28,9 @@ Schedule::command('backup:database')->dailyAt('03:00')->withoutOverlapping();
 // Q/R Blog auto: génération quotidienne à 07:00 UTC
 Schedule::command('qr:daily-generate')->dailyAt('07:00')->withoutOverlapping(7200);
 
+// Statistics data: monthly fetch from World Bank/OECD/Eurostat (1st of month at 02:00 UTC)
+Schedule::command('statistics:fetch-all')->monthlyOn(1, '02:00')->withoutOverlapping(7200);
+
 // ── ACTIFS ──
 
 // Auto campaigns: check for next task to process every minute
