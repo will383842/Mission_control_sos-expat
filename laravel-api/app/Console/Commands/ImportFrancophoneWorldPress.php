@@ -410,6 +410,131 @@ class ImportFrancophoneWorldPress extends Command
         ['name' => 'Spalian', 'base_url' => 'https://spalian.com', 'media_type' => 'web', 'topics' => ['business', 'international'], 'country' => 'France'],
 
         // ══════════════════════════════════════════════════════════════════
+        // FRANCE — BLOGS VOYAGE INFLUENTS (Top FR, haut trafic)
+        // ══════════════════════════════════════════════════════════════════
+        ['name' => 'Carnets de Traverse', 'base_url' => 'https://www.carnets-traverse.com', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'I-Voyages', 'base_url' => 'https://www.i-voyages.net', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'TourduMondiste', 'base_url' => 'https://www.tourdumondiste.com', 'media_type' => 'web', 'topics' => ['voyage', 'expatriation'], 'country' => 'France'],
+        ['name' => 'Instinct Voyageur', 'base_url' => 'https://www.instinct-voyageur.fr', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Novo-monde', 'base_url' => 'https://www.novo-monde.com', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'OneDayOneTravel', 'base_url' => 'https://www.onedayonetravel.com', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Voyages et Vagabondages', 'base_url' => 'https://www.voyagesetvagabondages.com', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Le Blog de Sarah', 'base_url' => 'https://leblogdesarah.com', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Madame Oreille', 'base_url' => 'https://www.madame-oreille.com', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Un Sac sur le Dos', 'base_url' => 'https://unsacsurledos.com', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Voyager en Photos', 'base_url' => 'https://voyager-en-photos.com', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Blog Voyage Way', 'base_url' => 'https://www.voyageway.com', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Refuse to Hibernate', 'base_url' => 'https://www.refusetohibernate.com', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Vie Nomade', 'base_url' => 'https://www.vienomade.com', 'media_type' => 'web', 'topics' => ['voyage', 'expatriation'], 'country' => 'France'],
+        ['name' => 'A-Contresens', 'base_url' => 'https://www.a-contresens.net', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Les Globe Blogueurs', 'base_url' => 'https://www.les-globe-blogueurs.com', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Le Monde est à Nous', 'base_url' => 'https://www.lemondeestanous.net', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'WeLoveWorld', 'base_url' => 'https://weloveworld.fr', 'media_type' => 'web', 'topics' => ['voyage', 'lifestyle'], 'country' => 'France'],
+        ['name' => 'Voyages de Pieds', 'base_url' => 'https://voyagesdepieds.fr', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Girltrotter', 'base_url' => 'https://girltrotter.com', 'media_type' => 'web', 'topics' => ['voyage', 'lifestyle'], 'country' => 'France'],
+        ['name' => 'My Travel Background', 'base_url' => 'https://mytravelbackground.com', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Le Prochain Voyage', 'base_url' => 'https://leprochainvoyage.com', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Hashtag Voyage', 'base_url' => 'https://www.hashtagvoyage.fr', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Blog OK Voyage', 'base_url' => 'https://www.okvoyage.com', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Trace ta Route', 'base_url' => 'https://www.trace-ta-route.com', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Voyages etc', 'base_url' => 'https://www.voyagesetc.fr', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Lucie en Voyage', 'base_url' => 'https://lucieenvoyage.com', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Les Aventuriers Voyageurs', 'base_url' => 'https://lesaventuriersvoyageurs.com', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Le Sac à Dos', 'base_url' => 'https://www.lesacados.com', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Planete3w', 'base_url' => 'https://www.planete3w.fr', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+
+        // ══════════════════════════════════════════════════════════════════
+        // FRANCE — DIGITAL NOMADES & TRAVAIL À DISTANCE
+        // ══════════════════════════════════════════════════════════════════
+        ['name' => 'Nomade Digital FR', 'base_url' => 'https://www.nomadedigital.fr', 'media_type' => 'web', 'topics' => ['expatriation', 'entrepreneuriat', 'voyage'], 'country' => 'France'],
+        ['name' => 'Les Nouveaux Travailleurs', 'base_url' => 'https://lesnouveauxtravailleurs.fr', 'media_type' => 'web', 'topics' => ['entrepreneuriat', 'expatriation'], 'country' => 'France'],
+        ['name' => 'Remoters', 'base_url' => 'https://www.remoters.net', 'media_type' => 'web', 'topics' => ['entrepreneuriat', 'expatriation', 'voyage'], 'country' => 'France'],
+        ['name' => 'Coworkees', 'base_url' => 'https://coworkees.com', 'media_type' => 'web', 'topics' => ['entrepreneuriat', 'voyage'], 'country' => 'France'],
+        ['name' => 'Malt Blog', 'base_url' => 'https://blog.malt.fr', 'media_type' => 'web', 'topics' => ['entrepreneuriat', 'business'], 'country' => 'France'],
+        ['name' => 'Freelance.info', 'base_url' => 'https://www.free-work.com', 'media_type' => 'web', 'topics' => ['entrepreneuriat', 'business'], 'country' => 'France'],
+        ['name' => 'Worklib Blog', 'base_url' => 'https://blog.worklib.com', 'media_type' => 'web', 'topics' => ['entrepreneuriat'], 'country' => 'France'],
+        ['name' => 'FrenchWeb Remote', 'base_url' => 'https://www.frenchweb.fr/remote', 'media_type' => 'web', 'topics' => ['entrepreneuriat', 'tech'], 'country' => 'France'],
+
+        // ══════════════════════════════════════════════════════════════════
+        // FRANCE — INVESTISSEMENT ÉTRANGER & IMMOBILIER INTERNATIONAL
+        // ══════════════════════════════════════════════════════════════════
+        ['name' => 'Investir à l\'Étranger', 'base_url' => 'https://www.investiraletranger.com', 'media_type' => 'web', 'topics' => ['business', 'expatriation'], 'country' => 'France'],
+        ['name' => 'Le Revenu Immobilier', 'base_url' => 'https://www.lerevenu.com/immobilier', 'media_type' => 'web', 'topics' => ['business', 'expatriation'], 'country' => 'France'],
+        ['name' => 'My Expat', 'base_url' => 'https://www.myexpat.fr', 'media_type' => 'web', 'topics' => ['business', 'expatriation'], 'country' => 'France'],
+        ['name' => 'Expatrimo', 'base_url' => 'https://www.expatrimo.com', 'media_type' => 'web', 'topics' => ['business', 'expatriation'], 'country' => 'France'],
+        ['name' => 'International Wealth', 'base_url' => 'https://internationalwealth.info/fr', 'media_type' => 'web', 'topics' => ['business', 'expatriation'], 'country' => 'France'],
+        ['name' => 'MeilleursAgents International', 'base_url' => 'https://www.meilleursagents.com/prix-immobilier/international', 'media_type' => 'web', 'topics' => ['business', 'expatriation'], 'country' => 'France'],
+        ['name' => 'Immobilier Danger', 'base_url' => 'https://www.immobilier-danger.com', 'media_type' => 'web', 'topics' => ['business'], 'country' => 'France'],
+        ['name' => 'Objectif Eco', 'base_url' => 'https://www.objectifeco.com', 'media_type' => 'web', 'topics' => ['business', 'entrepreneuriat'], 'country' => 'France'],
+        ['name' => 'Avenue des Investisseurs', 'base_url' => 'https://avenuedesinvestisseurs.fr', 'media_type' => 'web', 'topics' => ['business'], 'country' => 'France'],
+        ['name' => 'Café de la Bourse', 'base_url' => 'https://www.cafedelabourse.com', 'media_type' => 'web', 'topics' => ['business'], 'country' => 'France'],
+
+        // ══════════════════════════════════════════════════════════════════
+        // FRANCE — ÉTUDIANTS INTERNATIONAUX & MOBILITÉ
+        // ══════════════════════════════════════════════════════════════════
+        ['name' => 'L\'Étudiant International', 'base_url' => 'https://www.letudiant.fr/etudes/international', 'media_type' => 'web', 'topics' => ['international', 'expatriation'], 'country' => 'France'],
+        ['name' => 'Studyrama International', 'base_url' => 'https://www.studyrama.com/international', 'media_type' => 'web', 'topics' => ['international', 'expatriation'], 'country' => 'France'],
+        ['name' => 'Campus France', 'base_url' => 'https://www.campusfrance.org', 'media_type' => 'web', 'topics' => ['international', 'expatriation'], 'country' => 'France'],
+        ['name' => 'Erasmus+ France', 'base_url' => 'https://agence.erasmusplus.fr', 'media_type' => 'web', 'topics' => ['international', 'expatriation'], 'country' => 'France'],
+        ['name' => 'Digischool', 'base_url' => 'https://www.digischool.fr', 'media_type' => 'web', 'topics' => ['international'], 'country' => 'France'],
+        ['name' => 'Étudions à l\'Étranger', 'base_url' => 'https://www.etudionsaletranger.fr', 'media_type' => 'web', 'topics' => ['international', 'expatriation', 'voyage'], 'country' => 'France'],
+        ['name' => 'myCVfactory Blog', 'base_url' => 'https://www.mycvfactory.com/blog', 'media_type' => 'web', 'topics' => ['business', 'international'], 'country' => 'France'],
+        ['name' => 'Student.com FR', 'base_url' => 'https://www.student.com/fr', 'media_type' => 'web', 'topics' => ['international', 'expatriation'], 'country' => 'France'],
+        ['name' => 'Generation Voyage', 'base_url' => 'https://generationvoyage.fr', 'media_type' => 'web', 'topics' => ['voyage', 'expatriation'], 'country' => 'France'],
+
+        // ══════════════════════════════════════════════════════════════════
+        // FRANCE — ASSURANCE & PROTECTION SOCIALE EXPAT
+        // ══════════════════════════════════════════════════════════════════
+        ['name' => 'Assurances Voyage Blog', 'base_url' => 'https://www.chapkadirect.fr/blog', 'media_type' => 'web', 'topics' => ['voyage', 'expatriation'], 'country' => 'France'],
+        ['name' => 'ACS Blog (Assurance Expat)', 'base_url' => 'https://www.acs-ami.com/blog', 'media_type' => 'web', 'topics' => ['expatriation', 'voyage'], 'country' => 'France'],
+        ['name' => 'Humanis International', 'base_url' => 'https://humanis.com/international', 'media_type' => 'web', 'topics' => ['expatriation', 'business'], 'country' => 'France'],
+        ['name' => 'April International', 'base_url' => 'https://fr.april-international.com/blog', 'media_type' => 'web', 'topics' => ['expatriation', 'voyage'], 'country' => 'France'],
+        ['name' => 'Allianz Travel Blog', 'base_url' => 'https://www.allianz-voyage.fr/blog', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'CFE (Caisse des Français de l\'Étranger)', 'base_url' => 'https://www.cfe.fr', 'media_type' => 'web', 'topics' => ['expatriation'], 'country' => 'France'],
+
+        // ══════════════════════════════════════════════════════════════════
+        // FRANCE — FISCALITÉ INTERNATIONALE & DÉMARCHES EXPAT
+        // ══════════════════════════════════════════════════════════════════
+        ['name' => 'Portail des Français à l\'Étranger', 'base_url' => 'https://www.service-public.fr/particuliers/vosdroits/N120', 'media_type' => 'web', 'topics' => ['expatriation'], 'country' => 'France'],
+        ['name' => 'Cleiss', 'base_url' => 'https://www.cleiss.fr', 'media_type' => 'web', 'topics' => ['expatriation', 'business'], 'country' => 'France'],
+        ['name' => 'French Radar', 'base_url' => 'https://frenchradar.com', 'media_type' => 'web', 'topics' => ['expatriation', 'business'], 'country' => 'France'],
+        ['name' => 'ExFi (Expert Fiscal International)', 'base_url' => 'https://www.exfi.fr', 'media_type' => 'web', 'topics' => ['business', 'expatriation'], 'country' => 'France'],
+        ['name' => 'Terre d\'Asile', 'base_url' => 'https://www.france-terre-asile.org', 'media_type' => 'web', 'topics' => ['international', 'expatriation'], 'country' => 'France'],
+        ['name' => 'La Cimade', 'base_url' => 'https://www.lacimade.org', 'media_type' => 'web', 'topics' => ['international', 'expatriation'], 'country' => 'France'],
+
+        // ══════════════════════════════════════════════════════════════════
+        // FRANCE — RETRAITE À L'ÉTRANGER
+        // ══════════════════════════════════════════════════════════════════
+        ['name' => 'Retraite Sans Frontières', 'base_url' => 'https://retraitesansfrontieres.fr', 'media_type' => 'web', 'topics' => ['expatriation', 'lifestyle'], 'country' => 'France'],
+        ['name' => 'S\'expatrier en retraite', 'base_url' => 'https://www.expatriation-retraite.com', 'media_type' => 'web', 'topics' => ['expatriation', 'lifestyle'], 'country' => 'France'],
+        ['name' => 'Notre Temps Expatriation', 'base_url' => 'https://www.notretemps.com/retraite/partir-vivre-a-l-etranger', 'media_type' => 'web', 'topics' => ['expatriation', 'lifestyle'], 'country' => 'France'],
+        ['name' => 'Capital Retraite Étranger', 'base_url' => 'https://www.capital.fr/retraite', 'media_type' => 'web', 'topics' => ['expatriation', 'business'], 'country' => 'France'],
+
+        // ══════════════════════════════════════════════════════════════════
+        // FRANCE — PODCASTS VOYAGE/EXPAT/ENTREPRENEURIAT
+        // ══════════════════════════════════════════════════════════════════
+        ['name' => 'Les Baladeurs (podcast voyage)', 'base_url' => 'https://www.lesbaladeurs.com', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Nomade Digital Podcast', 'base_url' => 'https://nomadedigital.tv', 'media_type' => 'web', 'topics' => ['expatriation', 'entrepreneuriat'], 'country' => 'France'],
+        ['name' => 'Voyage en Roue Libre', 'base_url' => 'https://voyageenrouelibre.com', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Génération Do It Yourself', 'base_url' => 'https://www.yourpodcast.fr/gdiy', 'media_type' => 'web', 'topics' => ['entrepreneuriat'], 'country' => 'France'],
+        ['name' => 'Le Gratin (podcast)', 'base_url' => 'https://legratin.com', 'media_type' => 'web', 'topics' => ['entrepreneuriat', 'business'], 'country' => 'France'],
+        ['name' => 'Inpower (podcast)', 'base_url' => 'https://www.louiseaubery.com/inpower', 'media_type' => 'web', 'topics' => ['lifestyle', 'expatriation'], 'country' => 'France'],
+        ['name' => 'Transfert (podcast Slate)', 'base_url' => 'https://www.slate.fr/transfert', 'media_type' => 'web', 'topics' => ['lifestyle'], 'country' => 'France'],
+
+        // ══════════════════════════════════════════════════════════════════
+        // FRANCE — VACANCIERS & LOISIRS
+        // ══════════════════════════════════════════════════════════════════
+        ['name' => 'Vacances Pratiques', 'base_url' => 'https://www.vacancespratiques.com', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Cityzeum', 'base_url' => 'https://www.cityzeum.com', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Guide du Routard Forum', 'base_url' => 'https://www.routard.com/forum', 'media_type' => 'web', 'topics' => ['voyage', 'expatriation'], 'country' => 'France'],
+        ['name' => 'Partir.com', 'base_url' => 'https://www.partir.com', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Skyscanner FR Blog', 'base_url' => 'https://www.skyscanner.fr/actualites-voyage', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Liligo Mag', 'base_url' => 'https://www.liligo.fr/magazine-voyage', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Lastminute FR Blog', 'base_url' => 'https://www.lastminute.com/fr/blog', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Voyages SNCF Magazine', 'base_url' => 'https://www.oui.sncf/magazine', 'media_type' => 'web', 'topics' => ['voyage'], 'country' => 'France'],
+        ['name' => 'Air France Magazine', 'base_url' => 'https://www.airfrancemagazine.com', 'media_type' => 'presse_ecrite', 'topics' => ['voyage', 'lifestyle'], 'country' => 'France'],
+
+        // ══════════════════════════════════════════════════════════════════
         // FRANCE — AGENCES DE PRESSE
         // ══════════════════════════════════════════════════════════════════
         ['name' => 'AFP (Agence France-Presse)', 'base_url' => 'https://www.afp.com', 'media_type' => 'web', 'topics' => ['international', 'business'], 'country' => 'France'],
