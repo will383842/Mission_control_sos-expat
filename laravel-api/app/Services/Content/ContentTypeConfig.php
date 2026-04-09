@@ -202,10 +202,11 @@ class ContentTypeConfig
                 'include_charts_data' => false,
                 'include_key_figures' => false,
                 'eeat_signals' => true,
-                'prompt_suffix' => "Témoignage authentique d'un expatrié. "
-                    . "Style narratif à la première personne (simulé). "
+                'prompt_suffix' => "Témoignage inspiré de cas réels d'expatriés. "
+                    . "Style narratif à la première personne. "
                     . "Inclure : contexte de départ, défis rencontrés, bonnes surprises, conseils concrets pour ceux qui veulent faire pareil. "
-                    . "NE PAS inventer de données chiffrées précises, rester dans le vécu personnel.",
+                    . "NE PAS inventer de données chiffrées précises, rester dans le vécu personnel. "
+                    . "Mentionner que le témoignage est inspiré de retours d'expérience réels.",
             ],
 
             // Q&A NEEDS (longue traîne — intentions de recherche précises)
@@ -406,7 +407,7 @@ class ContentTypeConfig
                 'h2_count' => [3, 5],
                 'include_charts_data' => false,
                 'include_key_figures' => true,
-                'eeat_signals' => false,
+                'eeat_signals' => true,
                 'prompt_suffix' => "Article d'affiliation / outreach. "
                     . "Objectif : convaincre le lecteur de rejoindre le programme SOS-Expat. "
                     . "Ton enthousiaste mais honnête. Mettre en avant les avantages concrets (commissions, flexibilité, communauté). "
@@ -441,7 +442,7 @@ class ContentTypeConfig
                 'prompt_suffix' => "Article d'affiliation comparatif et orienté conversion. "
                     . "Comparer objectivement les services (prix, avantages, inconvénients). "
                     . "Les liens affiliés doivent apparaître naturellement dans le contexte. "
-                    . "Inclure des avis utilisateurs simulés et un tableau comparatif.",
+                    . "Inclure un tableau comparatif détaillé et des retours d'expérience concrets.",
             ],
 
             // DEFAULT
