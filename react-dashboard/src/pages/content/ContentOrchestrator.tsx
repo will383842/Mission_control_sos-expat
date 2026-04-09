@@ -72,6 +72,7 @@ const TYPE_ICONS: Record<string, string> = {
   outreach_chatters: '💬', outreach_influenceurs: '📢', outreach_admin_groupes: '👥',
   outreach_avocats: '⚖️', outreach_expats: '🧳',
   testimonial: '💬', brand_content: '🏷️',
+  pain_point: '🆘', statistiques: '📊',
 };
 
 const TYPE_COLORS: Record<string, string> = {
@@ -81,6 +82,7 @@ const TYPE_COLORS: Record<string, string> = {
   outreach_chatters: 'bg-cyan-500', outreach_influenceurs: 'bg-teal-500', outreach_admin_groupes: 'bg-lime-500',
   outreach_avocats: 'bg-green-500', outreach_expats: 'bg-fuchsia-500',
   testimonial: 'bg-pink-500', brand_content: 'bg-purple-500',
+  pain_point: 'bg-red-500', statistiques: 'bg-blue-600',
 };
 
 export default function ContentOrchestrator() {

@@ -109,6 +109,8 @@ class BlogPublisher
                 => 'programme',
             in_array($parentArticle->content_type, ['affiliation', 'landing'])
                 => 'affiliation',
+            in_array($parentArticle->content_type, ['tutorial', 'pain_point'])
+                => 'fiches-pratiques',
             in_array($parentArticle->content_type, ['qa', 'comparative', 'qa_needs'])
                 => 'fiches-thematiques',
             in_array($parentArticle->content_type, ['news', 'press', 'press_release', 'testimonial'])
