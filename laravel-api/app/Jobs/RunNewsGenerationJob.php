@@ -41,8 +41,17 @@ class RunNewsGenerationJob implements ShouldQueue
             ->get();
 
         $dispatched = 0;
+        $seenTitles = [];
 
         foreach ($items as $item) {
+            // Dedup: skip items with same title (same article from different RSS feeds)
+            $normalizedTitle = mb_strtolower(trim($item->title));
+            if (isset($seenTitles[$normalizedTitle])) {
+                $item->update(['status' => 'skipped', 'error_message' => 'Duplicate title from another feed']);
+                continue;
+            }
+            $seenTitles[$normalizedTitle] = true;
+
             GenerateNewsArticleJob::dispatch($item->id);
             $dispatched++;
         }
