@@ -160,14 +160,30 @@ class GenerateFromSourceJob implements ShouldQueue
         // Level 2: per-item input quality
         $inputQuality  = $item->input_quality ?? $this->deriveInputQuality($item);
         $sourceContent = $this->loadSourceContent($item, $inputQuality);
+        $country       = $item->country ?? null;
+
+        // If no country on item, pick a random one from priority list (for template variables)
+        if (!$country) {
+            $priorities = ['FR', 'BE', 'CH', 'CA', 'MA', 'ES', 'DE', 'PT', 'TH', 'US', 'GB', 'AE', 'IT', 'NL', 'AU'];
+            $country = $priorities[array_rand($priorities)];
+        }
+
         $topic         = $this->buildTopic($item, $this->sourceSlug);
         $keywords      = $this->buildKeywords($item, $this->sourceSlug);
+
+        // Resolve template variables {pays}, {country}, {annee}, {ville} in topic
+        $countryName = \App\Models\ContentCountry::where('country_code', $country)->value('name_fr') ?? $country;
+        $topic = str_replace(
+            ['{pays}', '{country}', '{Land}', '{país}', '{annee}', '{year}'],
+            [$countryName, $countryName, $countryName, $countryName, date('Y'), date('Y')],
+            $topic
+        );
 
         return [
             'topic'               => $topic,
             'content_type'        => $contentType,
             'language'            => $item->language ?? 'fr',
-            'country'             => $item->country  ?? null,
+            'country'             => $country,
             'keywords'            => $keywords,
             'source_slug'         => $this->sourceSlug,
             'source_item_id'      => $item->id,
