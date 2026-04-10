@@ -22,30 +22,8 @@ class PublishContentJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $timeout = 120;
-
-    /**
-     * Use retryUntil instead of $tries to avoid release() counting as attempts.
-     * Base window is 24h, extended if the item has a future scheduled_at date.
-     */
-    public function retryUntil(): \DateTime
-    {
-        $item = PublicationQueueItem::find($this->queueItemId);
-
-        // If the item is scheduled in the future, extend the retry window to cover it + 24h
-        if ($item?->scheduled_at && $item->scheduled_at->isFuture()) {
-            return $item->scheduled_at->copy()->addHours(24);
-        }
-
-        return now()->addHours(24);
-    }
-
-    /**
-     * Exponential backoff in seconds.
-     */
-    public function backoff(): array
-    {
-        return [30, 60, 120, 300, 600];
-    }
+    public int $tries = 5;
+    public array $backoff = [30, 60, 120];
 
     public function __construct(
         public int $queueItemId,
@@ -72,21 +50,11 @@ class PublishContentJob implements ShouldQueue
             return;
         }
 
-        // Check schedule constraints
-        if (!$this->isWithinSchedule($endpoint->id)) {
-            $this->release(300); // retry in 5 minutes
-            return;
-        }
-
-        // Check rate limits
-        if (!$this->isWithinRateLimit($endpoint->id)) {
-            Log::info('PublishContentJob released: rate limit reached', [
-                'queue_item_id' => $this->queueItemId,
-                'endpoint_id' => $endpoint->id,
-            ]);
-            $this->release(600); // retry in 10 minutes
-            return;
-        }
+        // Schedule and rate limit checks REMOVED.
+        // The publication-engine cron (every 2 min) is the gatekeeper.
+        // When this job runs, it publishes immediately — no delays, no release loops.
+        // This eliminates the Redis delayed-set dependency that caused articles
+        // to be stuck in "pending forever" after every deploy.
 
         // Check scheduled_at (not ready yet)
         if ($item->scheduled_at && $item->scheduled_at->isFuture()) {
