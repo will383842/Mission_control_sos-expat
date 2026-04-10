@@ -238,6 +238,12 @@ class RunOrchestratorCycleJob implements ShouldQueue
         // Pick a random priority country for country-specific content
         $country = $countries[array_rand($countries)] ?? 'FR';
 
+        // Pain point articles: prioritize francophone countries first (higher conversion)
+        if ($type === 'pain_point') {
+            $francophones = ['FR', 'BE', 'CH', 'CA', 'MA', 'TN', 'SN', 'CI', 'CM', 'MG', 'ML', 'BF', 'NE', 'TD', 'CG', 'CD', 'GA', 'DJ', 'KM', 'MU', 'LU', 'MC'];
+            $country = $francophones[array_rand($francophones)];
+        }
+
         // Map orchestrator type → actual generation method
         return match ($type) {
             'qa' => $this->triggerGeneration('qa', null, null),
