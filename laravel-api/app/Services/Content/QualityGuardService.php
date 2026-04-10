@@ -159,7 +159,31 @@ class QualityGuardService
             $warnings[] = "Titre sans année {$currentYear} (signal fraîcheur Google)";
         }
 
-        // ── 10. BRAND COMPLIANCE ──
+        // ── 10. AI-SOUNDING CONTENT DETECTION ──
+        $textLower = mb_strtolower($text);
+        $aiPatterns = 0;
+        foreach ([
+            'il est important de', 'il convient de', 'il est essentiel',
+            'il est crucial', 'il est recommandé', 'il est recommande',
+            'dans cet article', "n'hésitez pas", "n'hesitez pas",
+            'en conclusion,', 'cela signifie que', 'il est à noter',
+            'it is important to', 'it is essential', 'it is crucial',
+            'in this article', 'in conclusion,',
+        ] as $pattern) {
+            $aiPatterns += mb_substr_count($textLower, $pattern);
+        }
+        $checks['natural_writing'] = $aiPatterns < 5;
+        if (!$checks['natural_writing']) {
+            $issues[] = "Contenu IA détecté: {$aiPatterns} formules robotiques ('il est important de', 'il convient de', etc.)";
+        }
+
+        // ── 11b. REPETITIVE YEAR ──
+        $yearCount = mb_substr_count($textLower, strtolower(date('Y')));
+        if ($yearCount > 10 && $wordCount < 3000) {
+            $warnings[] = "Année répétée {$yearCount} fois — semble artificiel";
+        }
+
+        // ── 12. BRAND COMPLIANCE ──
         $brandResult = $this->checkBrandCompliance($text);
         $checks['brand'] = $brandResult['passed'];
         if (!$brandResult['passed']) {
