@@ -933,11 +933,16 @@ class ArticleGenerationService
             $title = ucfirst($keyword) . ($countryName ? " — {$countryName}" : '') . " ({$year})";
         }
 
-        // 11. Truncate if too long (max 90 chars, cut at word boundary)
-        if (mb_strlen($title) > 90) {
-            $truncated = mb_substr($title, 0, 90);
+        // 11. Truncate if too long — adaptive limit
+        // Brand-listing titles (Wise, Airbnb, SOS-Expat.com...) can be up to 140 chars
+        $brandPattern = '/\b(SOS-Expat\.com|Wise|Revolut|Airbnb|Uber|Booking|Skyscanner|Duolingo|N26|PayPal|Nomad List)\b/iu';
+        $hasBrands = preg_match_all($brandPattern, $title) >= 2;
+        $maxLen = $hasBrands ? 140 : 90;
+
+        if (mb_strlen($title) > $maxLen) {
+            $truncated = mb_substr($title, 0, $maxLen);
             $lastSpace = mb_strrpos($truncated, ' ');
-            $title = ($lastSpace && $lastSpace > 50) ? mb_substr($truncated, 0, $lastSpace) : $truncated;
+            $title = ($lastSpace && $lastSpace > 60) ? mb_substr($truncated, 0, $lastSpace) : $truncated;
         }
 
         return trim($title);
@@ -1047,11 +1052,31 @@ class ArticleGenerationService
               . "- Densité totale : 1-2% (ni trop, ni trop peu)\n"
               . "Le mot-clé doit apparaître NATURELLEMENT — jamais forcé ou répétitif.");
 
-        $userPrompt = "Titre: {$title}\n\n"
+        // Extract brand names from topic (e.g. "Wise, Airbnb, SOS-Expat.com, Uber")
+        $topicText = $params['topic'] ?? '';
+        $brandsFromTopic = [];
+        if (preg_match_all('/\b(SOS-Expat\.com|Wise|Revolut|Airbnb|Uber|Uber Eats|Booking(?:\.com)?|Skyscanner|Duolingo|N26|PayPal|Stripe|WhatsApp|Google Maps|Google Translate|Nomad List|Notion|Erasmusu|Student Universe|Interactive Brokers|IBKR|Monzo|Starling|Kayak|Expedia|Hostelworld|Couchsurfing|Rome2Rio|Maps\.me)\b/iu', $topicText, $m)) {
+            $brandsFromTopic = array_unique($m[0]);
+        }
+
+        $userPrompt = "Sujet original complet: {$topicText}\n\n"
+            . "Titre généré: {$title}\n\n"
             . "Introduction (déjà rédigée, à intégrer):\n{$excerpt}\n\n"
             . (!empty($keywordsStr) ? "Mots-clés à intégrer: {$keywordsStr}\n\n" : '')
-            . (!empty($factsStr) ? "Faits de recherche à utiliser:\n- {$factsStr}\n\n" : '')
-            . (!empty($instructions) ? "Instructions supplémentaires: {$instructions}\n\n" : '')
+            . (!empty($factsStr) ? "Faits de recherche à utiliser:\n- {$factsStr}\n\n" : '');
+
+        if (!empty($brandsFromTopic)) {
+            $brandList = implode(', ', $brandsFromTopic);
+            $userPrompt .= "═══ MARQUES À CITER OBLIGATOIREMENT ═══\n"
+                . "Tu DOIS citer ces marques RÉELLES par leur NOM EXACT dans l'article : {$brandList}\n"
+                . "- Chaque marque a sa propre section avec ses fonctionnalités réelles et son prix réel.\n"
+                . "- INTERDIT : 'Application A', 'Application B', 'Service X' — utilise UNIQUEMENT les vrais noms.\n"
+                . "- Pour chaque marque, explique concrètement à quoi elle sert et pourquoi elle est utile.\n"
+                . "- SOS-Expat.com doit être présenté comme : service de mise en relation téléphonique avec un avocat ou un expert local, en moins de 5 minutes, 24h/24, dans 197 pays, pour toute situation (juridique, administrative, pratique, médicale, urgence).\n"
+                . "- Ne JAMAIS inventer de chiffres sur SOS-Expat.com (pas de nombre d'avocats, clients, notes).\n\n";
+        }
+
+        $userPrompt .= (!empty($instructions) ? "Instructions supplémentaires: {$instructions}\n\n" : '')
             . "Année courante: " . date('Y') . ". Mentionne cette année dans le premier paragraphe et les données chiffrées.\n\n"
             . "Rédige l'article complet en HTML.";
 
