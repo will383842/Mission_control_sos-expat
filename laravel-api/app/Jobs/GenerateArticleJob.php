@@ -141,8 +141,9 @@ class GenerateArticleJob implements ShouldQueue
                 return;
             }
 
-            // Delay 5 minutes to let translations finish (Phase 15 dispatches 8 async
-            // GenerateTranslationJob with timeout=300s each on queue 'content')
+            // Create queue item — the publication-engine cron (every 2 min) will
+            // pick this up after 6 min (waits for translations to finish).
+            // NO Redis delay — DB is the source of truth, not Redis.
             $queueItem = PublicationQueueItem::create([
                 'publishable_type' => GeneratedArticle::class,
                 'publishable_id'   => $article->id,
@@ -152,7 +153,8 @@ class GenerateArticleJob implements ShouldQueue
                 'max_attempts'     => 5,
             ]);
 
-            PublishContentJob::dispatch($queueItem->id)->delay(now()->addSeconds(300));
+            // Also dispatch immediately as a best-effort (if Redis survives, faster publish)
+            PublishContentJob::dispatch($queueItem->id);
 
             Log::info('GenerateArticleJob: auto-publish queued', [
                 'article_id'    => $article->id,

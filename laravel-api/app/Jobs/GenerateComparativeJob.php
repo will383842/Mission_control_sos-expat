@@ -98,7 +98,7 @@ class GenerateComparativeJob implements ShouldQueue
                 'max_attempts'     => 5,
             ]);
 
-            PublishContentJob::dispatch($queueItem->id)->delay(now()->addSeconds(60));
+            PublishContentJob::dispatch($queueItem->id);
         } catch (\Throwable $e) {
             Log::error('GenerateComparativeJob: auto-publish failed (non-blocking)', [
                 'comparative_id' => $comparative->id,

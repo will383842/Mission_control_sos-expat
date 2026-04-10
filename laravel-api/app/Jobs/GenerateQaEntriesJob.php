@@ -92,7 +92,7 @@ class GenerateQaEntriesJob implements ShouldQueue
                 'max_attempts'     => 5,
             ]);
 
-            PublishContentJob::dispatch($queueItem->id)->delay(now()->addSeconds(30));
+            PublishContentJob::dispatch($queueItem->id);
         } catch (\Throwable $e) {
             Log::error('GenerateQaEntriesJob: auto-publish failed (non-blocking)', [
                 'qa_entry_id' => $entry->id,

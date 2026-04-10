@@ -107,25 +107,71 @@ Schedule::call(function () {
     }
 })->everyFifteenMinutes()->name('source-items-stale-recovery')->withoutOverlapping();
 
-// Publication stale recovery: re-dispatch pending items whose Redis job vanished
-// (happens after container rebuild — Redis delayed jobs can be lost)
+// ══════════════════════════════════════════════════════════════════════
+// PUBLICATION ENGINE (DB-driven, every 2 min)
+// This is THE definitive fix for lost Redis jobs during deploys.
+// Instead of relying on Redis delayed jobs, we scan the DB every 2 min
+// and publish everything that's ready. No Redis dependency.
+// ══════════════════════════════════════════════════════════════════════
 Schedule::call(function () {
-    $staleItems = \Illuminate\Support\Facades\DB::table('publication_queue')
+    $db = \Illuminate\Support\Facades\DB::class;
+    $log = \Illuminate\Support\Facades\Log::class;
+
+    // ── 1. Re-dispatch pending queue items (lost Redis jobs) ──
+    $staleItems = $db::table('publication_queue')
         ->where('status', 'pending')
-        ->where('updated_at', '<', now()->subMinutes(10))
+        ->where('updated_at', '<', now()->subMinutes(3))
         ->get(['id']);
 
-    $redispatched = 0;
     foreach ($staleItems as $item) {
         try {
-            \App\Jobs\PublishContentJob::dispatch($item->id)->delay(now()->addSeconds(rand(5, 30)));
-            $redispatched++;
+            // NO delay — dispatch immediately, let the job handle schedule/rate checks
+            \App\Jobs\PublishContentJob::dispatch($item->id);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning("Publication recovery: failed to re-dispatch #{$item->id}", ['error' => $e->getMessage()]);
+            $log::warning("Pub engine: failed to dispatch queue #{$item->id}", ['error' => $e->getMessage()]);
         }
     }
 
-    if ($redispatched > 0) {
-        \Illuminate\Support\Facades\Log::info("Publication stale recovery: {$redispatched} items re-dispatched");
+    // ── 2. Find articles ready to publish but NOT in queue at all ──
+    $orphans = $db::table('generated_articles as ga')
+        ->leftJoin('publication_queue as pq', function ($join) {
+            $join->on('pq.publishable_id', '=', 'ga.id')
+                 ->where('pq.publishable_type', '=', 'App\\Models\\GeneratedArticle');
+        })
+        ->whereNull('pq.id')
+        ->where('ga.status', 'review')
+        ->where('ga.quality_score', '>=', 60)
+        ->whereNull('ga.parent_article_id')
+        ->where('ga.word_count', '>', 0)
+        ->whereNotNull('ga.content_html')
+        ->where('ga.created_at', '<', now()->subMinutes(6)) // wait for translations
+        ->pluck('ga.id');
+
+    if ($orphans->isNotEmpty()) {
+        $endpoint = $db::table('publishing_endpoints')
+            ->where('is_default', true)->where('is_active', true)->first();
+
+        if ($endpoint) {
+            foreach ($orphans as $articleId) {
+                $queueId = $db::table('publication_queue')->insertGetId([
+                    'publishable_type' => 'App\\Models\\GeneratedArticle',
+                    'publishable_id'   => $articleId,
+                    'endpoint_id'      => $endpoint->id,
+                    'status'           => 'pending',
+                    'priority'         => 'default',
+                    'max_attempts'     => 5,
+                    'attempts'         => 0,
+                    'created_at'       => now(),
+                    'updated_at'       => now(),
+                ]);
+                \App\Jobs\PublishContentJob::dispatch($queueId);
+            }
+            $log::info("Pub engine: {$orphans->count()} orphan articles queued for publication");
+        }
     }
-})->everyFifteenMinutes()->name('publication-stale-recovery')->withoutOverlapping();
+
+    $total = $staleItems->count() + $orphans->count();
+    if ($total > 0) {
+        $log::info("Pub engine: {$staleItems->count()} stale re-dispatched, {$orphans->count()} orphans queued");
+    }
+})->everyTwoMinutes()->name('publication-engine')->withoutOverlapping();
