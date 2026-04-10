@@ -121,6 +121,16 @@ PROMPT;
 
 {$this->getHtmlTemplatesBlock()}
 
+=== URLS INTERNES VALIDES (SEULES URLS AUTORISEES) ===
+JAMAIS de www.sos-expat.com (le www n'existe PAS).
+JAMAIS d'URL inventee. Utiliser UNIQUEMENT ces formats :
+- Page prestataires : https://sos-expat.com/{lang}-{code_pays_iso_2}/{segment}
+- Segments FR : prestataires, articles, vie-a-letranger, actualites-expats, outils, pays, annuaire
+- Segments EN : providers, articles, living-abroad, expat-news, tools, countries, directory
+- Exemples : https://sos-expat.com/fr-fr/prestataires, https://sos-expat.com/en-us/providers
+- Le code pays est TOUJOURS 2 lettres ISO : fr, us, de, es, th, jp, ma, ch, be, etc.
+- JAMAIS de nom de pays dans l'URL : /fr-france/ est FAUX → /fr-fr/ est CORRECT
+- JAMAIS de /consultation, /recrutement, /blog/ — ces pages n'existent PAS
 === FIN KB ===
 
 Ne JAMAIS inventer de donnees. Toujours ecrire "SOS-Expat.com" avec tiret.

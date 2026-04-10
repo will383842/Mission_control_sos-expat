@@ -46,6 +46,33 @@ class GenerateArticleJob implements ShouldQueue
 
         $article = $service->generate($this->params);
 
+        // ── Sanitize all internal links in generated HTML ──
+        if (!empty($article->content_html)) {
+            $sanitized = \App\Services\Content\LinkSanitizer::sanitize(
+                $article->content_html,
+                $article->language ?? 'fr',
+                $article->country,
+            );
+            if ($sanitized !== $article->content_html) {
+                $article->update(['content_html' => $sanitized]);
+                Log::info('GenerateArticleJob: links sanitized', ['article_id' => $article->id]);
+            }
+        }
+
+        // Also sanitize translations
+        foreach ($article->translations ?? [] as $translation) {
+            if (!empty($translation->content_html)) {
+                $sanitized = \App\Services\Content\LinkSanitizer::sanitize(
+                    $translation->content_html,
+                    $translation->language ?? 'fr',
+                    $article->country,
+                );
+                if ($sanitized !== $translation->content_html) {
+                    $translation->update(['content_html' => $sanitized]);
+                }
+            }
+        }
+
         // Calculate and persist total generation cost
         $totalCost = \App\Models\ApiCost::where('costable_type', \App\Models\GeneratedArticle::class)
             ->where('costable_id', $article->id)
