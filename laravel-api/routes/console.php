@@ -66,8 +66,9 @@ Schedule::command('api:health-check')->dailyAt('08:00')->withoutOverlapping();
 // RSS: fetch feeds every 4 hours (SEULE source de scraping active)
 Schedule::job(new FetchRssFeedsJob)->everyFourHours()->withoutOverlapping(3600);
 
-// News: auto-generate from RSS at 8:00 AM UTC
-Schedule::job(new RunNewsGenerationJob)->dailyAt('08:00')->withoutOverlapping(7200);
+// News: auto-generate from RSS at 06:00 and 14:00 UTC (two batches per day)
+Schedule::job(new RunNewsGenerationJob)->dailyAt('06:00')->withoutOverlapping(7200);
+Schedule::job(new RunNewsGenerationJob)->dailyAt('14:00')->withoutOverlapping(7200);
 
 // News stale recovery: remettre en pending les items bloqués en 'generating' depuis >30 min
 // (cas de crash de worker pendant la génération)
@@ -80,6 +81,18 @@ Schedule::call(function () {
         \Illuminate\Support\Facades\Log::info("News stale recovery: {$staleCount} items remis en pending");
     }
 })->everyFifteenMinutes()->name('news-stale-recovery')->withoutOverlapping();
+
+// News failed retry: remettre les items échoués en pending (1 retry par jour à 12:00)
+Schedule::call(function () {
+    $failedCount = RssFeedItem::where('status', 'failed')
+        ->where('relevance_score', '>=', 50)
+        ->where('updated_at', '>=', now()->subDays(3))
+        ->update(['status' => 'pending', 'error_message' => null]);
+
+    if ($failedCount > 0) {
+        \Illuminate\Support\Facades\Log::info("News failed retry: {$failedCount} items remis en pending");
+    }
+})->dailyAt('12:00')->name('news-failed-retry')->withoutOverlapping();
 
 // Source items stale recovery: reset items stuck in 'processing' for >20 min
 // (happens when GenerateArticleJob fails but GenerateFromSourceJob already marked the item)
