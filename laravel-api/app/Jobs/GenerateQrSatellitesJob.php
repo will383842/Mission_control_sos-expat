@@ -51,12 +51,14 @@ class GenerateQrSatellitesJob implements ShouldQueue
             return;
         }
 
-        $apiKey = config('services.anthropic.api_key') ?: config('services.claude.api_key');
+        $apiKey = config('services.anthropic.api_key') ?: config('services.claude.api_key', '');
         $blogUrl = rtrim(config('services.blog.url', ''), '/');
         $blogKey = config('services.blog.api_key', '');
 
-        if (!$apiKey || !$blogUrl || !$blogKey) {
-            Log::warning('QrSatellites: missing API key or Blog config');
+        // GPT primary, Claude fallback — only OpenAI is required.
+        $openai = app(\App\Services\AI\OpenAiService::class);
+        if ((! $openai->isConfigured() && ! $apiKey) || !$blogUrl || !$blogKey) {
+            Log::warning('QrSatellites: missing AI key (need OpenAI or Anthropic) or Blog config');
             return;
         }
 
@@ -122,19 +124,11 @@ class GenerateQrSatellitesJob implements ShouldQueue
             . "Retourne en JSON: [\"question 1 ?\", \"question 2 ?\", \"question 3 ?\", \"question 4 ?\", \"question 5 ?\"]"
             . "\n\nArticle: \"{$article->title}\"\nExtrait: {$contentSnippet}";
 
-        $response = Http::withHeaders([
-            'x-api-key' => $apiKey,
-            'anthropic-version' => '2023-06-01',
-            'content-type' => 'application/json',
-        ])->timeout(30)->post('https://api.anthropic.com/v1/messages', [
-            'model' => 'claude-haiku-4-5-20251001',
-            'max_tokens' => 300,
-            'messages' => [['role' => 'user', 'content' => $prompt]],
-        ]);
+        // GPT primary
+        $text = $this->callAi($prompt, null, 300, $apiKey, 'mini');
 
-        if (!$response->successful()) return [];
+        if ($text === null) return [];
 
-        $text = $response->json('content.0.text', '');
         $start = strpos($text, '[');
         $end = strrpos($text, ']');
         if ($start === false || $end === false) return [];
@@ -169,20 +163,11 @@ class GenerateQrSatellitesJob implements ShouldQueue
             . "Retourne en JSON UNIQUEMENT:\n"
             . "{\"meta_title\":\"...\",\"meta_description\":\"...\",\"excerpt\":\"...\",\"keywords_primary\":\"...\",\"ai_summary\":\"...\",\"content_html\":\"...\",\"faqs\":[{\"question\":\"?\",\"answer\":\"<p>...</p>\"}]}";
 
-        $response = Http::withHeaders([
-            'x-api-key' => $apiKey,
-            'anthropic-version' => '2023-06-01',
-            'content-type' => 'application/json',
-        ])->timeout(120)->post('https://api.anthropic.com/v1/messages', [
-            'model' => 'claude-sonnet-4-6',
-            'max_tokens' => 4000,
-            'system' => $kbContext,
-            'messages' => [['role' => 'user', 'content' => $prompt]],
-        ]);
+        // GPT primary
+        $text = $this->callAi($prompt, $kbContext, 4000, $apiKey, 'standard');
 
-        if (!$response->successful()) return null;
+        if ($text === null) return null;
 
-        $text = $response->json('content.0.text', '');
         $start = strpos($text, '{');
         $end = strrpos($text, '}');
         if ($start === false || $end === false) return null;
@@ -264,5 +249,57 @@ class GenerateQrSatellitesJob implements ShouldQueue
         } catch (\Throwable $e) {
             Log::warning("QrSatellites: failed to update parent on blog", ['error' => $e->getMessage()]);
         }
+    }
+
+    /**
+     * GPT primary, Claude fallback. Switched 2026-04-11 to isolate Q/R
+     * satellites from Anthropic credit / availability issues.
+     *
+     * @param  string  $tier  'mini' for cheap (gpt-4o-mini + haiku) or 'standard' (gpt-4o + sonnet)
+     */
+    private function callAi(string $prompt, ?string $systemPrompt, int $maxTokens, string $anthropicKey, string $tier = 'standard'): ?string
+    {
+        $gptModel    = $tier === 'mini' ? 'gpt-4o-mini' : 'gpt-4o';
+        $claudeModel = $tier === 'mini' ? 'claude-haiku-4-5-20251001' : 'claude-sonnet-4-6';
+
+        /** @var \App\Services\AI\OpenAiService $openai */
+        $openai = app(\App\Services\AI\OpenAiService::class);
+
+        if ($openai->isConfigured()) {
+            $result = $openai->complete($systemPrompt ?? '', $prompt, [
+                'model'      => $gptModel,
+                'max_tokens' => $maxTokens,
+            ]);
+            if (!empty($result['success']) && !empty($result['content'])) {
+                return $result['content'];
+            }
+            Log::warning('QrSatellites: GPT primary failed, falling back to Claude', [
+                'gpt_model' => $gptModel,
+                'error'     => $result['error'] ?? 'unknown',
+            ]);
+        }
+
+        // Fallback Claude
+        if (empty($anthropicKey)) return null;
+
+        $body = [
+            'model'      => $claudeModel,
+            'max_tokens' => $maxTokens,
+            'messages'   => [['role' => 'user', 'content' => $prompt]],
+        ];
+        if ($systemPrompt) $body['system'] = $systemPrompt;
+
+        $response = Http::withHeaders([
+            'x-api-key'         => $anthropicKey,
+            'anthropic-version' => '2023-06-01',
+            'content-type'      => 'application/json',
+        ])->timeout(120)->post('https://api.anthropic.com/v1/messages', $body);
+
+        if (!$response->successful()) {
+            Log::error('QrSatellites: Claude fallback also failed', ['status' => $response->status()]);
+            return null;
+        }
+
+        return $response->json('content.0.text');
     }
 }

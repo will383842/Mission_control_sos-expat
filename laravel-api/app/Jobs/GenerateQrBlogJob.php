@@ -36,13 +36,16 @@ class GenerateQrBlogJob implements ShouldQueue
 
     public function handle(): void
     {
-        $anthropicKey = config('services.anthropic.api_key') ?: config('services.claude.api_key');
+        $anthropicKey = config('services.anthropic.api_key') ?: config('services.claude.api_key', '');
         $blogApiUrl   = rtrim(config('services.blog.url', ''), '/');
         $blogApiKey   = config('services.blog.api_key', '');
 
-        if (! $anthropicKey) {
+        // GPT is now primary, Claude is fallback only — only require at least
+        // one of them to be configured. OpenAI alone is enough.
+        $openai = app(\App\Services\AI\OpenAiService::class);
+        if (! $openai->isConfigured() && ! $anthropicKey) {
             $this->updateProgress(['status' => 'failed', 'finished_at' => now()->toIso8601String(),
-                'log' => [['type' => 'error', 'msg' => 'ANTHROPIC_API_KEY manquant dans .env']]]);
+                'log' => [['type' => 'error', 'msg' => 'Aucune clé AI configurée (OPENAI_API_KEY ou ANTHROPIC_API_KEY)']]]);
             return;
         }
 
@@ -357,14 +360,39 @@ PROMPT;
     // CLAUDE API
     // ─────────────────────────────────────────
 
+    /**
+     * GPT-4o primary, Claude fallback. Switched 2026-04-11 to isolate Q/R
+     * generation from Anthropic credit / availability issues. Maps the
+     * legacy Claude model arg to a GPT equivalent (haiku → mini, sonnet → 4o).
+     */
     private function callClaude(string $model, string $prompt, int $maxTokens, string $key, ?string $systemPrompt = null): ?string
     {
+        $gptModel = str_contains($model, 'haiku') ? 'gpt-4o-mini' : 'gpt-4o';
+
+        /** @var \App\Services\AI\OpenAiService $openai */
+        $openai = app(\App\Services\AI\OpenAiService::class);
+
+        if ($openai->isConfigured()) {
+            $result = $openai->complete($systemPrompt ?? '', $prompt, [
+                'model'      => $gptModel,
+                'max_tokens' => $maxTokens,
+                'json_mode'  => true,
+            ]);
+            if (!empty($result['success']) && !empty($result['content'])) {
+                return $result['content'];
+            }
+            Log::warning('GenerateQrBlogJob: GPT primary failed, falling back to Claude', [
+                'gpt_model' => $gptModel,
+                'error'     => $result['error'] ?? 'unknown',
+            ]);
+        }
+
+        // Fallback: Claude
         $body = [
             'model'      => $model,
             'max_tokens' => $maxTokens,
             'messages'   => [['role' => 'user', 'content' => $prompt]],
         ];
-
         if ($systemPrompt) {
             $body['system'] = $systemPrompt;
         }
@@ -376,7 +404,7 @@ PROMPT;
         ])->timeout(120)->post('https://api.anthropic.com/v1/messages', $body);
 
         if (! $response->successful()) {
-            Log::error('Claude API error in QrBlogJob', ['status' => $response->status()]);
+            Log::error('Claude API error in QrBlogJob (fallback also failed)', ['status' => $response->status()]);
             return null;
         }
 

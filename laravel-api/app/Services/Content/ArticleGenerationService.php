@@ -2024,17 +2024,48 @@ class ArticleGenerationService
     }
 
     /**
-     * Route a completion request to Claude or OpenAI depending on the model.
-     * Model names starting with 'claude-' go to ClaudeService; everything else to OpenAiService.
+     * Route a completion request — GPT primary, Claude as automatic fallback.
+     *
+     * Switched 2026-04-11: previously dispatched directly based on the model
+     * name prefix, which created a hard dependency on whichever vendor was
+     * requested. Now we ALWAYS try GPT first (mapping claude-* requests to
+     * the closest GPT equivalent), and only fall back to the originally
+     * requested Claude model if GPT fails. Isolates the entire generation
+     * pipeline from any single-vendor outage.
      */
     private function aiComplete(string $systemPrompt, string $userPrompt, array $options = []): array
     {
-        $model = $options['model'] ?? null;
+        $requestedModel    = $options['model'] ?? 'gpt-4o';
+        $isClaudeRequested = is_string($requestedModel) && str_starts_with($requestedModel, 'claude-');
 
-        if ($model && str_starts_with($model, 'claude-')) {
-            return $this->claude->complete($systemPrompt, $userPrompt, $options);
+        // Map any model request to a GPT primary
+        $gptModel = match (true) {
+            !is_string($requestedModel)                  => 'gpt-4o',
+            str_starts_with($requestedModel, 'gpt-')     => $requestedModel,
+            str_contains($requestedModel, 'haiku')       => 'gpt-4o-mini',
+            str_contains($requestedModel, 'opus'),
+            str_contains($requestedModel, 'sonnet')      => 'gpt-4o',
+            default                                      => 'gpt-4o',
+        };
+
+        $gptOptions = $options;
+        $gptOptions['model'] = $gptModel;
+        $result = $this->openAi->complete($systemPrompt, $userPrompt, $gptOptions);
+
+        if (!empty($result['success']) && !empty($result['content'])) {
+            return $result;
         }
 
-        return $this->openAi->complete($systemPrompt, $userPrompt, $options);
+        // Fallback: original Claude model (or sonnet if no Claude was originally requested)
+        $claudeFallback = $isClaudeRequested ? $requestedModel : 'claude-sonnet-4-6';
+        Log::warning('aiComplete: GPT failed, falling back to Claude', [
+            'gpt_model'       => $gptModel,
+            'claude_fallback' => $claudeFallback,
+            'gpt_error'       => $result['error'] ?? 'unknown',
+        ]);
+
+        $claudeOptions = $options;
+        $claudeOptions['model'] = $claudeFallback;
+        return $this->claude->complete($systemPrompt, $userPrompt, $claudeOptions);
     }
 }
