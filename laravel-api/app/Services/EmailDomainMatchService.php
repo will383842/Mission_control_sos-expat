@@ -3,16 +3,23 @@
 namespace App\Services;
 
 use App\Models\Influenceur;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 
 /**
  * Verifies that a contact's email domain matches their website domain.
  * If mismatch detected AND scraper found a better email on the actual site → auto-correct.
+ *
+ * Generic (consumer) and junk email domains are loaded from
+ * config/email_providers.php so the lists can be extended without code changes.
+ * A minimal hardcoded fallback is kept in this class in case the config is
+ * missing (e.g. right after a deploy before cache is rebuilt).
  */
 class EmailDomainMatchService
 {
-    // Emails that are clearly junk / dev / placeholder
-    private const JUNK_EMAIL_PATTERNS = [
+    // Fallback junk list — used only if config/email_providers.php is missing.
+    // The real source of truth is config('email_providers.junk').
+    private const JUNK_EMAIL_PATTERNS_FALLBACK = [
         'flywheel.local', 'localhost', 'example.com', 'example.org',
         'test.com', 'test.org', 'domain.com', 'email.com',
         'monsite.fr', 'yoursite.com', 'sentry.io', 'wixpress.com',
@@ -20,8 +27,9 @@ class EmailDomainMatchService
         'mailinator.com', 'guerrillamail.com', 'tempmail.com',
     ];
 
-    // Generic email providers (not mismatches — someone can use gmail for a school)
-    private const GENERIC_PROVIDERS = [
+    // Fallback generic providers list — used only if config is missing.
+    // The real source of truth is config('email_providers.generic').
+    private const GENERIC_PROVIDERS_FALLBACK = [
         'gmail.com', 'yahoo.com', 'yahoo.fr', 'hotmail.com', 'hotmail.fr',
         'outlook.com', 'outlook.fr', 'live.com', 'live.fr',
         'icloud.com', 'protonmail.com', 'proton.me',
@@ -30,16 +38,47 @@ class EmailDomainMatchService
     ];
 
     /**
+     * Return the list of generic consumer email providers.
+     * Reads from config/email_providers.php with a hardcoded fallback.
+     *
+     * @return array<int, string>
+     */
+    private function genericProviders(): array
+    {
+        $fromConfig = Config::get('email_providers.generic');
+        if (is_array($fromConfig) && count($fromConfig) > 0) {
+            return $fromConfig;
+        }
+        return self::GENERIC_PROVIDERS_FALLBACK;
+    }
+
+    /**
+     * Return the list of junk/disposable/placeholder email domains/patterns.
+     *
+     * @return array<int, string>
+     */
+    private function junkPatterns(): array
+    {
+        $fromConfig = Config::get('email_providers.junk');
+        if (is_array($fromConfig) && count($fromConfig) > 0) {
+            return $fromConfig;
+        }
+        return self::JUNK_EMAIL_PATTERNS_FALLBACK;
+    }
+
+    /**
      * Run email/site match check and auto-correction on a batch of contacts.
      */
     public function runBatch(int $limit = 200): array
     {
-        $stats = ['checked' => 0, 'junk_cleaned' => 0, 'mismatches' => 0, 'auto_corrected' => 0];
+        $stats = ['checked' => 0, 'junk_cleaned' => 0, 'generic_skipped' => 0, 'mismatches' => 0, 'auto_corrected' => 0];
+
+        $junkPatterns = $this->junkPatterns();
 
         // Step 1: Clean junk emails
         $junkContacts = Influenceur::whereNotNull('email')
-            ->where(function ($q) {
-                foreach (self::JUNK_EMAIL_PATTERNS as $pattern) {
+            ->where(function ($q) use ($junkPatterns) {
+                foreach ($junkPatterns as $pattern) {
                     $q->orWhere('email', 'LIKE', '%' . $pattern);
                 }
             })
@@ -68,6 +107,8 @@ class EmailDomainMatchService
                     $stats['auto_corrected']++;
                 } elseif ($result === 'mismatch_flagged') {
                     $stats['mismatches']++;
+                } elseif ($result === 'generic') {
+                    $stats['generic_skipped']++;
                 }
             } catch (\Throwable $e) {
                 // Never let a single contact crash the whole batch.
@@ -95,8 +136,16 @@ class EmailDomainMatchService
 
         if (!$emailDomain || !$siteDomain) return 'ok';
 
-        // Generic providers are never mismatches
-        if (in_array($emailDomain, self::GENERIC_PROVIDERS)) return 'generic';
+        // Generic providers (gmail, yahoo, orange.fr, qq.com, etc.) are never
+        // considered mismatches — an SMB, school or freelance can legitimately
+        // use a free consumer email alongside a professional website.
+        if (in_array($emailDomain, $this->genericProviders(), true)) {
+            Log::debug('EmailDomainMatch: skipping generic provider', [
+                'id'           => $inf->id,
+                'email_domain' => $emailDomain,
+            ]);
+            return 'generic';
+        }
 
         // Check if domains match (including subdomains)
         if ($this->domainsMatch($emailDomain, $siteDomain)) return 'ok';
@@ -246,12 +295,12 @@ class EmailDomainMatchService
     {
         $domain = $this->getEmailDomain($email);
         if (!$domain) return true;
-        foreach (self::JUNK_EMAIL_PATTERNS as $pattern) {
+        foreach ($this->junkPatterns() as $pattern) {
             if (str_contains($domain, $pattern)) return true;
         }
         // Reject emails starting with noreply, dpo, etc.
         $local = strtolower(substr($email, 0, strpos($email, '@')));
-        if (in_array($local, ['noreply', 'no-reply', 'donotreply', 'postmaster', 'webmaster', 'dpo', 'abuse', 'spam', 'signalement'])) {
+        if (in_array($local, ['noreply', 'no-reply', 'donotreply', 'postmaster', 'webmaster', 'dpo', 'abuse', 'spam', 'signalement'], true)) {
             return true;
         }
         return false;
