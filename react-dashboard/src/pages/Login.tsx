@@ -43,41 +43,52 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-bg flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen bg-bg flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Ambient background orbs */}
+      <div className="pointer-events-none absolute -top-32 -left-32 w-96 h-96 rounded-full bg-violet/20 blur-3xl" aria-hidden="true" />
+      <div className="pointer-events-none absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-cyan/10 blur-3xl" aria-hidden="true" />
+
+      <div className="w-full max-w-sm relative z-10">
+        {/* Logo + brand */}
         <div className="text-center mb-8">
-          <h1 className="font-title text-2xl font-bold text-white">Mission Control</h1>
-          <p className="text-muted text-sm mt-1">SOS-Expat</p>
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-violet shadow-glow-violet ring-2 ring-violet/30 mb-4">
+            <span className="font-title text-2xl font-bold text-white">MC</span>
+          </div>
+          <h1 className="font-title text-2xl font-bold text-white flex items-center justify-center gap-2">
+            Mission Control
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-gradient-violet text-white tracking-wider uppercase shadow-sm">v2</span>
+          </h1>
+          <p className="text-violet-light/80 text-xs mt-1 tracking-widest uppercase font-semibold">SOS-Expat CRM</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-surface border border-border rounded-2xl p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="bg-surface/80 backdrop-blur-xl border border-border/80 rounded-2xl p-6 space-y-4 shadow-2xl ring-1 ring-white/5">
           {error && (
-            <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-lg">
+            <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm px-4 py-3 rounded-xl ring-1 ring-inset ring-red-400/10" role="alert">
               {error}
             </div>
           )}
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1.5">Email</label>
+            <label className="block text-sm text-gray-400 mb-1.5 font-medium">Email</label>
             <input
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
-              className="w-full bg-surface2 border border-border rounded-lg px-4 py-2.5 text-white text-sm placeholder-muted focus:outline-none focus:border-violet transition-colors"
+              className="w-full bg-surface2/70 border border-border/80 rounded-xl px-4 py-2.5 text-white text-sm placeholder-muted shadow-inner-sm transition-all focus:outline-none focus:border-violet focus:bg-surface2 focus:shadow-glow-violet"
               placeholder="vous@sos-expat.com"
             />
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1.5">Mot de passe</label>
+            <label className="block text-sm text-gray-400 mb-1.5 font-medium">Mot de passe</label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
-                className="w-full bg-surface2 border border-border rounded-lg px-4 py-2.5 pr-10 text-white text-sm placeholder-muted focus:outline-none focus:border-violet transition-colors"
+                className="w-full bg-surface2/70 border border-border/80 rounded-xl px-4 py-2.5 pr-10 text-white text-sm placeholder-muted shadow-inner-sm transition-all focus:outline-none focus:border-violet focus:bg-surface2 focus:shadow-glow-violet"
                 placeholder="••••••••"
               />
               <button
@@ -85,6 +96,7 @@ export default function Login() {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
                 tabIndex={-1}
+                aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
               >
                 <EyeIcon open={showPassword} />
               </button>
@@ -94,11 +106,15 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-violet hover:bg-violet/90 disabled:opacity-50 text-white font-medium py-2.5 rounded-lg transition-colors"
+            className="w-full bg-gradient-violet hover:shadow-glow-violet active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 text-white font-semibold py-3 rounded-xl transition-all duration-200 ring-1 ring-violet/30 shadow-lg"
           >
             {loading ? 'Connexion...' : 'Se connecter'}
           </button>
         </form>
+
+        <p className="text-center text-[11px] text-muted mt-6 tracking-wider uppercase">
+          Nouvelle interface v2 · {new Date().toISOString().slice(0, 10)}
+        </p>
       </div>
     </div>
   );
