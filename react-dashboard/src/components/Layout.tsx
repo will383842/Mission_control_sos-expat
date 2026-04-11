@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { useContactTypes } from '../hooks/useContactTypes';
 import { useReminders } from '../hooks/useReminders';
@@ -130,6 +131,7 @@ function loadLS<T extends Record<string, boolean>>(key: string, defaults: T): T 
 
 // ── Main Layout ─────────────────────────────────────────────
 export default function Layout() {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   useContactTypes();
   const { reminders } = useReminders();
@@ -197,6 +199,18 @@ export default function Layout() {
     navigate('/login');
   };
 
+  // Close mobile sidebar on Escape
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSidebarOpen(false);
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [sidebarOpen]);
+
+  // NOTE: route-change close is handled via handleNavClick on each NavLink.
+
   const isAdmin = user?.role === 'admin';
   const isManager = user?.role === 'manager';
   const isResearcher = user?.role === 'researcher';
@@ -221,11 +235,21 @@ export default function Layout() {
 
   return (
     <div className="flex min-h-screen bg-bg">
+      {/* Skip link (WCAG) */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-1/2 focus:-translate-x-1/2 focus:z-[100] focus:bg-violet focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-lg"
+      >
+        {t('nav.skipToContent')}
+      </a>
+
       {/* Mobile hamburger */}
       <button
         onClick={() => setSidebarOpen(true)}
-        className="md:hidden fixed top-3 left-3 z-50 p-2 bg-surface border border-border rounded-lg text-white"
-        aria-label="Menu"
+        className="md:hidden fixed top-3 left-3 z-50 min-h-touch min-w-touch p-2 bg-surface border border-border rounded-lg text-white focus-visible:outline-2 focus-visible:outline-violet"
+        aria-label={t('nav.openMenu')}
+        aria-expanded={sidebarOpen}
+        aria-controls="main-sidebar"
       >
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
           <line x1="3" y1="5" x2="17" y2="5" />
@@ -236,11 +260,17 @@ export default function Layout() {
 
       {/* Backdrop */}
       {sidebarOpen && (
-        <div className="md:hidden fixed inset-0 z-40 bg-black/60" onClick={() => setSidebarOpen(false)} />
+        <div
+          className="md:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
       )}
 
       {/* Sidebar */}
       <aside
+        id="main-sidebar"
+        aria-label="Navigation principale"
         className={`fixed inset-y-0 left-0 z-50 w-60 bg-surface border-r border-border flex flex-col transform transition-transform duration-200 ease-in-out ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } md:translate-x-0 md:sticky md:top-0 md:h-screen md:flex-shrink-0`}
@@ -253,8 +283,8 @@ export default function Layout() {
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="md:hidden text-muted hover:text-white"
-            aria-label="Fermer"
+            className="md:hidden min-h-touch min-w-touch inline-flex items-center justify-center text-muted hover:text-white focus-visible:outline-2 focus-visible:outline-violet rounded-lg"
+            aria-label={t('nav.closeMenu')}
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <line x1="4" y1="4" x2="16" y2="16" />
@@ -791,7 +821,7 @@ export default function Layout() {
           prevented native <select> dropdowns from opening in Chrome 120+ (dropdown
           clipped by overflow context). Page-level scroll via body is used instead.
           Sidebar uses md:sticky md:h-screen to remain visible on scroll. */}
-      <main className="flex-1 min-h-screen">
+      <main id="main-content" tabIndex={-1} className="flex-1 min-h-screen focus:outline-none">
         <Outlet />
       </main>
     </div>
