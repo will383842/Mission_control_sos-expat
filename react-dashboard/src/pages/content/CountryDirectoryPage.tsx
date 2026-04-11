@@ -1,6 +1,8 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import api from '../../api/client';
 import { toast } from '../../components/Toast';
+import { Modal } from '../../ui/Modal';
+import { Button } from '../../ui/Button';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -207,7 +209,7 @@ export default function CountryDirectoryPage() {
       reload();
       if (selectedCountry) loadCountry(selectedCountry);
       if (tab === 'embassies') loadEmbassies();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setModalError(err?.response?.data?.message || 'Erreur lors de la sauvegarde');
     } finally {
       setSaving(false);
@@ -715,14 +717,21 @@ function EntryModal({ entry, onChange, onSave, onClose, saving, error }: {
   const set = (field: string, value: unknown) => onChange({ ...entry, [field]: value });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-      <div className="bg-gray-900 rounded-xl border border-gray-700 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="flex justify-between items-center p-4 border-b border-gray-700">
-          <h2 className="text-white font-bold">{entry.id ? 'Modifier l\'entrée' : 'Ajouter une entrée'}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">✕</button>
-        </div>
-
-        <div className="p-4 space-y-4">
+    <Modal
+      open={true}
+      onClose={onClose}
+      title={entry.id ? "Modifier l'entrée" : 'Ajouter une entrée'}
+      size="lg"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>Annuler</Button>
+          <Button variant="primary" onClick={onSave} loading={saving}>
+            {entry.id ? 'Mettre à jour' : 'Créer'}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
           {/* Pays hôte */}
           <fieldset className="border border-gray-700 rounded-lg p-3">
             <legend className="text-xs text-gray-400 px-1">Pays hôte</legend>
@@ -805,17 +814,8 @@ function EntryModal({ entry, onChange, onSave, onClose, saving, error }: {
           </fieldset>
 
           {error && <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/30 rounded p-2">{error}</p>}
-        </div>
-
-        <div className="flex justify-end gap-2 p-4 border-t border-gray-700">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-300 hover:text-white">Annuler</button>
-          <button onClick={onSave} disabled={saving}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm rounded-lg font-medium">
-            {saving ? 'Sauvegarde...' : entry.id ? 'Mettre à jour' : 'Créer'}
-          </button>
-        </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 
@@ -972,7 +972,7 @@ function ImportsTab() {
     try {
       await api.post('/country-directory/imports/launch-all');
       await reloadImports();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(err?.response?.data?.message || 'Erreur lors du lancement');
     } finally {
       setLaunchingAll(false);
@@ -991,7 +991,7 @@ function ImportsTab() {
       setScopeValue('');
       setSelectedCats([]);
       await reloadImports();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setCreateError(err?.response?.data?.message || 'Erreur lors du lancement');
     } finally {
       setCreating(false);

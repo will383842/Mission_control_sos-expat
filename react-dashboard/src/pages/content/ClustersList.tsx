@@ -10,6 +10,8 @@ import {
 import type { TopicCluster, ClusterStatus, PaginatedResponse } from '../../types/content';
 import { toast } from '../../components/Toast';
 import { ConfirmModal } from '../../components/ConfirmModal';
+import { Modal } from '../../ui/Modal';
+import { Button } from '../../ui/Button';
 import { errMsg } from './helpers';
 
 // ── Constants ───────────────────────────────────────────────
@@ -183,24 +185,26 @@ export default function ClustersList() {
       </div>
 
       {/* Auto-cluster modal */}
-      {showAutoCluster && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-md space-y-4">
-            <h3 className="font-title font-semibold text-white text-lg">Auto-clustering articles</h3>
-            <p className="text-sm text-muted">Regrouper automatiquement les articles scraped en clusters thematiques.</p>
-            <div className="space-y-3">
-              <input value={autoCountry} onChange={e => setAutoCountry(e.target.value)} placeholder="Pays (obligatoire)" className={inputClass + ' w-full'} />
-              <input value={autoCategory} onChange={e => setAutoCategory(e.target.value)} placeholder="Categorie (optionnel)" className={inputClass + ' w-full'} />
-            </div>
-            <div className="flex justify-end gap-3">
-              <button onClick={() => setShowAutoCluster(false)} className="px-4 py-2 text-sm text-muted hover:text-white transition-colors">Annuler</button>
-              <button onClick={handleAutoCluster} disabled={autoLoading || !autoCountry} className="px-4 py-2 bg-violet hover:bg-violet/90 text-white text-sm rounded-lg transition-colors disabled:opacity-50">
-                {autoLoading ? 'Clustering...' : 'Lancer'}
-              </button>
-            </div>
-          </div>
+      <Modal
+        open={showAutoCluster}
+        onClose={() => setShowAutoCluster(false)}
+        title="Auto-clustering articles"
+        description="Regrouper automatiquement les articles scraped en clusters thematiques."
+        size="md"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setShowAutoCluster(false)}>Annuler</Button>
+            <Button variant="primary" onClick={handleAutoCluster} disabled={!autoCountry} loading={autoLoading}>
+              {autoLoading ? 'Clustering...' : 'Lancer'}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <input value={autoCountry} onChange={e => setAutoCountry(e.target.value)} placeholder="Pays (obligatoire)" className={inputClass + ' w-full'} />
+          <input value={autoCategory} onChange={e => setAutoCategory(e.target.value)} placeholder="Categorie (optionnel)" className={inputClass + ' w-full'} />
         </div>
-      )}
+      </Modal>
 
       {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

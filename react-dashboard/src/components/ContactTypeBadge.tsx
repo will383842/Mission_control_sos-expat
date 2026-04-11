@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- co-located CONTACT_TYPE_OPTIONS export is used across the codebase */
 import React from 'react';
 import type { ContactType } from '../types/influenceur';
 import { CONTACT_TYPES, CONTACT_TYPE_MAP } from '../lib/constants';

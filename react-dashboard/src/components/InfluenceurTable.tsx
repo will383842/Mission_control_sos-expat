@@ -140,7 +140,7 @@ export default function InfluenceurTable({ influenceurs }: Props) {
     return sortDir === 'asc' ? cmp : -cmp;
   });
 
-  const Th = ({ label, field, className = '' }: { label: string; field?: SortKey; className?: string }) => (
+  const renderTh = (label: string, field?: SortKey, className = '') => (
     <th
       className={`text-left text-xs text-muted font-medium px-3 py-3 whitespace-nowrap ${field ? 'cursor-pointer hover:text-white select-none' : ''} ${className}`}
       onClick={() => field && handleSort(field)}
@@ -155,19 +155,19 @@ export default function InfluenceurTable({ influenceurs }: Props) {
         <table className="w-full">
           <thead>
             <tr className="border-b border-border bg-surface2/30">
-              <Th label="" className="w-1 p-0" />       {/* barre catégorie */}
-              <Th label="Contact" field="name" />
-              <Th label="Type" />
-              <Th label="Pays" field="country" />
-              <Th label="Langue" />
-              <Th label="Email" />
-              <Th label="Téléphone" />
-              <Th label="Réseaux" />
-              <Th label="Formulaire" />
-              <Th label="Statut" field="status" />
-              <Th label="Complétude" field="data_completeness" />
-              <Th label="Dernier contact" field="last_contact_at" />
-              <Th label="" />  {/* actions */}
+              {renderTh('', undefined, 'w-1 p-0')}{/* barre catégorie */}
+              {renderTh('Contact', 'name')}
+              {renderTh('Type')}
+              {renderTh('Pays', 'country')}
+              {renderTh('Langue')}
+              {renderTh('Email')}
+              {renderTh('Téléphone')}
+              {renderTh('Réseaux')}
+              {renderTh('Formulaire')}
+              {renderTh('Statut', 'status')}
+              {renderTh('Complétude', 'data_completeness')}
+              {renderTh('Dernier contact', 'last_contact_at')}
+              {renderTh('')}{/* actions */}
             </tr>
           </thead>
           <tbody>

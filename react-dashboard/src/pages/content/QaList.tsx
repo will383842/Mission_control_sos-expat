@@ -10,6 +10,8 @@ import {
 import type { QaEntry, QaSourceType, ContentStatus, PaginatedResponse } from '../../types/content';
 import { toast } from '../../components/Toast';
 import { ConfirmModal } from '../../components/ConfirmModal';
+import { Modal } from '../../ui/Modal';
+import { Button } from '../../ui/Button';
 import { errMsg } from './helpers';
 
 // ── Constants ───────────────────────────────────────────────
@@ -241,48 +243,52 @@ export default function QaList() {
       </div>
 
       {/* Modal: From Article */}
-      {showFromArticle && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-md space-y-4">
-            <h3 className="font-title font-semibold text-white text-lg">Generer Q&A depuis un article</h3>
-            <p className="text-sm text-muted">Entrez l'ID de l'article dont les FAQ seront extraites.</p>
-            <input
-              type="number"
-              value={articleIdInput}
-              onChange={e => setArticleIdInput(e.target.value)}
-              placeholder="ID article"
-              className={inputClass + ' w-full'}
-            />
-            <div className="flex justify-end gap-3">
-              <button onClick={() => setShowFromArticle(false)} className="px-4 py-2 text-sm text-muted hover:text-white transition-colors">Annuler</button>
-              <button onClick={handleFromArticle} disabled={modalLoading || !articleIdInput} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded-lg transition-colors disabled:opacity-50">
-                {modalLoading ? 'Generation...' : 'Generer'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        open={showFromArticle}
+        onClose={() => setShowFromArticle(false)}
+        title="Generer Q&A depuis un article"
+        description="Entrez l'ID de l'article dont les FAQ seront extraites."
+        size="md"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setShowFromArticle(false)}>Annuler</Button>
+            <Button variant="primary" onClick={handleFromArticle} disabled={!articleIdInput} loading={modalLoading}>
+              Generer
+            </Button>
+          </>
+        }
+      >
+        <input
+          type="number"
+          value={articleIdInput}
+          onChange={e => setArticleIdInput(e.target.value)}
+          placeholder="ID article"
+          className={inputClass + ' w-full'}
+        />
+      </Modal>
 
       {/* Modal: From PAA */}
-      {showFromPaa && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-md space-y-4">
-            <h3 className="font-title font-semibold text-white text-lg">Generer Q&A depuis PAA</h3>
-            <p className="text-sm text-muted">Les questions People Also Ask seront generees pour le sujet donne.</p>
-            <div className="space-y-3">
-              <input value={paaTopic} onChange={e => setPaaTopic(e.target.value)} placeholder="Sujet (ex: visa france)" className={inputClass + ' w-full'} />
-              <input value={paaCountry} onChange={e => setPaaCountry(e.target.value)} placeholder="Pays (ex: france)" className={inputClass + ' w-full'} />
-              <input value={paaLanguage} onChange={e => setPaaLanguage(e.target.value)} placeholder="Langue (optionnel, ex: fr)" className={inputClass + ' w-full'} />
-            </div>
-            <div className="flex justify-end gap-3">
-              <button onClick={() => setShowFromPaa(false)} className="px-4 py-2 text-sm text-muted hover:text-white transition-colors">Annuler</button>
-              <button onClick={handleFromPaa} disabled={modalLoading || !paaTopic || !paaCountry} className="px-4 py-2 bg-violet hover:bg-violet/90 text-white text-sm rounded-lg transition-colors disabled:opacity-50">
-                {modalLoading ? 'Generation...' : 'Generer'}
-              </button>
-            </div>
-          </div>
+      <Modal
+        open={showFromPaa}
+        onClose={() => setShowFromPaa(false)}
+        title="Generer Q&A depuis PAA"
+        description="Les questions People Also Ask seront generees pour le sujet donne."
+        size="md"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setShowFromPaa(false)}>Annuler</Button>
+            <Button variant="primary" onClick={handleFromPaa} disabled={!paaTopic || !paaCountry} loading={modalLoading}>
+              Generer
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <input value={paaTopic} onChange={e => setPaaTopic(e.target.value)} placeholder="Sujet (ex: visa france)" className={inputClass + ' w-full'} />
+          <input value={paaCountry} onChange={e => setPaaCountry(e.target.value)} placeholder="Pays (ex: france)" className={inputClass + ' w-full'} />
+          <input value={paaLanguage} onChange={e => setPaaLanguage(e.target.value)} placeholder="Langue (optionnel, ex: fr)" className={inputClass + ' w-full'} />
         </div>
-      )}
+      </Modal>
 
       {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

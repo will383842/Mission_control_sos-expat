@@ -23,6 +23,8 @@ import {
 } from '../../api/news';
 import { toast } from '../../components/Toast';
 import { inputClass, errMsg, formatDate } from './helpers';
+import { Modal } from '../../ui/Modal';
+import { Button } from '../../ui/Button';
 
 // ── Helpers locaux ──────────────────────────────────────────
 
@@ -98,7 +100,7 @@ const LANGUAGE_OPTIONS = [
   { value: 'ar', label: 'العربية' },
 ];
 
-// ── Confirm Modal simple ────────────────────────────────────
+// ── Confirm Modal simple (wrapper around <Modal>) ──────────────
 function ConfirmModal({ title, message, onConfirm, onCancel }: {
   title: string;
   message: string;
@@ -106,20 +108,20 @@ function ConfirmModal({ title, message, onConfirm, onCancel }: {
   onCancel: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm space-y-4">
-        <h3 className="font-title font-semibold text-white text-lg">{title}</h3>
-        <p className="text-sm text-muted">{message}</p>
-        <div className="flex justify-end gap-2">
-          <button onClick={onCancel} className="px-4 py-1.5 text-sm text-muted hover:text-white transition-colors">
-            Annuler
-          </button>
-          <button onClick={onConfirm} className="px-4 py-1.5 bg-red-600 hover:bg-red-500 text-white text-sm rounded-lg transition-colors">
-            Confirmer
-          </button>
-        </div>
-      </div>
-    </div>
+    <Modal
+      open={true}
+      onClose={onCancel}
+      title={title}
+      size="sm"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onCancel}>Annuler</Button>
+          <Button variant="danger" onClick={onConfirm}>Confirmer</Button>
+        </>
+      }
+    >
+      <p className="text-sm text-muted">{message}</p>
+    </Modal>
   );
 }
 
@@ -347,14 +349,21 @@ function AddFeedModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-lg space-y-4 overflow-y-auto max-h-[90vh]">
-        <div className="flex items-center justify-between">
-          <h3 className="font-title font-semibold text-white text-lg">Ajouter un flux RSS</h3>
-          <button onClick={onClose} className="text-muted hover:text-white transition-colors">✕</button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-3">
+    <Modal
+      open={true}
+      onClose={onClose}
+      title="Ajouter un flux RSS"
+      size="md"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>Annuler</Button>
+          <Button variant="primary" onClick={() => handleSubmit({ preventDefault: () => {} } as React.FormEvent)} loading={saving}>
+            Ajouter le flux
+          </Button>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label className="block text-xs text-muted mb-1">Nom *</label>
             <input
@@ -463,25 +472,10 @@ function AddFeedModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =
             />
             <label htmlFor="feed_active" className="text-sm text-muted">Activer immédiatement</label>
           </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-1.5 text-sm text-muted hover:text-white transition-colors"
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="px-4 py-1.5 bg-violet hover:bg-violet/90 text-white text-sm rounded-lg transition-colors disabled:opacity-50"
-            >
-              {saving ? 'Enregistrement...' : 'Ajouter le flux'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+          {/* Submit via footer button */}
+          <button type="submit" hidden aria-hidden="true" />
+      </form>
+    </Modal>
   );
 }
 
@@ -519,14 +513,21 @@ function EditFeedModal({ feed, onClose, onSaved }: { feed: RssFeed; onClose: () 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-lg space-y-4 overflow-y-auto max-h-[90vh]">
-        <div className="flex items-center justify-between">
-          <h3 className="font-title font-semibold text-white text-lg">Éditer le flux RSS</h3>
-          <button onClick={onClose} className="text-muted hover:text-white transition-colors">✕</button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-3">
+    <Modal
+      open={true}
+      onClose={onClose}
+      title="Éditer le flux RSS"
+      size="md"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>Annuler</Button>
+          <Button variant="primary" onClick={() => handleSubmit({ preventDefault: () => {} } as React.FormEvent)} loading={saving}>
+            Enregistrer
+          </Button>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label className="block text-xs text-muted mb-1">Nom *</label>
             <input
@@ -633,25 +634,9 @@ function EditFeedModal({ feed, onClose, onSaved }: { feed: RssFeed; onClose: () 
             />
             <label htmlFor="edit_feed_active" className="text-sm text-muted">Flux actif</label>
           </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-1.5 text-sm text-muted hover:text-white transition-colors"
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="px-4 py-1.5 bg-violet hover:bg-violet/90 text-white text-sm rounded-lg transition-colors disabled:opacity-50"
-            >
-              {saving ? 'Enregistrement...' : 'Enregistrer'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+          <button type="submit" hidden aria-hidden="true" />
+      </form>
+    </Modal>
   );
 }
 
@@ -1032,61 +1017,54 @@ function BatchModal({ feeds, onClose, onLaunched }: {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="font-title font-semibold text-white text-lg">Générer un batch</h3>
-          <button onClick={onClose} className="text-muted hover:text-white transition-colors">✕</button>
+    <Modal
+      open={true}
+      onClose={onClose}
+      title="Générer un batch"
+      size="sm"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>Annuler</Button>
+          <Button variant="primary" onClick={handleLaunch} loading={launching}>⚡ Lancer</Button>
+        </>
+      }
+    >
+      <div className="space-y-3">
+        <div>
+          <label className="block text-xs text-muted mb-1">Nombre max à générer</label>
+          <input
+            type="number"
+            min={1}
+            max={50}
+            className={inputClass + ' w-full'}
+            value={limit}
+            onChange={e => setLimit(e.target.value)}
+          />
         </div>
-        <div className="space-y-3">
-          <div>
-            <label className="block text-xs text-muted mb-1">Nombre max à générer</label>
-            <input
-              type="number"
-              min={1}
-              max={50}
-              className={inputClass + ' w-full'}
-              value={limit}
-              onChange={e => setLimit(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-muted mb-1">Flux spécifique (optionnel)</label>
-            <select
-              className={inputClass + ' w-full'}
-              value={feedId}
-              onChange={e => setFeedId(e.target.value)}
-            >
-              <option value="">Tous les flux</option>
-              {feeds.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs text-muted mb-1">Score minimum : <span className="text-white">{minRelevance}%</span></label>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              value={minRelevance}
-              onChange={e => setMinRelevance(e.target.value)}
-              className="w-full accent-violet"
-            />
-          </div>
-        </div>
-        <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-1.5 text-sm text-muted hover:text-white transition-colors">
-            Annuler
-          </button>
-          <button
-            onClick={handleLaunch}
-            disabled={launching}
-            className="px-4 py-1.5 bg-violet hover:bg-violet/90 text-white text-sm rounded-lg transition-colors disabled:opacity-50"
+        <div>
+          <label className="block text-xs text-muted mb-1">Flux spécifique (optionnel)</label>
+          <select
+            className={inputClass + ' w-full'}
+            value={feedId}
+            onChange={e => setFeedId(e.target.value)}
           >
-            {launching ? 'Lancement...' : '⚡ Lancer'}
-          </button>
+            <option value="">Tous les flux</option>
+            {feeds.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs text-muted mb-1">Score minimum : <span className="text-white">{minRelevance}%</span></label>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={minRelevance}
+            onChange={e => setMinRelevance(e.target.value)}
+            className="w-full accent-violet"
+          />
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 

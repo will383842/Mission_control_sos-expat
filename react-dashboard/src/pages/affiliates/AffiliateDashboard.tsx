@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { toast as _toast } from '../../components/Toast';
+import { Modal } from '../../ui/Modal';
+import { Button } from '../../ui/Button';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -174,8 +176,8 @@ export default function AffiliateDashboard() {
       );
       setPrograms(data.data);
       setStats(data.stats);
-    } catch (e: any) {
-      showToast(e.message || 'Erreur chargement', 'error');
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : 'Erreur chargement', 'error');
     } finally {
       setLoading(false);
     }
@@ -193,7 +195,7 @@ export default function AffiliateDashboard() {
     }
   }
 
-  async function handleUpdateField(program: AffiliateProgram, field: string, value: any) {
+  async function handleUpdateField(program: AffiliateProgram, field: string, value: unknown) {
     try {
       await apiFetch(`/affiliates/${program.id}`, {
         method: 'PUT',
@@ -201,8 +203,8 @@ export default function AffiliateDashboard() {
       }, token);
       showToast('Mis à jour', 'success');
       load();
-    } catch (e: any) {
-      showToast(e.message, 'error');
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : 'Erreur', 'error');
     }
   }
 
@@ -700,12 +702,12 @@ function ProgramModal({
   });
   const [saving, setSaving] = useState(false);
 
-  const set = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }));
+  const set = (k: string, v: unknown) => setForm(f => ({ ...f, [k]: v }));
 
   async function save() {
     setSaving(true);
     try {
-      const payload: any = { ...form };
+      const payload: Record<string, unknown> = { ...form };
       // Convertir les champs vides en null
       ['description', 'affiliate_dashboard_url', 'affiliate_signup_url', 'my_affiliate_link',
        'commission_info', 'payout_threshold', 'payout_method', 'payout_frequency', 'network', 'notes'
@@ -718,22 +720,28 @@ function ProgramModal({
       }
       showToast(isEdit ? 'Programme mis à jour' : 'Programme créé', 'success');
       onSaved();
-    } catch (e: any) {
-      showToast(e.message, 'error');
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : 'Erreur', 'error');
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="bg-surface border border-border rounded-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        <div className="p-4 border-b border-border flex items-center justify-between">
-          <h2 className="font-semibold text-white">{isEdit ? 'Modifier le programme' : 'Nouveau programme'}</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-white">✕</button>
-        </div>
-        <div className="overflow-y-auto p-4 space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+    <Modal
+      open={true}
+      onClose={onClose}
+      title={isEdit ? 'Modifier le programme' : 'Nouveau programme'}
+      size="lg"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>Annuler</Button>
+          <Button variant="primary" onClick={save} loading={saving}>Enregistrer</Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
               <label className="block text-xs text-gray-400 mb-1">Nom du programme *</label>
               <input value={form.name} onChange={e => set('name', e.target.value)}
@@ -817,19 +825,9 @@ function ProgramModal({
                 rows={3}
                 className="w-full px-3 py-2 bg-surface2 border border-border rounded-lg text-sm text-white focus:outline-none focus:border-violet resize-none" />
             </div>
-          </div>
-        </div>
-        <div className="p-4 border-t border-border flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors">
-            Annuler
-          </button>
-          <button onClick={save} disabled={saving}
-            className="px-4 py-2 bg-violet text-white rounded-lg text-sm font-medium hover:bg-violet/80 disabled:opacity-50 transition-colors">
-            {saving ? 'Enregistrement...' : 'Enregistrer'}
-          </button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 
@@ -857,7 +855,7 @@ function EarningModal({
     earned_at: today,
   });
   const [saving, setSaving] = useState(false);
-  const set = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }));
+  const set = (k: string, v: unknown) => setForm(f => ({ ...f, [k]: v }));
 
   async function save() {
     if (!form.amount || parseFloat(form.amount) <= 0) {
@@ -872,21 +870,27 @@ function EarningModal({
       }, token);
       showToast('Entrée ajoutée', 'success');
       onSaved();
-    } catch (e: any) {
-      showToast(e.message, 'error');
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : 'Erreur', 'error');
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="bg-surface border border-border rounded-xl w-full max-w-md">
-        <div className="p-4 border-b border-border flex items-center justify-between">
-          <h2 className="font-semibold text-white">Ajouter une entrée — {program.name}</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-white">✕</button>
-        </div>
-        <div className="p-4 space-y-3">
+    <Modal
+      open={true}
+      onClose={onClose}
+      title={`Ajouter une entrée — ${program.name}`}
+      size="md"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>Annuler</Button>
+          <Button variant="primary" onClick={save} loading={saving}>Ajouter</Button>
+        </>
+      }
+    >
+      <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-gray-400 mb-1">Type</label>
@@ -927,16 +931,8 @@ function EarningModal({
               ⚠️ Un "Paiement reçu" réduit le solde courant du montant saisi.
             </p>
           )}
-        </div>
-        <div className="p-4 border-t border-border flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-400 hover:text-white">Annuler</button>
-          <button onClick={save} disabled={saving}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-500 disabled:opacity-50">
-            {saving ? '...' : 'Ajouter'}
-          </button>
-        </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 
@@ -965,24 +961,22 @@ function DetailModal({
   const totalPayouts = payouts.reduce((s, e) => s + parseFloat(e.amount), 0);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="bg-surface border border-border rounded-xl w-full max-w-xl max-h-[80vh] flex flex-col">
-        <div className="p-4 border-b border-border flex items-center justify-between">
-          <div>
-            <h2 className="font-semibold text-white">{program.name}</h2>
-            <p className="text-xs text-gray-500 mt-0.5">Historique des gains</p>
-          </div>
-          <div className="flex gap-2">
-            <button onClick={onAddEarning}
-              className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-medium hover:bg-green-500">
-              + Entrée
-            </button>
-            <button onClick={onClose} className="text-gray-500 hover:text-white">✕</button>
-          </div>
-        </div>
-
+    <Modal
+      open={true}
+      onClose={onClose}
+      title={program.name}
+      description="Historique des gains"
+      size="lg"
+      footer={
+        <>
+          <Button variant="primary" onClick={onAddEarning}>+ Entrée</Button>
+          <Button variant="ghost" onClick={onClose}>Fermer</Button>
+        </>
+      }
+    >
+      <div className="space-y-0">
         {/* Résumé */}
-        <div className="grid grid-cols-3 gap-3 p-4 border-b border-border">
+        <div className="grid grid-cols-3 gap-3 pb-4 border-b border-border">
           <div className="text-center">
             <p className="text-[10px] text-gray-500 uppercase">Solde actuel</p>
             <p className="text-lg font-bold text-white">{parseFloat(program.current_balance).toFixed(2)} €</p>
@@ -1033,7 +1027,7 @@ function DetailModal({
         </div>
 
         {program.affiliate_dashboard_url && (
-          <div className="p-3 border-t border-border">
+          <div className="pt-3 mt-3 border-t border-border">
             <a href={program.affiliate_dashboard_url} target="_blank" rel="noopener noreferrer"
               className="block text-center text-xs py-2 bg-violet/20 text-violet-light rounded-lg hover:bg-violet/30 transition-colors">
               🔗 Ouvrir le dashboard affilié pour vérifier les chiffres
@@ -1041,6 +1035,6 @@ function DetailModal({
           </div>
         )}
       </div>
-    </div>
+    </Modal>
   );
 }

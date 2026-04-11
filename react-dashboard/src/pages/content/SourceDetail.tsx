@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api/client';
+import { Modal } from '../../ui/Modal';
 
 // ── Source metadata ────────────────────────────────────────
 const SOURCE_META: Record<string, { label: string; icon: string; description: string; accentColor: string }> = {
@@ -386,32 +387,17 @@ export default function SourceDetail() {
       </div>
 
       {/* Detail drawer */}
-      {(detail || detailLoading) && (
-        <div className="fixed inset-0 z-50 flex justify-end" onClick={() => setDetail(null)}>
-          <div className="absolute inset-0 bg-black/60" />
-          <div
-            className="relative w-full max-w-xl bg-surface border-l border-border overflow-y-auto shadow-2xl"
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Drawer header */}
-            <div className="sticky top-0 bg-surface border-b border-border p-5 flex items-start justify-between z-10">
-              <h3 className="font-semibold text-t1 text-base pr-4 line-clamp-2">
-                {detail?.item?.title ?? 'Chargement...'}
-              </h3>
-              <button
-                onClick={() => setDetail(null)}
-                className="text-t3 hover:text-t1 transition-colors flex-shrink-0"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {detailLoading ? (
-              <div className="p-8 text-t3 text-sm animate-pulse">Chargement...</div>
-            ) : detail && (
-              <div className="p-5 space-y-5">
+      <Modal
+        open={!!detail || detailLoading}
+        onClose={() => setDetail(null)}
+        title={detail?.item?.title ?? 'Chargement...'}
+        size="xl"
+        placement="right"
+      >
+        {detailLoading ? (
+          <div className="p-8 text-t3 text-sm animate-pulse">Chargement...</div>
+        ) : detail && (
+          <div className="space-y-5">
                 {/* Meta grid */}
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   {[
@@ -551,11 +537,9 @@ export default function SourceDetail() {
                     </div>
                   </>
                 )}
-              </div>
-            )}
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   );
 }

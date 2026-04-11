@@ -12,6 +12,8 @@ import {
 import type { PressDossier, PressDossierItem, ContentStatus } from '../../types/content';
 import { toast } from '../../components/Toast';
 import { ConfirmModal } from '../../components/ConfirmModal';
+import { Modal } from '../../ui/Modal';
+import { Button } from '../../ui/Button';
 import { errMsg } from './helpers';
 import { useDirtyGuard } from '../../hooks/useDirtyGuard';
 
@@ -357,44 +359,45 @@ export default function DossierDetail() {
       </div>
 
       {/* Add item modal */}
-      {showAddItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowAddItem(false)}>
-          <div className="bg-surface border border-border rounded-lg shadow-xl p-6 max-w-md w-full mx-4" onClick={e => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-white mb-4">Ajouter un element</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs text-muted uppercase tracking-wide mb-1">Type</label>
-                <select value={addItemType} onChange={e => setAddItemType(e.target.value as 'article' | 'press_release')} className={inputClass + ' w-full'}>
-                  <option value="article">Article</option>
-                  <option value="press_release">Communique de presse</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs text-muted uppercase tracking-wide mb-1">ID de l'element</label>
-                <input
-                  type="number"
-                  value={addItemId}
-                  onChange={e => setAddItemId(e.target.value)}
-                  placeholder="Ex: 42"
-                  className={inputClass + ' w-full'}
-                />
-              </div>
-              <div className="flex justify-end gap-3">
-                <button onClick={() => setShowAddItem(false)} className="px-4 py-2 text-sm text-muted hover:text-white transition-colors">
-                  Annuler
-                </button>
-                <button
-                  onClick={handleAddItem}
-                  disabled={!addItemId.trim() || actionLoading === 'add-item'}
-                  className="px-4 py-2 bg-violet hover:bg-violet/90 text-white text-sm rounded-lg transition-colors disabled:opacity-50"
-                >
-                  {actionLoading === 'add-item' ? 'Ajout...' : 'Ajouter'}
-                </button>
-              </div>
-            </div>
+      <Modal
+        open={showAddItem}
+        onClose={() => setShowAddItem(false)}
+        title="Ajouter un element"
+        size="md"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setShowAddItem(false)}>Annuler</Button>
+            <Button
+              variant="primary"
+              onClick={handleAddItem}
+              disabled={!addItemId.trim()}
+              loading={actionLoading === 'add-item'}
+            >
+              Ajouter
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs text-muted uppercase tracking-wide mb-1">Type</label>
+            <select value={addItemType} onChange={e => setAddItemType(e.target.value as 'article' | 'press_release')} className={inputClass + ' w-full'}>
+              <option value="article">Article</option>
+              <option value="press_release">Communique de presse</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs text-muted uppercase tracking-wide mb-1">ID de l'element</label>
+            <input
+              type="number"
+              value={addItemId}
+              onChange={e => setAddItemId(e.target.value)}
+              placeholder="Ex: 42"
+              className={inputClass + ' w-full'}
+            />
           </div>
         </div>
-      )}
+      </Modal>
 
       <ConfirmModal
         open={!!confirmAction}

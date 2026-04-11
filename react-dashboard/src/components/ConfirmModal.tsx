@@ -1,4 +1,5 @@
-import React from 'react';
+import { Modal } from '../ui/Modal';
+import { Button } from '../ui/Button';
 
 interface ConfirmModalProps {
   open: boolean;
@@ -7,10 +8,15 @@ interface ConfirmModalProps {
   confirmLabel?: string;
   cancelLabel?: string;
   variant?: 'danger' | 'warning' | 'default';
+  loading?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }
 
+/**
+ * ConfirmModal — accessible confirmation dialog.
+ * Built on top of <Modal> (focus trap + Escape + portal + role="dialog").
+ */
 export function ConfirmModal({
   open,
   title,
@@ -18,40 +24,31 @@ export function ConfirmModal({
   confirmLabel = 'Confirmer',
   cancelLabel = 'Annuler',
   variant = 'default',
+  loading = false,
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
-  if (!open) return null;
-
-  const btnColors = {
-    danger: 'bg-red-600 hover:bg-red-700',
-    warning: 'bg-amber-600 hover:bg-amber-700',
-    default: 'bg-violet hover:bg-violet/90',
-  };
+  const confirmVariant =
+    variant === 'danger' ? 'danger' : variant === 'warning' ? 'primary' : 'primary';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={onCancel}>
-      <div
-        className="bg-surface border border-border rounded-lg shadow-xl p-6 max-w-md w-full mx-4"
-        onClick={e => e.stopPropagation()}
-      >
-        <h3 className="text-lg font-bold text-white mb-2">{title}</h3>
-        <p className="text-muted mb-6">{message}</p>
-        <div className="flex justify-end gap-3">
-          <button
-            className="px-4 py-2 rounded bg-surface2 text-muted hover:text-white transition"
-            onClick={onCancel}
-          >
+    <Modal
+      open={open}
+      onClose={onCancel}
+      title={title}
+      size="sm"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onCancel} disabled={loading}>
             {cancelLabel}
-          </button>
-          <button
-            className={`px-4 py-2 rounded text-white transition ${btnColors[variant]}`}
-            onClick={onConfirm}
-          >
+          </Button>
+          <Button variant={confirmVariant} onClick={onConfirm} loading={loading}>
             {confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </>
+      }
+    >
+      <p className="text-text-muted">{message}</p>
+    </Modal>
   );
 }

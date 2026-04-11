@@ -11,6 +11,8 @@ import {
 } from '../../api/promoTemplatesApi';
 import { toast } from '../../components/Toast';
 import { ConfirmModal } from '../../components/ConfirmModal';
+import { Modal } from '../../ui/Modal';
+import { Button } from '../../ui/Button';
 
 const TYPE_LABELS: Record<PromoTemplateType, string> = {
   utm_campaign: 'Campagne UTM',
@@ -280,14 +282,21 @@ export default function PromoToolsAdmin() {
       )}
 
       {/* Create/Edit Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface1 rounded-2xl border border-border w-full max-w-lg p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-text">
-              {editing ? 'Modifier le template' : 'Nouveau template'}
-            </h2>
-
-            <div className="space-y-3">
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        title={editing ? 'Modifier le template' : 'Nouveau template'}
+        size="md"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setShowModal(false)}>Annuler</Button>
+            <Button variant="primary" onClick={handleSave} loading={saving}>
+              {editing ? 'Mettre à jour' : 'Créer'}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
               <div>
                 <label className="block text-xs text-muted mb-1">Nom *</label>
                 <input
@@ -370,39 +379,20 @@ export default function PromoToolsAdmin() {
                 />
                 <label htmlFor="is_active" className="text-sm text-text">Actif (visible dans les outils)</label>
               </div>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-2">
-              <button
-                onClick={() => setShowModal(false)}
-                className="px-4 py-2 text-sm text-muted hover:text-text transition-colors"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="bg-violet hover:bg-violet/90 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              >
-                {saving ? 'Sauvegarde...' : (editing ? 'Mettre à jour' : 'Créer')}
-              </button>
-            </div>
-          </div>
         </div>
-      )}
+      </Modal>
 
       {/* Delete Confirm */}
-      {deleteTarget && (
-        <ConfirmModal
-          title="Supprimer le template"
-          message={`Supprimer "${deleteTarget.name}" ? Cette action est irréversible.`}
-          confirmLabel="Supprimer"
-          confirmClass="bg-red-600 hover:bg-red-700 text-white"
-          onConfirm={handleDelete}
-          onCancel={() => setDeleteTarget(null)}
-          loading={deleting}
-        />
-      )}
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Supprimer le template"
+        message={deleteTarget ? `Supprimer "${deleteTarget.name}" ? Cette action est irréversible.` : ''}
+        variant="danger"
+        confirmLabel="Supprimer"
+        loading={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- legacy global-state toast, see ui/Toast for the React Query-friendly replacement */
 import React, { useState, useCallback, useEffect } from 'react';
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';

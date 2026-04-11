@@ -2,6 +2,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../api/client';
 import { CONTACT_TYPES } from '../../lib/constants';
+import { Modal } from '../../ui/Modal';
+import { Button } from '../../ui/Button';
 
 interface Email {
   id: number; step: number; subject: string; body_text: string;
@@ -444,37 +446,35 @@ export default function ProspectionEmails() {
       {/* ═══════════════════════════════════════
           EDIT MODAL
       ═══════════════════════════════════════ */}
-      {editEmail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setEditEmail(null)}>
-          <div className="bg-surface border border-border rounded-xl w-full max-w-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between">
-              <h3 className="text-white font-title font-semibold">Editer l'email</h3>
-              <div className="flex items-center gap-2 text-xs text-muted">
-                <span>{editEmail.influenceur?.name}</span>
-                <span className="bg-surface2 px-2 py-0.5 rounded">Step {editEmail.step}</span>
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs text-muted mb-1">Objet</label>
-              <input value={editSubject} onChange={e => setEditSubject(e.target.value)}
-                className="w-full bg-bg border border-border rounded-lg px-3 py-2 text-white text-sm focus:border-violet outline-none" />
-            </div>
-            <div>
-              <label className="block text-xs text-muted mb-1">Corps (texte brut — pas de HTML pour maximiser la delivrabilite)</label>
-              <textarea value={editBody} onChange={e => setEditBody(e.target.value)} rows={12}
-                className="w-full bg-bg border border-border rounded-lg px-3 py-2 text-white text-sm focus:border-violet outline-none resize-y leading-relaxed" />
-            </div>
-            <p className="text-[10px] text-muted">Texte brut uniquement. Le formatage HTML est volontairement desactive pour maximiser la delivrabilite.</p>
-            <div className="flex justify-end gap-3 pt-2">
-              <button onClick={() => setEditEmail(null)} className="px-4 py-2 text-muted hover:text-white text-sm transition-colors">Annuler</button>
-              <button onClick={handleSaveEdit} disabled={actionLoading === editEmail.id}
-                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm rounded-lg transition-colors font-medium">
-                Sauvegarder et approuver
-              </button>
-            </div>
+      <Modal
+        open={!!editEmail}
+        onClose={() => setEditEmail(null)}
+        title="Editer l'email"
+        description={editEmail ? `${editEmail.influenceur?.name ?? ''} · Step ${editEmail.step}` : undefined}
+        size="lg"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setEditEmail(null)}>Annuler</Button>
+            <Button variant="primary" onClick={handleSaveEdit} loading={actionLoading === editEmail?.id}>
+              Sauvegarder et approuver
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs text-muted mb-1">Objet</label>
+            <input value={editSubject} onChange={e => setEditSubject(e.target.value)}
+              className="w-full bg-bg border border-border rounded-lg px-3 py-2 text-white text-sm focus:border-violet outline-none" />
           </div>
+          <div>
+            <label className="block text-xs text-muted mb-1">Corps (texte brut — pas de HTML pour maximiser la delivrabilite)</label>
+            <textarea value={editBody} onChange={e => setEditBody(e.target.value)} rows={12}
+              className="w-full bg-bg border border-border rounded-lg px-3 py-2 text-white text-sm focus:border-violet outline-none resize-y leading-relaxed" />
+          </div>
+          <p className="text-[10px] text-muted">Texte brut uniquement. Le formatage HTML est volontairement desactive pour maximiser la delivrabilite.</p>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

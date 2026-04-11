@@ -12,6 +12,8 @@ import {
 } from '../../api/sondagesApi';
 import { toast } from '../../components/Toast';
 import { ConfirmModal } from '../../components/ConfirmModal';
+import { Modal } from '../../ui/Modal';
+import { Button } from '../../ui/Button';
 
 const STATUS_COLORS: Record<SondageStatus, string> = {
   draft: 'bg-yellow-500/20 text-yellow-300',
@@ -354,17 +356,21 @@ export default function SondagesList() {
       )}
 
       {/* ── Modal formulaire ─────────────────────────────────────── */}
-      {showForm && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 backdrop-blur-sm pt-10 pb-6 overflow-y-auto">
-          <div className="bg-surface border border-border rounded-2xl w-full max-w-2xl mx-4 shadow-2xl">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-              <h3 className="font-title text-lg font-semibold text-white">
-                {editingId !== null ? 'Modifier le sondage' : 'Nouveau sondage'}
-              </h3>
-              <button onClick={closeForm} className="text-muted hover:text-white transition-colors text-xl leading-none">×</button>
-            </div>
-
-            <div className="px-6 py-5 space-y-5">
+      <Modal
+        open={showForm}
+        onClose={closeForm}
+        title={editingId !== null ? 'Modifier le sondage' : 'Nouveau sondage'}
+        size="lg"
+        footer={
+          <>
+            <Button variant="ghost" onClick={closeForm}>Annuler</Button>
+            <Button variant="primary" onClick={handleSave} loading={saving}>
+              {saving ? 'Enregistrement...' : editingId !== null ? 'Mettre à jour' : 'Créer le sondage'}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-5">
               {/* Titre */}
               <div>
                 <label className="block text-xs text-muted mb-1.5 uppercase tracking-wide">Titre *</label>
@@ -491,21 +497,8 @@ export default function SondagesList() {
                   ))}
                 </div>
               </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border">
-              <button onClick={closeForm} className="px-4 py-2 text-sm text-muted hover:text-white transition-colors">Annuler</button>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="px-5 py-2 bg-violet hover:bg-violet/90 text-white text-sm rounded-lg transition-colors disabled:opacity-50"
-              >
-                {saving ? 'Enregistrement...' : editingId !== null ? 'Mettre à jour' : 'Créer le sondage'}
-              </button>
-            </div>
-          </div>
         </div>
-      )}
+      </Modal>
 
       <ConfirmModal
         open={!!confirmDelete}
