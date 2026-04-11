@@ -179,7 +179,7 @@ export default function ArtMotsCles() {
       await generateArticle(params);
       setKeywords(prev => prev.map(k => k.id === kw.id ? { ...k, _status: undefined, articles_using_count: 1 } : k));
       toast.success(`Generation lancee: ${kw.keyword}`);
-    } catch (e: any) {
+    } catch (e: unknown) {
       setKeywords(prev => prev.map(k => k.id === kw.id ? { ...k, _status: 'failed' } : k));
       toast.error(e?.response?.data?.message || 'Erreur generation');
     } finally {

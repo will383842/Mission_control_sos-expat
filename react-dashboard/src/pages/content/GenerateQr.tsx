@@ -69,6 +69,10 @@ export default function GenerateQr() {
     } catch { /* silent */ }
   }, []);
 
+  const stopPolling = useCallback(() => {
+    if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+  }, []);
+
   const loadProgress = useCallback(async () => {
     try {
       const res = await fetchQrBlogProgress();
@@ -79,10 +83,12 @@ export default function GenerateQr() {
         loadStats();
       }
     } catch { /* silent */ }
-  }, []);
+  }, [stopPolling, loadStats]);
 
-  const stopPolling = () => { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; } };
-  const startPolling = () => { stopPolling(); pollRef.current = setInterval(loadProgress, 3000); };
+  const startPolling = useCallback(() => {
+    stopPolling();
+    pollRef.current = setInterval(loadProgress, 3000);
+  }, [stopPolling, loadProgress]);
 
   useEffect(() => { loadStats().finally(() => setStatsLoading(false)); return () => stopPolling(); }, []);
   useEffect(() => { if (progress?.status === 'running') startPolling(); }, []);

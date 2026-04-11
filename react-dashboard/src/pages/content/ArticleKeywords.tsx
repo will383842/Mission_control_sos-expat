@@ -146,7 +146,7 @@ export default function ArticleKeywords({ preset }: Props) {
       const article = res.data as unknown as GeneratedArticle;
       setKeywords(prev => prev.map(k => k.keyword === kw ? { ...k, status: 'done', articleId: article.id } : k));
       toast.success(`Article lance pour "${kw}"`);
-    } catch (e: any) {
+    } catch (e: unknown) {
       setKeywords(prev => prev.map(k => k.keyword === kw ? { ...k, status: 'pending' } : k));
       toast.error(e?.response?.data?.message || 'Erreur generation');
     }

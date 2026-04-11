@@ -51,7 +51,7 @@ export default function ContentTemplateDetail() {
       setNewKeyword('');
       toast.success('Mot-cle ajoute');
       loadTemplate();
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast.error(e?.response?.data?.message || 'Erreur');
     }
   };
@@ -66,7 +66,7 @@ export default function ContentTemplateDetail() {
       setShowBulk(false);
       toast.success((res.data as any).message);
       loadTemplate();
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast.error(e?.response?.data?.message || 'Erreur');
     }
   };
@@ -78,7 +78,7 @@ export default function ContentTemplateDetail() {
       const res = await expandTemplate(template.id);
       toast.success((res.data as any).message);
       loadTemplate();
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast.error(e?.response?.data?.message || 'Erreur expansion');
     } finally {
       setExpandLoading(false);
@@ -92,7 +92,7 @@ export default function ContentTemplateDetail() {
       const res = await generateTemplateItems(template.id, limit, itemIds);
       toast.success((res.data as any).message);
       loadTemplate();
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast.error(e?.response?.data?.message || 'Erreur generation');
     } finally {
       setGenerating(false);

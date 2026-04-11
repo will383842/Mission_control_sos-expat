@@ -72,7 +72,7 @@ export default function FichesPays({ type }: Props) {
       toast.success(`Generation lancee pour ${countryName}`);
       // Remove from missing list
       setMissing(prev => prev.filter(c => c.code !== countryCode));
-    } catch (e: any) {
+    } catch (e: unknown) {
       const msg = e?.response?.data?.message || 'Erreur generation';
       toast.error(msg);
     } finally {

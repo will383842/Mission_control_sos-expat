@@ -185,7 +185,7 @@ export default function ScrapingDashboard() {
       const res = await api.post('/content-gen/scraping/launch', { action });
       notify(`✅ ${res.data.message}`);
       setTimeout(fetchStatus, 3000);
-    } catch (e: any) {
+    } catch (e: unknown) {
       notify(e?.response?.data?.error || 'Erreur de lancement', 'error');
     } finally {
       setLaunching(null);

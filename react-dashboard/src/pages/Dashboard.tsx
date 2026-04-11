@@ -150,11 +150,6 @@ export default function Dashboard() {
     }
   }, [user]);
 
-  // Redirect researchers
-  if (user?.role === 'researcher') {
-    return <Navigate to="/mon-tableau" replace />;
-  }
-
   // ── Derived data ────────────────────────────────────────
   const activeAndSigned = useMemo(() => {
     if (!stats) return 0;
@@ -185,6 +180,11 @@ export default function Dashboard() {
     if (!stats?.byStatus) return [];
     return Object.entries(stats.byStatus).map(([name, value]) => ({ name, value }));
   }, [stats]);
+
+  // Redirect researchers (after all hooks)
+  if (user?.role === 'researcher') {
+    return <Navigate to="/mon-tableau" replace />;
+  }
 
   // ── Loading skeleton ────────────────────────────────────
   if (loading) {

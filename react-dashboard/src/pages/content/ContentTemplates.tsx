@@ -138,7 +138,7 @@ export default function ContentTemplates() {
       setNewTitle('');
       setNewInstructions('');
       loadTemplates();
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast.error(e?.response?.data?.message || 'Erreur creation');
     } finally {
       setCreating(false);

@@ -197,7 +197,7 @@ export default function ArtStatistiques() {
       const res = await fetchFn({});
       toast.success(`${res.data.total_stored} data points recuperes`);
       await loadDataStats();
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast.error(e?.response?.data?.error || `Erreur fetch ${source}`);
     } finally {
       setFetching(null);
@@ -222,7 +222,7 @@ export default function ArtStatistiques() {
       toast.success(`${res.data.stats_found} statistiques trouvees`);
       await loadDatasets();
       await loadOverview();
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast.error(e?.response?.data?.error || 'Erreur recherche');
     } finally {
       setResearching(false);
@@ -240,7 +240,7 @@ export default function ArtStatistiques() {
       toast.success(`${res.data.queued} recherches lancees, ${res.data.skipped} deja faites`);
       await loadDatasets();
       await loadOverview();
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast.error(e?.response?.data?.error || 'Erreur batch');
     } finally {
       setBatchRunning(false);
@@ -254,7 +254,7 @@ export default function ArtStatistiques() {
       toast.success('Dataset valide par Claude');
       await loadDatasets();
       await loadOverview();
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast.error(e?.response?.data?.error || 'Erreur validation');
     }
   };
@@ -267,7 +267,7 @@ export default function ArtStatistiques() {
       toast.success(`Article genere: ${ds.title}`);
       await loadDatasets();
       await loadOverview();
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast.error(e?.response?.data?.error || 'Erreur generation');
     } finally {
       setGeneratingIds(prev => { const s = new Set(prev); s.delete(ds.id); return s; });
@@ -282,7 +282,7 @@ export default function ArtStatistiques() {
       const res = await generateStatisticsBatch(ids);
       toast.success(`${res.data.queued} articles en generation`);
       await loadDatasets();
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast.error(e?.response?.data?.error || 'Erreur batch generation');
     }
   };

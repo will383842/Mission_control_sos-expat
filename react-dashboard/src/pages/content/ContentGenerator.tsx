@@ -182,22 +182,24 @@ export default function ContentGenerator({ type }: Props) {
         }),
         api.get('/generation-sources/categories'),
       ]);
-      const raw = itemsRes.data as any;
-      setItems(raw?.items?.data ?? raw?.data ?? (Array.isArray(raw) ? raw : []));
-      const cats = (statsRes.data as any) ?? [];
-      const myCat = Array.isArray(cats) ? cats.find((c: any) => c.slug === config.slug) : null;
-      setStats(myCat ?? null);
+      const raw = itemsRes.data as { items?: { data?: unknown[] }; data?: unknown[] } | unknown[];
+      const extractedItems = (raw as { items?: { data?: unknown[] } })?.items?.data
+        ?? (raw as { data?: unknown[] })?.data
+        ?? (Array.isArray(raw) ? raw : []);
+      setItems(extractedItems as typeof items);
+      const cats = (statsRes.data as Array<{ slug: string }>) ?? [];
+      const myCat = Array.isArray(cats) ? cats.find((c) => c.slug === config.slug) : null;
+      setStats((myCat ?? null) as typeof stats);
       // Load logs for stats tab
       if (tab === 'generated') {
         try {
           const logsRes = await api.get('/content/orchestrator/logs', { params: { days: 30 } });
-          const allLogs: any[] = Array.isArray(logsRes.data) ? logsRes.data : [];
-          // Filter by content type
+          const allLogs = (Array.isArray(logsRes.data) ? logsRes.data : []) as Array<{ type?: string; content_type?: string }>;
           const filtered = allLogs
-            .filter((l: any) => l.type === config.contentType || l.content_type === config.contentType)
+            .filter((l) => l.type === config.contentType || l.content_type === config.contentType)
             .slice(0, 30)
             .reverse();
-          setLogs(filtered);
+          setLogs(filtered as typeof logs);
         } catch {
           setLogs([]);
         }
@@ -217,12 +219,12 @@ export default function ContentGenerator({ type }: Props) {
     setLogsLoading(true);
     api.get('/content/orchestrator/logs', { params: { days: 30 } })
       .then(res => {
-        const allLogs: any[] = Array.isArray(res.data) ? res.data : [];
+        const allLogs = (Array.isArray(res.data) ? res.data : []) as Array<{ type?: string; content_type?: string }>;
         const filtered = allLogs
-          .filter((l: any) => l.type === config.contentType || l.content_type === config.contentType)
+          .filter((l) => l.type === config.contentType || l.content_type === config.contentType)
           .slice(0, 30)
           .reverse();
-        setLogs(filtered);
+        setLogs(filtered as typeof logs);
       })
       .catch(() => setLogs([]))
       .finally(() => setLogsLoading(false));
@@ -248,8 +250,9 @@ export default function ContentGenerator({ type }: Props) {
       await generateArticle(params);
       toast.success(`Generation lancee: ${item.title}`);
       loadData();
-    } catch (e: any) {
-      toast.error(e?.response?.data?.message || 'Erreur');
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg || 'Erreur');
     } finally {
       setGenerating(null);
     }
@@ -308,8 +311,9 @@ export default function ContentGenerator({ type }: Props) {
       await generateArticle(params);
       toast.success(`Generation lancee: ${newTitle.trim()}`);
       setNewTitle('');
-    } catch (e: any) {
-      toast.error(e?.response?.data?.message || 'Erreur');
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg || 'Erreur');
     }
   };
 
@@ -322,8 +326,9 @@ export default function ContentGenerator({ type }: Props) {
       await api.post(`/generation-sources/${config.slug}/trigger`);
       toast.success('Pipeline de generation declenche');
       loadData();
-    } catch (e: any) {
-      toast.error(e?.response?.data?.message || 'Erreur trigger');
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg || 'Erreur trigger');
     }
   };
 
@@ -668,7 +673,7 @@ export default function ContentGenerator({ type }: Props) {
                     labelStyle={{ color: '#fff' }}
                   />
                   <Bar dataKey="generated" name="Generes" radius={[3, 3, 0, 0]}>
-                    {logs.map((_: any, i: number) => (
+                    {logs.map((_, i: number) => (
                       <Cell key={i} fill={i === logs.length - 1 ? '#7c3aed' : '#a78bfa'} />
                     ))}
                   </Bar>

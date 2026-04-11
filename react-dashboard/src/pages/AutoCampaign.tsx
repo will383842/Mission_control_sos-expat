@@ -146,7 +146,7 @@ function CountrySelector({ selected, onChange }: { selected: string[]; onChange:
   const toggleCollapse = (region: string) => {
     setCollapsed(prev => {
       const next = new Set(prev);
-      next.has(region) ? next.delete(region) : next.add(region);
+      if (next.has(region)) next.delete(region); else next.add(region);
       return next;
     });
   };
