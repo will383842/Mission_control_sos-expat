@@ -1,0 +1,51 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "search": "Search",
+    "filter": "Filter",
+    "reset": "Reset",
+    "yes": "Yes",
+    "no": "No",
+    "required": "required",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Information"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "contacts": "Contacts",
+    "reminders": "Reminders",
+    "journal": "Journal",
+    "team": "Team",
+    "settings": "Settings",
+    "logout": "Logout",
+    "skipToContent": "Skip to main content",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "email": "Email address",
+    "password": "Password",
+    "loginButton": "Sign in",
+    "invalidCredentials": "Invalid credentials"
+  },
+  "errors": {
+    "generic": "An unexpected error occurred.",
+    "network": "Network error. Check your connection.",
+    "notFound": "Page not found",
+    "unauthorized": "Unauthorized access",
+    "backToHome": "Back to home"
+  }
+}

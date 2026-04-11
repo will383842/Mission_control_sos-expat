@@ -1,0 +1,51 @@
+{
+  "common": {
+    "loading": "Chargement...",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "close": "Fermer",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "reset": "Réinitialiser",
+    "yes": "Oui",
+    "no": "Non",
+    "required": "requis",
+    "error": "Erreur",
+    "success": "Succès",
+    "warning": "Attention",
+    "info": "Information"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "contacts": "Contacts",
+    "reminders": "Relances",
+    "journal": "Journal",
+    "team": "Équipe",
+    "settings": "Paramètres",
+    "logout": "Déconnexion",
+    "skipToContent": "Aller au contenu principal",
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu"
+  },
+  "auth": {
+    "login": "Connexion",
+    "logout": "Déconnexion",
+    "email": "Adresse email",
+    "password": "Mot de passe",
+    "loginButton": "Se connecter",
+    "invalidCredentials": "Identifiants invalides"
+  },
+  "errors": {
+    "generic": "Une erreur inattendue s'est produite.",
+    "network": "Erreur réseau. Vérifiez votre connexion.",
+    "notFound": "Page introuvable",
+    "unauthorized": "Accès non autorisé",
+    "backToHome": "Retour à l'accueil"
+  }
+}
