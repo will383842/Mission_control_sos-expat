@@ -418,16 +418,37 @@ class ArticleImprovementService
         $needed = max(0, 4 - $existingLinks);
         if ($needed === 0) return;
 
-        // Find related published articles in the same language (exclude self + already linked)
-        $candidates = GeneratedArticle::where('language', $article->language)
+        // Find related published articles. Strict topical filter first:
+        //   1) same language AND same country  ← preferred (Switzerland article links to other Swiss articles)
+        //   2) if not enough, fall back to same language only (still a real internal link, just less topical)
+        // Historical bug: a Nouvelle-Calédonie article was getting Swiss internal
+        // links because we picked random same-language candidates with no country
+        // filter. Always prefer same-country to keep links contextually relevant.
+        $base = GeneratedArticle::where('language', $article->language)
             ->where('id', '!=', $article->id)
             ->where('status', 'published')
             ->whereNotNull('slug')
             ->whereNull('parent_article_id')
-            ->where('word_count', '>', 0)
-            ->inRandomOrder()
-            ->limit($needed * 3)
-            ->get(['id', 'title', 'slug', 'language', 'country']);
+            ->where('word_count', '>', 0);
+
+        $candidates = collect();
+        if (!empty($article->country)) {
+            $candidates = (clone $base)
+                ->where('country', $article->country)
+                ->inRandomOrder()
+                ->limit($needed * 3)
+                ->get(['id', 'title', 'slug', 'language', 'country']);
+        }
+
+        // Top up with same-language candidates only if same-country pool is too small
+        if ($candidates->count() < $needed) {
+            $extra = (clone $base)
+                ->whereNotIn('id', $candidates->pluck('id')->all() ?: [0])
+                ->inRandomOrder()
+                ->limit($needed * 3)
+                ->get(['id', 'title', 'slug', 'language', 'country']);
+            $candidates = $candidates->concat($extra);
+        }
 
         if ($candidates->isEmpty()) return;
 

@@ -161,14 +161,33 @@ class GenerateFromSourceJob implements ShouldQueue
         $inputQuality  = $item->input_quality ?? $this->deriveInputQuality($item);
         $sourceContent = $this->loadSourceContent($item, $inputQuality);
         $rawCountry    = $item->country ?? null;
+        $rawTitle      = $item->title ?? '';
 
         // Normalize country to ISO 2-letter code (critical for Blog country association)
+        // 4-step resolution (most reliable first):
+        //   1. item->country normalized via map
+        //   2. item->title scanned for any country name in the map
+        //   3. item->original_title (if present) scanned likewise
+        //   4. default to 'FR' (NEVER pick a random country — that's the
+        //      historical bug that caused articles about Nouvelle-Calédonie
+        //      to be tagged country=CH and serve Swiss images + Swiss
+        //      internal links)
         $country = $rawCountry ? $this->normalizeCountryCode($rawCountry) : null;
-
-        // If no country on item, pick a random one from priority list
+        if (!$country && !empty($rawTitle)) {
+            $country = $this->extractCountryFromText($rawTitle);
+        }
+        if (!$country && !empty($item->original_title ?? '')) {
+            $country = $this->extractCountryFromText($item->original_title);
+        }
         if (!$country) {
-            $priorities = ['FR', 'BE', 'CH', 'CA', 'MA', 'ES', 'DE', 'PT', 'TH', 'US', 'GB', 'AE', 'IT', 'NL', 'AU'];
-            $country = $priorities[array_rand($priorities)];
+            // Deterministic safe default — better to be wrong consistently
+            // (always FR) than randomly (one in fifteen chance per article).
+            $country = 'FR';
+            \Illuminate\Support\Facades\Log::warning('GenerateFromSourceJob: country could not be determined, defaulting to FR', [
+                'item_id' => $item->id,
+                'raw_country' => $rawCountry,
+                'title' => mb_substr($rawTitle, 0, 80),
+            ]);
         }
 
         $topic         = $this->buildTopic($item, $this->sourceSlug);
@@ -426,10 +445,37 @@ class GenerateFromSourceJob implements ShouldQueue
                 'VN'=>['Vietnam','Viêt Nam'],'YE'=>['Yémen','Yemen'],
                 'ZM'=>['Zambie','Zambia'],'ZW'=>['Zimbabwe'],
                 'ST'=>['São Tomé-et-Príncipe','Sao Tomé et Principe','Sao Tome'],
-                'YT'=>['Mayotte'],'PF'=>['Polynésie française','Polynesie francaise'],
+                'YT'=>['Mayotte'],'PF'=>['Polynésie française','Polynesie francaise','French Polynesia'],
                 'GI'=>['Gibraltar'],'AW'=>['Aruba'],
                 'SL'=>['Sierra Leone'],'BB'=>['Barbade','Barbados'],
                 'MO'=>['Macao','Macau'],'SB'=>['Îles Salomon','Iles Salomon'],
+                // ── French overseas territories (DOM-TOM) ──
+                'NC'=>['Nouvelle-Calédonie','Nouvelle-Caledonie','New Caledonia'],
+                'RE'=>['La Réunion','La Reunion','Réunion','Reunion','Reunion Island'],
+                'MQ'=>['Martinique'],
+                'GP'=>['Guadeloupe'],
+                'GF'=>['Guyane','Guyane française','Guyane francaise','French Guiana'],
+                'PM'=>['Saint-Pierre-et-Miquelon','Saint Pierre et Miquelon'],
+                'WF'=>['Wallis-et-Futuna','Wallis et Futuna'],
+                'BL'=>['Saint-Barthélemy','Saint Barthelemy'],
+                'MF'=>['Saint-Martin'],
+                'TF'=>['Terres australes','TAAF'],
+                // ── United Kingdom constituent countries (NI commonly grouped with GB) ──
+                // 'Irlande du Nord' is part of the UK politically, so we map it to GB.
+                // Source items historically used "Irlande du Nord" as a label.
+                'GB'=>['Royaume-Uni','UK','United Kingdom','Grande-Bretagne','Irlande du Nord','Northern Ireland','Écosse','Ecosse','Scotland','Pays de Galles','Wales'],
+                // ── Misc additions for source items observed in production ──
+                'BS'=>['Bahamas'],'BZ'=>['Belize'],'BW'=>['Botswana'],
+                'CR'=>['Costa Rica'],'DO'=>['République dominicaine','Republique dominicaine','Dominican Republic'],
+                'EC'=>['Équateur','Equateur','Ecuador'],'SV'=>['Salvador','El Salvador'],
+                'FJ'=>['Fidji','Fiji'],'GM'=>['Gambie','Gambia'],
+                'IS'=>['Islande','Iceland'],'KZ'=>['Kazakhstan'],
+                'MK'=>['Macédoine','Macedonia','North Macedonia'],
+                'MV'=>['Maldives'],'MT'=>['Malte','Malta'],
+                'NA'=>['Namibie','Namibia'],'PG'=>['Papouasie','Papua New Guinea'],
+                'PY'=>['Paraguay'],'SC'=>['Seychelles'],
+                'SO'=>['Somalie','Somalia'],'ZA'=>['Afrique du Sud','South Africa'],
+                'VU'=>['Vanuatu'],'ZW'=>['Zimbabwe'],
             ];
             foreach ($names as $code => $variants) {
                 foreach ($variants as $name) {
@@ -439,6 +485,47 @@ class GenerateFromSourceJob implements ShouldQueue
         }
 
         return self::$countryMap[mb_strtolower($input)] ?? null;
+    }
+
+    /**
+     * Scan free text (article title, original_title, description) for any
+     * country name present in the countryMap. Used as a fallback when the
+     * source item lacks a clean country field.
+     *
+     * Matches longest names first so "Nouvelle-Calédonie" wins over a stray
+     * "Calédonie" alias, and word boundaries prevent false hits like
+     * "France" matching inside "Francais".
+     */
+    private function extractCountryFromText(?string $text): ?string
+    {
+        if (empty($text)) {
+            return null;
+        }
+
+        // Make sure the map is built
+        if (self::$countryMap === null) {
+            $this->normalizeCountryCode('init');
+        }
+
+        $haystack = ' ' . mb_strtolower($text) . ' ';
+
+        // Sort names by length DESC so the most specific match wins
+        $names = array_keys(self::$countryMap);
+        usort($names, fn($a, $b) => mb_strlen($b) - mb_strlen($a));
+
+        foreach ($names as $name) {
+            // Skip ultra-short or ambiguous tokens (>=4 chars to avoid "uk" / "us" inside random words)
+            if (mb_strlen($name) < 4) {
+                continue;
+            }
+            // Word-boundary-ish check using surrounding non-letter chars
+            $pattern = '/(?<![\p{L}])' . preg_quote($name, '/') . '(?![\p{L}])/iu';
+            if (preg_match($pattern, $haystack)) {
+                return self::$countryMap[$name];
+            }
+        }
+
+        return null;
     }
 
     private function countryName(string $code): string
