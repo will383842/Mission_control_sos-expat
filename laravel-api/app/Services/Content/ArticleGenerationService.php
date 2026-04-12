@@ -82,6 +82,7 @@ class ArticleGenerationService
         $contentType = $params['content_type'] ?? 'article';
         $searchIntent = $params['search_intent'] ?? $params['intent'] ?? self::defaultIntent($contentType);
         $typeConfig = ContentTypeConfig::withIntent($contentType, $searchIntent);
+        $typeConfig['_search_intent'] = $searchIntent; // Pass intent to all phases via typeConfig
         $language = $params['language'] ?? 'fr';
         $country = $params['country'] ?? null;
 
@@ -917,30 +918,62 @@ class ArticleGenerationService
 
         $template = $this->getPromptTemplate('article', 'title');
 
+        // Determine search intent for title format
+        $searchIntent = $typeConfig['_search_intent'] ?? self::defaultIntent($contentType);
+
+        // Intent-specific title format rules (2026 best practice: title = exact search query)
+        $intentTitleRule = match ($searchIntent) {
+            'informational' => "FORMAT INFORMATIONNEL — le titre est une QUESTION GOOGLE ou une REQUETE NATURELLE :\n"
+                . "  Exemples parfaits :\n"
+                . "  - 'Visa Thailande refuse : que faire en {$year} ?'\n"
+                . "  - 'Combien coute un visa de travail en Allemagne ({$year})'\n"
+                . "  - 'Ouvrir un compte bancaire au Portugal : demarches {$year}'\n"
+                . "  Le titre DOIT correspondre a ce que l'utilisateur tape LITTERALEMENT dans Google.\n",
+            'commercial_investigation' => "FORMAT COMPARATIF — verdict direct dans le titre :\n"
+                . "  Exemples parfaits :\n"
+                . "  - 'Wise vs Revolut pour expatries : comparatif {$year}'\n"
+                . "  - 'Meilleure assurance sante en Thailande : comparatif et prix ({$year})'\n"
+                . "  Structure : 'X vs Y : comparatif {$year}' ou 'Meilleur(e) X : comparatif {$year}'\n",
+            'transactional' => "FORMAT TRANSACTIONNEL — action directe dans le titre :\n"
+                . "  Exemples parfaits :\n"
+                . "  - 'Consulter un avocat en Thailande en ligne ({$year})'\n"
+                . "  - 'Obtenir un visa Thailande : prix et delais {$year}'\n"
+                . "  Le titre promet une ACTION CONCRETE et rapide.\n",
+            'urgency' => "FORMAT URGENCE — probleme + action immediate dans le titre :\n"
+                . "  Exemples parfaits :\n"
+                . "  - 'Passeport vole en Thailande : que faire en urgence ({$year})'\n"
+                . "  - 'Arrete en Thailande : premiers reflexes et droits ({$year})'\n"
+                . "  Structure : '[Probleme] en [Pays] : que faire ({$year})'\n",
+            'local' => "FORMAT LOCAL — service + lieu precis dans le titre :\n"
+                . "  Exemples parfaits :\n"
+                . "  - 'Avocat a Bangkok : ou trouver un juriste en {$year}'\n"
+                . "  - 'Medecin international a Chiang Mai ({$year})'\n",
+            default => '',
+        };
+
         $systemPrompt = $this->kbPrompt . "\n\n" . ($template
             ? $this->replaceVariables($template->system_message, ['language' => $language, 'year' => $year])
             : "Tu generes des titres SEO qui correspondent a des VRAIES INTENTIONS DE RECHERCHE Google.\n\n"
-              . "Le titre que tu generes doit etre EXACTEMENT ce qu'un expatrie taperait dans Google quand il a ce probleme ou cette question.\n\n"
-              . "REGLES :\n"
+              . "PRINCIPE 2026 : le titre DOIT etre la REQUETE EXACTE que l'utilisateur tape dans Google.\n"
+              . "Google fait du title matching — si le titre ne correspond pas a la requete, tu perds le clic.\n\n"
+              . "REGLE PRIMORDIALE : si le sujet fourni est DEJA formule comme une requete Google naturelle,\n"
+              . "GARDE-LE TEL QUEL et ajoute juste l'annee ({$year}) si elle manque.\n"
+              . "Ne reecris PAS un bon titre en quelque chose de generique.\n\n"
+              . $intentTitleRule . "\n"
+              . "REGLES GENERALES :\n"
               . "1. LONGUEUR : 50-90 caracteres. Le titre est COMPLET, jamais coupe.\n"
               . "2. MOT-CLE PRINCIPAL : \"{$primaryKeyword}\" apparait dans les 5 premiers mots.\n"
               . "3. ANNEE : inclure \"{$year}\" (signal fraicheur Google).\n"
               . "4. FORMATS INTERDITS — NE JAMAIS UTILISER :\n"
               . "   - 'Guide Complet', 'Guide Pratique', 'Guide Essentiel', 'Guide Ultime'\n"
               . "   - 'Tout Savoir sur', 'Tout ce qu'il faut savoir'\n"
-              . "   - 'Conseils, Demarches et Astuces'\n"
-              . "   - 'Decouvrez', 'Voici', 'Comment'\n"
+              . "   - 'Conseils, Demarches et Astuces', 'Conseils Pratiques'\n"
+              . "   - 'Decouvrez', 'Voici'\n"
               . "   - Tout titre qui commence par 'Guide'\n"
-              . "5. FORMATS A UTILISER — ce sont des REQUETES GOOGLE NATURELLES :\n"
-              . "   - URGENCE : 'Passeport perdu au Maroc : que faire en {$year}'\n"
-              . "   - QUESTION : 'Combien coute un visa de travail en Allemagne ({$year})'\n"
-              . "   - PROBLEME : 'Compte bancaire bloque a l'etranger : solutions {$year}'\n"
-              . "   - COMPARAISON : 'Portugal vs Espagne : ou s'expatrier en {$year}'\n"
-              . "   - DEMARCHE : 'Visa digital nomad Thailande : demarches et couts {$year}'\n"
-              . "   - COUT : 'Cout de la vie a Lisbonne en {$year} : budget detaille'\n"
-              . "   - TEMOIGNAGE : 'S'installer a Berlin a 35 ans : mon experience ({$year})'\n"
-              . "6. Le titre doit donner ENVIE de cliquer — il promet une REPONSE CONCRETE.\n"
-              . "7. Il doit etre SPECIFIQUE au pays/ville mentionne — pas generique.\n\n"
+              . "   - Toute reformulation GENERIQUE d'un sujet SPECIFIQUE\n"
+              . "5. Le titre doit donner ENVIE de cliquer — il promet une REPONSE CONCRETE.\n"
+              . "6. Il doit etre SPECIFIQUE au pays/ville mentionne — pas generique.\n"
+              . "7. MULTI-NATIONALITE : pas de mention de nationalite specifique dans le titre.\n\n"
               . "Langue: {$language}. Retourne UNIQUEMENT le titre, sans guillemets.");
 
         $userPrompt = "Sujet: {$topic}\nMot-clé principal: {$primaryKeyword}\nAnnée: {$year}{$factsContext}";
@@ -1012,6 +1045,9 @@ class ArticleGenerationService
         // 5. Strip generic IA patterns
         $title = preg_replace('/\s*:?\s*guide\s+(complet|pratique|essentiel|ultime|efficace)\b/iu', '', $title);
         $title = preg_replace('/\s*:?\s*tout\s+savoir\s*(sur\s*)?/iu', '', $title);
+        $title = preg_replace('/\s*:?\s*conseils\s+pratiques\b/iu', '', $title);
+        $title = preg_replace('/\s*:?\s*conseils\s+et\s+astuces\b/iu', '', $title);
+        $title = preg_replace('/\s*:?\s*demarches\s+et\s+astuces\b/iu', '', $title);
 
         // 6. Fix capitalization — Title Case for French
         // Capitalize first letter + after : — –
