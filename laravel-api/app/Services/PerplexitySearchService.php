@@ -96,6 +96,70 @@ class PerplexitySearchService
     }
 
     /**
+     * Search the web for FACTUAL data (articles, statistics, country info).
+     * Uses low temperature (0.1) and strict anti-hallucination prompt.
+     */
+    public function searchFactual(string $query, string $language = 'fr'): array
+    {
+        if (!$this->isConfigured()) {
+            return ['success' => false, 'text' => '', 'citations' => [], 'error' => 'API key not configured'];
+        }
+
+        $systemPrompt = "Tu es un chercheur factuel. Ton rôle est de trouver des DONNÉES VÉRIFIÉES et SOURCÉES.\n\n"
+            . "RÈGLES STRICTES :\n"
+            . "- Ne fournis des statistiques QUE si tu as une source vérifiable avec URL.\n"
+            . "- Si une donnée n'est pas disponible, dis explicitement \"donnée non disponible\" — N'INVENTE JAMAIS.\n"
+            . "- Privilégie les sources officielles : World Bank, OECD, Eurostat, ONU, gouvernements, banques centrales.\n"
+            . "- Pour chaque fait cité, indique la source et l'année entre parenthèses.\n"
+            . "- NE PAS arrondir les chiffres — utilise les valeurs exactes des sources.\n"
+            . "- NE PAS utiliser \"environ\", \"à peu près\", \"autour de\" sans source.\n"
+            . "- Langue de réponse : {$language}";
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->apiKey,
+                'Content-Type'  => 'application/json',
+            ])->timeout(90)->post('https://api.perplexity.ai/chat/completions', [
+                'model'    => $this->model,
+                'messages' => [
+                    ['role' => 'system', 'content' => $systemPrompt],
+                    ['role' => 'user', 'content' => $query],
+                ],
+                'max_tokens'       => 4000,
+                'temperature'      => 0.1,  // Very low: prioritize factual accuracy
+                'return_citations' => true,
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $text = $data['choices'][0]['message']['content'] ?? '';
+                $citations = $data['citations'] ?? [];
+                $tokens = ($data['usage']['prompt_tokens'] ?? 0) + ($data['usage']['completion_tokens'] ?? 0);
+
+                Log::info('Perplexity factual search OK', [
+                    'text_length' => strlen($text),
+                    'citations'   => count($citations),
+                    'tokens'      => $tokens,
+                ]);
+
+                return [
+                    'success'   => true,
+                    'text'      => $text,
+                    'citations' => $citations,
+                    'tokens'    => $tokens,
+                ];
+            }
+
+            Log::warning('Perplexity factual API error', ['status' => $response->status()]);
+            return ['success' => false, 'text' => '', 'citations' => [], 'error' => 'HTTP ' . $response->status()];
+
+        } catch (\Throwable $e) {
+            Log::error('Perplexity factual exception', ['message' => $e->getMessage()]);
+            return ['success' => false, 'text' => '', 'citations' => [], 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
      * Run two parallel Perplexity searches with different angles.
      */
     public function searchParallel(string $query1, string $query2, string $language = 'fr'): array
