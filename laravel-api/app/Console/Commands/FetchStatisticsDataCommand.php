@@ -31,7 +31,7 @@ class FetchStatisticsDataCommand extends Command
             $this->info('── World Bank ──');
             try {
                 $result = app(WorldBankDataService::class)->fetchAll($startYear, $endYear);
-                $count = $result['inserted'] ?? $result['total'] ?? 0;
+                $count = is_array($result) ? array_sum($result) : 0;
                 $totalPoints += $count;
                 $this->info("  World Bank: {$count} data points");
             } catch (\Throwable $e) {
@@ -45,7 +45,7 @@ class FetchStatisticsDataCommand extends Command
             $this->info('── OECD ──');
             try {
                 $result = app(OecdDataService::class)->fetchAll($startYear, $endYear);
-                $count = $result['inserted'] ?? $result['total'] ?? 0;
+                $count = is_array($result) ? array_sum($result) : 0;
                 $totalPoints += $count;
                 $this->info("  OECD: {$count} data points");
             } catch (\Throwable $e) {
@@ -59,7 +59,7 @@ class FetchStatisticsDataCommand extends Command
             $this->info('── Eurostat ──');
             try {
                 $result = app(EurostatDataService::class)->fetchAll($startYear, $endYear);
-                $count = $result['inserted'] ?? $result['total'] ?? 0;
+                $count = is_array($result) ? array_sum($result) : 0;
                 $totalPoints += $count;
                 $this->info("  Eurostat: {$count} data points");
             } catch (\Throwable $e) {

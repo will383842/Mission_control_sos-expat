@@ -102,15 +102,25 @@ class WorldBankDataService
                     $countryName = $record['country']['value'] ?? null;
                     $year = (int) ($record['date'] ?? 0);
 
-                    // Skip aggregates (regions, world) — only accept 2 or 3-char country codes
+                    // Skip aggregates (regions, world) — only accept real ISO country codes
                     if (!$countryCode) continue;
-                    if (strlen($countryCode) !== 2 && strlen($countryCode) !== 3) continue;
                     if ($year < $startYear) continue;
 
                     // Normalize to 2-letter ISO code
                     $iso3 = $record['countryiso3code'] ?? $countryCode;
-                    $iso2 = (strlen($iso3) === 3) ? ($this->iso3toIso2($iso3) ?? $iso3) : $iso3;
-                    $iso2 = strtoupper(substr($iso2, 0, 2));
+                    $iso2 = null;
+
+                    if (strlen($iso3) === 3) {
+                        $iso2 = $this->iso3toIso2($iso3);
+                        // Skip aggregates: if ISO3 not in our mapping, it's not a real country
+                        if (!$iso2) continue;
+                    } elseif (strlen($countryCode) === 2) {
+                        // World Bank sometimes returns 2-char codes directly
+                        // Only accept if it looks like a real country (exists in our ISO3 map values)
+                        $iso2 = strtoupper($countryCode);
+                    } else {
+                        continue;
+                    }
 
                     try {
                     StatisticsDataPoint::updateOrCreate(
