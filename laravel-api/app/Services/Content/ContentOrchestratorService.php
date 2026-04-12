@@ -108,7 +108,7 @@ class ContentOrchestratorService
         if (isset($data['status'])) $update['status'] = in_array($data['status'], ['running', 'paused', 'stopped']) ? $data['status'] : 'paused';
         if (isset($data['telegram_alerts'])) $update['telegram_alerts'] = (bool) $data['telegram_alerts'];
         if (isset($data['campaign_country_queue'])) $update['campaign_country_queue'] = json_encode($data['campaign_country_queue']);
-        if (isset($data['campaign_articles_per_country'])) $update['campaign_articles_per_country'] = max(10, min(500, (int) $data['campaign_articles_per_country']));
+        if (isset($data['campaign_articles_per_country'])) $update['campaign_articles_per_country'] = max(10, min(10000, (int) $data['campaign_articles_per_country']));
 
         $update['updated_at'] = now();
 
