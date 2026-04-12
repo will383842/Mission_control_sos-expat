@@ -107,7 +107,7 @@ class CountryCampaignCommand extends Command
             ['type' => 'article', 'intent' => 'informational', 'topic' => "Permis de conduire en {$countryName} : obtention et conversion ({$year})"],
             ['type' => 'article', 'intent' => 'informational', 'topic' => "Assurance sante en {$countryName} : quelle couverture choisir ? ({$year})"],
             ['type' => 'article', 'intent' => 'informational', 'topic' => "Scolariser ses enfants en {$countryName} : ecoles internationales et options ({$year})"],
-            ['type' => 'article', 'intent' => 'informational', 'topic' => "Retraite en {$countryName} : droits, fiscalite et demarches ({$year})"],
+            ['type' => 'article', 'intent' => 'informational', 'topic' => "Contrat de travail en {$countryName} : droits et clauses pour expatries ({$year})"],
             ['type' => 'article', 'intent' => 'informational', 'topic' => "Ouvrir un compte bancaire en {$countryName} en tant qu'expatrie ({$year})"],
 
             // ── ARTICLES PRATIQUES (10) — Daily life topics ──
@@ -184,7 +184,7 @@ class CountryCampaignCommand extends Command
             ['type' => 'article', 'intent' => 'informational', 'topic' => "Gastronomie en {$countryName} : plats typiques et ou manger ({$year})"],
             ['type' => 'article', 'intent' => 'informational', 'topic' => "Sport et activites en plein air en {$countryName} ({$year})"],
             ['type' => 'article', 'intent' => 'informational', 'topic' => "Benevolat en {$countryName} : associations et missions pour expatries ({$year})"],
-            ['type' => 'article', 'intent' => 'informational', 'topic' => "Espaces de coworking en {$countryName} : les meilleurs spots ({$year})"],
+            ['type' => 'article', 'intent' => 'informational', 'topic' => "Apprendre la langue locale en {$countryName} : ecoles et methodes ({$year})"],
 
             // ── STATISTIQUES (6) — Data-driven authority ──
             ['type' => 'statistics', 'intent' => 'informational', 'topic' => "Population expatriee en {$countryName} : chiffres et tendances ({$year})"],
@@ -321,21 +321,24 @@ class CountryCampaignCommand extends Command
             ->where('language', 'fr')
             ->whereIn('status', ['generating', 'review', 'published', 'approved'])
             ->pluck('title')
-            ->map(fn ($t) => mb_strtolower($t))
             ->toArray();
 
         $existingCount = count($existingTitles);
         $this->info("Existing articles for {$countryCode}: {$existingCount}");
 
-        // Filter out already-generated topics (fuzzy match on first 30 chars)
+        // Filter out already-generated topics using keyword-based semantic dedup
+        $existingKeywordSets = array_map(fn ($t) => $this->extractDedupKeywords($t, $countryName), $existingTitles);
+
         $toGenerate = [];
         foreach ($plan as $item) {
-            $topicLower = mb_strtolower($item['topic']);
+            $topicKeywords = $this->extractDedupKeywords($item['topic'], $countryName);
             $isDuplicate = false;
-            foreach ($existingTitles as $existing) {
-                // Fuzzy: if first 30 chars of topic match an existing title
-                if (mb_substr($topicLower, 0, 30) === mb_substr($existing, 0, 30)) {
+            foreach ($existingKeywordSets as $existingKw) {
+                // Count overlapping keywords — if >= 2 core keywords match, it's a duplicate
+                $overlap = count(array_intersect($topicKeywords, $existingKw));
+                if ($overlap >= 2) {
                     $isDuplicate = true;
+                    $this->line("  [SKIP] \"{$item['topic']}\" — overlaps with existing article");
                     break;
                 }
             }
@@ -493,6 +496,44 @@ class CountryCampaignCommand extends Command
         $this->info("Total: {$totalArticles} articles across " . count($counts) . " countries");
 
         return 0;
+    }
+
+    /**
+     * Extract core keywords for dedup comparison.
+     * Strips country name, year, accents, stopwords — returns array of significant words.
+     */
+    private function extractDedupKeywords(string $text, string $countryName): array
+    {
+        // Normalize: lowercase, strip accents, remove year, remove country name
+        $text = mb_strtolower($text);
+        $text = $this->stripAccents($text);
+        $countryNorm = $this->stripAccents(mb_strtolower($countryName));
+        $text = str_replace($countryNorm, '', $text);
+        $text = preg_replace('/\(\d{4}\)|\b\d{4}\b/', '', $text);
+        $text = preg_replace('/[^a-z\s]/', ' ', $text);
+        $text = preg_replace('/\s+/', ' ', trim($text));
+
+        // Remove stopwords
+        $stopwords = ['en', 'de', 'du', 'des', 'le', 'la', 'les', 'un', 'une', 'et', 'ou', 'pour', 'par',
+            'ce', 'que', 'qui', 'il', 'est', 'au', 'aux', 'son', 'sa', 'ses', 'a', 'dans', 'sur',
+            'pas', 'ne', 'se', 'avec', 'plus', 'tant', 'qu', 'votre', 'vos', 'nos', 'mon', 'ma',
+            'quel', 'quelle', 'quels', 'quelles', 'comment', 'faut', 'peut', 'on', 'faire',
+            'guide', 'complet', 'complete', 'pratique', 'pratiques', 'conseils', 'etapes',
+            'essentielles', 'detaille', 'tout', 'toutes', 'savoir', 'an', 'ans',
+            'expatrie', 'expatries', 'expatriation', 'etranger', 'etrangers'];
+
+        $words = array_filter(explode(' ', $text), fn ($w) => strlen($w) >= 3 && !in_array($w, $stopwords));
+
+        return array_values(array_unique($words));
+    }
+
+    /**
+     * Strip accents from a string (e→e, ï→i, etc.)
+     */
+    private function stripAccents(string $str): string
+    {
+        $transliterator = \Transliterator::create('NFD; [:Nonspacing Mark:] Remove; NFC');
+        return $transliterator ? $transliterator->transliterate($str) : $str;
     }
 
     /**
