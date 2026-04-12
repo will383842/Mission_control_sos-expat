@@ -428,6 +428,8 @@ class ContentOrchestratorService
             'today_rss_generated' => 0,
             'today_cost_cents' => 0,
             'telegram_alerts' => true,
+            'campaign_country_queue' => [],
+            'campaign_articles_per_country' => 100,
             'type_labels' => self::TYPE_LABELS,
         ];
     }

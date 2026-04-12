@@ -260,7 +260,7 @@ class GenerationSchedulerService
     }
 
     /**
-     * Get the current Country Campaign focus country (< 50 articles).
+     * Get the current Country Campaign focus country (below threshold from DB).
      * Cached for 10 minutes.
      */
     private function getCurrentFocusCountry(): ?string

@@ -114,7 +114,7 @@ class CountryCampaignCommand extends Command
             ['type' => 'article', 'intent' => 'informational', 'topic' => "Se loger en {$countryName} : quartiers, prix et conseils ({$year})"],
             ['type' => 'article', 'intent' => 'informational', 'topic' => "Transports en {$countryName} : se deplacer au quotidien ({$year})"],
             ['type' => 'article', 'intent' => 'informational', 'topic' => "Telephonie et internet en {$countryName} : meilleurs operateurs ({$year})"],
-            ['type' => 'article', 'intent' => 'informational', 'topic' => "Systeme de sante en {$countryName} : hopitaux, medecins et urgences ({$year})"],
+            ['type' => 'article', 'intent' => 'informational', 'topic' => "Hopitaux et medecins en {$countryName} : guide pratique urgences ({$year})"],
             ['type' => 'article', 'intent' => 'informational', 'topic' => "Securite en {$countryName} : zones a eviter et precautions ({$year})"],
             ['type' => 'article', 'intent' => 'informational', 'topic' => "Climat et meilleure periode pour s'installer en {$countryName} ({$year})"],
             ['type' => 'article', 'intent' => 'informational', 'topic' => "Vie sociale en {$countryName} : rencontrer des gens et s'integrer ({$year})"],
@@ -167,14 +167,14 @@ class CountryCampaignCommand extends Command
             ['type' => 'qa', 'intent' => 'informational', 'topic' => "Quels sont les impots a payer en {$countryName} pour un expatrie ? ({$year})"],
 
             // ── TUTORIELS (8) — Step-by-step, how-to schema ──
-            ['type' => 'article', 'intent' => 'transactional', 'topic' => "Comment obtenir un visa pour {$countryName} etape par etape ({$year})"],
-            ['type' => 'article', 'intent' => 'transactional', 'topic' => "Demenager en {$countryName} : checklist complete ({$year})"],
-            ['type' => 'article', 'intent' => 'transactional', 'topic' => "Ouvrir un compte bancaire en {$countryName} en ligne : tutoriel ({$year})"],
-            ['type' => 'article', 'intent' => 'transactional', 'topic' => "S'inscrire au consulat en {$countryName} : demarche pas a pas ({$year})"],
-            ['type' => 'article', 'intent' => 'transactional', 'topic' => "Trouver un avocat en {$countryName} : ou chercher et combien ca coute ({$year})"],
-            ['type' => 'article', 'intent' => 'transactional', 'topic' => "Passer le permis de conduire en {$countryName} : tutoriel complet ({$year})"],
-            ['type' => 'article', 'intent' => 'transactional', 'topic' => "Souscrire une assurance sante en {$countryName} : guide pas a pas ({$year})"],
-            ['type' => 'article', 'intent' => 'transactional', 'topic' => "Declaration d'impots en {$countryName} : guide pour expatries ({$year})"],
+            ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "Comment obtenir un visa pour {$countryName} etape par etape ({$year})"],
+            ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "Demenager en {$countryName} : checklist complete ({$year})"],
+            ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "Ouvrir un compte bancaire en {$countryName} en ligne : tutoriel ({$year})"],
+            ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "S'inscrire au consulat en {$countryName} : demarche pas a pas ({$year})"],
+            ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "Trouver un avocat en {$countryName} : ou chercher et combien ca coute ({$year})"],
+            ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "Passer le permis de conduire en {$countryName} : tutoriel complet ({$year})"],
+            ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "Souscrire une assurance sante en {$countryName} : guide pas a pas ({$year})"],
+            ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "Declaration d'impots en {$countryName} : guide pour expatries ({$year})"],
 
             // ── DIGITAL NOMAD / LIFESTYLE (8) — Growing segment ──
             ['type' => 'article', 'intent' => 'informational', 'topic' => "Digital nomad en {$countryName} : visa, coworking et cout de vie ({$year})"],
@@ -187,19 +187,19 @@ class CountryCampaignCommand extends Command
             ['type' => 'article', 'intent' => 'informational', 'topic' => "Espaces de coworking en {$countryName} : les meilleurs spots ({$year})"],
 
             // ── STATISTIQUES (6) — Data-driven authority ──
-            ['type' => 'statistiques', 'intent' => 'informational', 'topic' => "Population expatriee en {$countryName} : chiffres et tendances ({$year})"],
-            ['type' => 'statistiques', 'intent' => 'informational', 'topic' => "Cout de la vie en {$countryName} en chiffres : loyer, courses, transport ({$year})"],
-            ['type' => 'statistiques', 'intent' => 'informational', 'topic' => "Salaires moyens en {$countryName} par secteur ({$year})"],
-            ['type' => 'statistiques', 'intent' => 'informational', 'topic' => "Prix de l'immobilier en {$countryName} : achat et location ({$year})"],
-            ['type' => 'statistiques', 'intent' => 'informational', 'topic' => "Criminalite et securite en {$countryName} : statistiques ({$year})"],
-            ['type' => 'statistiques', 'intent' => 'informational', 'topic' => "Qualite de vie en {$countryName} : classement et indicateurs ({$year})"],
+            ['type' => 'statistics', 'intent' => 'informational', 'topic' => "Population expatriee en {$countryName} : chiffres et tendances ({$year})"],
+            ['type' => 'statistics', 'intent' => 'informational', 'topic' => "Cout de la vie en {$countryName} en chiffres : loyer, courses, transport ({$year})"],
+            ['type' => 'statistics', 'intent' => 'informational', 'topic' => "Salaires moyens en {$countryName} par secteur ({$year})"],
+            ['type' => 'statistics', 'intent' => 'informational', 'topic' => "Prix de l'immobilier en {$countryName} : achat et location ({$year})"],
+            ['type' => 'statistics', 'intent' => 'informational', 'topic' => "Criminalite et securite en {$countryName} : statistiques ({$year})"],
+            ['type' => 'statistics', 'intent' => 'informational', 'topic' => "Qualite de vie en {$countryName} : classement et indicateurs ({$year})"],
 
             // ── OUTREACH (5) — Affiliate recruitment ──
-            ['type' => 'article', 'intent' => 'informational', 'topic' => "Devenir chatter SOS-Expat en {$countryName} : aider les expatries et gagner de l'argent ({$year})"],
-            ['type' => 'article', 'intent' => 'informational', 'topic' => "Influenceur expatriation en {$countryName} : rejoindre le programme SOS-Expat ({$year})"],
-            ['type' => 'article', 'intent' => 'informational', 'topic' => "Admin de groupe expat en {$countryName} : monetiser votre communaute ({$year})"],
-            ['type' => 'article', 'intent' => 'informational', 'topic' => "Avocat en {$countryName} : devenir partenaire SOS-Expat ({$year})"],
-            ['type' => 'article', 'intent' => 'informational', 'topic' => "Expat en {$countryName} : aidez d'autres expatries et gagnez des commissions ({$year})"],
+            ['type' => 'outreach', 'intent' => 'informational', 'topic' => "Devenir chatter SOS-Expat en {$countryName} : aider les expatries et gagner de l'argent ({$year})"],
+            ['type' => 'outreach', 'intent' => 'informational', 'topic' => "Influenceur expatriation en {$countryName} : rejoindre le programme SOS-Expat ({$year})"],
+            ['type' => 'outreach', 'intent' => 'informational', 'topic' => "Admin de groupe expat en {$countryName} : monetiser votre communaute ({$year})"],
+            ['type' => 'outreach', 'intent' => 'informational', 'topic' => "Avocat en {$countryName} : devenir partenaire SOS-Expat ({$year})"],
+            ['type' => 'outreach', 'intent' => 'informational', 'topic' => "Expat en {$countryName} : aidez d'autres expatries et gagnez des commissions ({$year})"],
 
             // ── TEMOIGNAGES (5) — Social proof ──
             ['type' => 'testimonial', 'intent' => 'informational', 'topic' => "Temoignage : mon expatriation en {$countryName}, les debuts ({$year})"],
@@ -400,7 +400,7 @@ class CountryCampaignCommand extends Command
 
             GenerateArticleJob::dispatch([
                 'topic'          => $item['topic'],
-                'content_type'   => $item['type'] === 'qa' ? 'qa' : 'article',
+                'content_type'   => $item['type'],
                 'language'       => 'fr',
                 'country'        => $countryCode,
                 'keywords'       => $keywords,

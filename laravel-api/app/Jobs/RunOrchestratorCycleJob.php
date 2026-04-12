@@ -241,7 +241,7 @@ class RunOrchestratorCycleJob implements ShouldQueue
         $blogUrl = rtrim(config('services.blog.url', ''), '/');
 
         // ── COUNTRY CAMPAIGN MODE (2026-04-12) ──
-        // Focus on ONE country at a time until it has 50 articles.
+        // Focus on ONE country at a time until it has N articles (threshold from DB).
         // This builds topical authority per country cluster (2026 SEO best practice).
         $country = $this->getCurrentCampaignCountry();
 
@@ -465,7 +465,7 @@ class RunOrchestratorCycleJob implements ShouldQueue
     /**
      * Country Campaign Mode: return the current focus country.
      *
-     * Picks the first country in priority order that has < 50 articles.
+     * Picks the first country in priority order that has < N articles (threshold from DB).
      * When a country reaches 50, auto-advances to the next.
      * Returns null when all campaign countries are complete.
      */
