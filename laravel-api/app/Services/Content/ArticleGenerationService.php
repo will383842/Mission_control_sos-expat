@@ -1324,12 +1324,61 @@ class ArticleGenerationService
             ];
         }
 
-        // Fallback structuré
+        // Fallback structuré — used when the LLM call fails. Be defensive
+        // about the primaryKeyword: older callsites may pass a value still
+        // polluted by template artifacts ("guide complet", "budget detaille",
+        // etc.) from extractKeywords() edge cases. Strip them here so we
+        // never ship a broken meta_title downstream.
         $year = date('Y');
+        $cleanKw = $this->sanitizeFallbackKeyword($primaryKeyword);
+
+        // Prefer the article H1 title over a polluted keyword when the
+        // keyword looks broken (empty after sanitisation or still contains
+        // artifacts). The H1 is LLM-generated and usually clean.
+        $baseLabel = $cleanKw !== '' ? $cleanKw : strip_tags($title);
+        $baseLabel = trim($baseLabel);
+
+        // Proper title-case: capitalise every word, not just the first.
+        $baseLabelCased = mb_convert_case($baseLabel, MB_CASE_TITLE, 'UTF-8');
+
         return [
-            'meta_title' => mb_substr(ucfirst($primaryKeyword) . ' : Guide Complet ' . $year . ' | SOS-Expat', 0, 60),
-            'meta_description' => mb_substr('Découvrez notre guide complet sur ' . $primaryKeyword . '. Conseils pratiques, démarches et informations à jour en ' . $year . '.', 0, 155),
+            'meta_title' => mb_substr($baseLabelCased . ' : Guide Pratique ' . $year . ' | SOS-Expat', 0, 60),
+            'meta_description' => mb_substr('Découvrez notre guide pratique sur ' . mb_strtolower($baseLabel) . '. Conseils, démarches et informations à jour en ' . $year . '.', 0, 155),
         ];
+    }
+
+    /**
+     * Strip template artifacts that leaked from extractKeywords() legacy runs.
+     * These are descriptor phrases that were meant as topic classifiers
+     * ("guide complet", "budget detaille", "toutes les options") but got
+     * concatenated into the primary keyword by the old pipeline.
+     */
+    private function sanitizeFallbackKeyword(string $kw): string
+    {
+        $kw = mb_strtolower(trim($kw));
+        $artifacts = [
+            'guide complet',
+            'guide pratique',
+            'budget detaille',
+            'budget détaillé',
+            'toutes les options',
+            'marche de l\'emploi et opportunites',
+            'marché de l\'emploi et opportunités',
+            'en tant qu\'expatrie',
+            'en tant qu\'expatrié',
+            'tout savoir',
+        ];
+        foreach ($artifacts as $a) {
+            $kw = str_ireplace($a, '', $kw);
+        }
+        // Collapse "en en", "de de", etc.
+        $kw = preg_replace('/\b(\w+)\s+\1\b/u', '$1', $kw);
+        // Strip leading/trailing connector words
+        $kw = preg_replace('/^(en|de|du|la|le|les|des|et|sur|pour)\s+/', '', $kw);
+        $kw = preg_replace('/\s+(en|de|du|la|le|les|des|et|sur|pour)$/', '', $kw);
+        // Normalize whitespace + dangling punctuation
+        $kw = preg_replace('/[\s:;,]+/', ' ', $kw);
+        return trim($kw);
     }
 
     /**

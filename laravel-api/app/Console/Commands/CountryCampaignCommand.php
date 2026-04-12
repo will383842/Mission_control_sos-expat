@@ -577,21 +577,66 @@ class CountryCampaignCommand extends Command
 
     /**
      * Extract keywords from a topic string.
+     *
+     * Topics are typically shaped like:
+     *   "Cout de la vie en Thaïlande en 2026 : budget detaille"
+     *   "Systeme de sante en Thaïlande : guide complet"
+     *
+     * We want the keyword to be the SUBJECT (left of the colon) rewritten
+     * around the country, NOT the descriptor suffix (right of the colon).
+     * The legacy implementation stripped the country then kept everything,
+     * which made "en [descriptor]" leak into the primary keyword and
+     * cascade into broken meta_titles downstream.
      */
     public function extractKeywords(string $topic, string $countryName): array
     {
-        // Remove year, country name, and common words to get keywords
+        // 1. Strip year tokens ("(2026)", "2026")
         $clean = preg_replace('/\(\d{4}\)|\d{4}/', '', $topic);
-        $clean = str_ireplace([$countryName, 'en tant qu\'expatrie', 'en tant qu\'etranger', 'pour les expatries', 'pour expatries'], '', $clean);
-        $clean = preg_replace('/\s*:\s*/', ' ', $clean);
+
+        // 2. Take only the SUBJECT (left of the first colon). This drops the
+        //    article-type descriptor that was polluting the keyword (e.g.
+        //    "budget detaille", "guide complet", "toutes les options").
+        if (mb_strpos($clean, ':') !== false) {
+            $clean = mb_substr($clean, 0, mb_strpos($clean, ':'));
+        }
+
+        // 3. Strip expatriation boilerplate, keep the country name this time
+        //    — it's what anchors the SEO keyword geographically.
+        $clean = str_ireplace(
+            [
+                'en tant qu\'expatrie',
+                'en tant qu\'expatrié',
+                'en tant qu\'etranger',
+                'en tant qu\'étranger',
+                'pour les expatries',
+                'pour les expatriés',
+                'pour expatries',
+                'pour expatriés',
+            ],
+            '',
+            $clean,
+        );
+
+        // 4. Normalize whitespace
         $clean = preg_replace('/\s+/', ' ', trim($clean));
 
-        // Primary keyword = first meaningful phrase
-        $primary = mb_strtolower(trim($clean));
+        // 5. Ensure the country name is present in the primary keyword
+        //    (case-insensitive). If the subject doesn't mention it
+        //    explicitly, append it so "cout de la vie" becomes
+        //    "cout de la vie thailande".
+        $primary = mb_strtolower($clean);
+        $lowerCountry = mb_strtolower($countryName);
+        if ($primary === '' || mb_stripos($primary, $lowerCountry) === false) {
+            $primary = trim($primary . ' ' . $lowerCountry);
+        }
 
-        // Add country name back for long-tail
-        $withCountry = mb_strtolower($countryName) . ' ' . $primary;
+        // 6. Long-tail variant: "[country] [subject]" ordering
+        $withCountry = $lowerCountry . ' ' . mb_strtolower($clean);
 
-        return array_filter([$primary, $withCountry, mb_strtolower($countryName) . ' expatrie']);
+        return array_values(array_filter([
+            $primary,
+            $withCountry,
+            $lowerCountry . ' expatrie',
+        ], fn ($v) => is_string($v) && $v !== ''));
     }
 }
