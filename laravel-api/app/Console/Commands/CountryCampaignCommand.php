@@ -84,8 +84,8 @@ class CountryCampaignCommand extends Command
         $cities = self::TOP_CITIES[$countryCode] ?? ['la capitale', 'la deuxieme ville', 'la troisieme ville'];
 
         return [
-            // ── FICHE PAYS (1) — Pure country data, non-expat ──
-            ['type' => 'guide', 'intent' => 'informational', 'topic' => "{$countryName} : superficie, population, langues, monnaie, economie et chiffres cles ({$year})"],
+            // ── FICHE PAYS (1) — Pure country factsheet, data-driven ──
+            ['type' => 'statistics', 'intent' => 'informational', 'topic' => "{$countryName} : superficie, population, langues, monnaie, economie et chiffres cles ({$year})"],
 
             // ── PILLAR CONTENT / GUIDES (5) — Foundation of the cluster ──
             ['type' => 'guide', 'intent' => 'informational', 'topic' => "S'expatrier en {$countryName} : guide complet {$year}"],
@@ -212,7 +212,7 @@ class CountryCampaignCommand extends Command
             ['type' => 'article', 'intent' => 'commercial_investigation', 'topic' => "SOS-Expat en {$countryName} : comment ca marche et pourquoi les expatries l'utilisent ({$year})"],
             ['type' => 'article', 'intent' => 'commercial_investigation', 'topic' => "Assistance juridique en {$countryName} : SOS-Expat vs avocat local vs assurance ({$year})"],
         ];
-        // Total: fiche(1) + guides(5) + city(3) + juridique(12) + pratique(10) + pain(10)
+        // Total: fiche_pays(1/stats) + guides(5) + city(3) + juridique(12) + pratique(10) + pain(10)
         //       + comparatif(8) + Q/R(19) + tutorial(8) + lifestyle(6) + stats(6)
         //       + outreach(6) + temoignages(4) + brand(2) = 100
     }
