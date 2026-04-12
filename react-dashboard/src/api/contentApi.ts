@@ -886,3 +886,25 @@ export const skipTemplateItem = (itemId: number) =>
 
 export const resetTemplateItem = (itemId: number) =>
   api.post(`/content-gen/templates/items/${itemId}/reset`);
+
+// ============================================================
+// COUNTRY CAMPAIGN
+// ============================================================
+
+export const fetchCampaignStatus = () =>
+  api.get('/content/orchestrator/campaign');
+
+export const updateCountryCampaign = (data: { country_queue?: string[]; articles_per_country?: number }) =>
+  api.put('/content/orchestrator/campaign', data);
+
+export const addCampaignCountry = (code: string) =>
+  api.post(`/content/orchestrator/campaign/add/${code}`);
+
+export const removeCampaignCountry = (code: string) =>
+  api.delete(`/content/orchestrator/campaign/remove/${code}`);
+
+export const reorderCampaign = (country_queue: string[]) =>
+  api.put('/content/orchestrator/campaign/reorder', { country_queue });
+
+export const launchCampaign = () =>
+  api.post('/content/orchestrator/campaign/launch');

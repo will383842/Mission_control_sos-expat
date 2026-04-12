@@ -266,11 +266,19 @@ class GenerationSchedulerService
     private function getCurrentFocusCountry(): ?string
     {
         return Cache::remember('country_campaign_focus', 600, function () {
-            $campaignOrder = [
-                'TH', 'VN', 'PT', 'ES', 'ID', 'MX', 'MA', 'AE', 'SG', 'JP',
-                'DE', 'GB', 'US', 'CA', 'AU', 'BR', 'CO', 'CR', 'GR', 'HR',
-                'IT', 'NL', 'BE', 'CH', 'TR', 'PH', 'MY', 'KH', 'IN', 'PL',
-            ];
+            // Read campaign queue and threshold from DB (configurable via dashboard)
+            $config = \Illuminate\Support\Facades\DB::table('content_orchestrator_config')->first();
+            $campaignOrder = json_decode($config->campaign_country_queue ?? '[]', true);
+            $threshold = (int) ($config->campaign_articles_per_country ?? 100);
+
+            // Fallback: if queue is empty, use priority_countries
+            if (empty($campaignOrder)) {
+                $campaignOrder = json_decode($config->priority_countries ?? '[]', true);
+            }
+
+            if (empty($campaignOrder)) {
+                return null;
+            }
 
             $counts = GeneratedArticle::where('language', 'fr')
                 ->whereIn('status', ['review', 'published', 'approved'])
@@ -282,7 +290,7 @@ class GenerationSchedulerService
                 ->toArray();
 
             foreach ($campaignOrder as $code) {
-                if (($counts[$code] ?? 0) < 50) {
+                if (($counts[$code] ?? 0) < $threshold) {
                     return $code;
                 }
             }

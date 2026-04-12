@@ -2,6 +2,7 @@
 
 namespace App\Services\Content;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -87,6 +88,8 @@ class ContentOrchestratorService
             'today_rss_generated' => $row->today_rss_generated ?? 0,
             'today_cost_cents' => $row->today_cost_cents,
             'telegram_alerts' => (bool) ($row->telegram_alerts ?? true),
+            'campaign_country_queue' => json_decode($row->campaign_country_queue ?? '[]', true) ?: [],
+            'campaign_articles_per_country' => (int) ($row->campaign_articles_per_country ?? 100),
             'type_labels' => self::TYPE_LABELS,
         ];
     }
@@ -104,6 +107,8 @@ class ContentOrchestratorService
         if (isset($data['priority_countries'])) $update['priority_countries'] = json_encode($data['priority_countries']);
         if (isset($data['status'])) $update['status'] = in_array($data['status'], ['running', 'paused', 'stopped']) ? $data['status'] : 'paused';
         if (isset($data['telegram_alerts'])) $update['telegram_alerts'] = (bool) $data['telegram_alerts'];
+        if (isset($data['campaign_country_queue'])) $update['campaign_country_queue'] = json_encode($data['campaign_country_queue']);
+        if (isset($data['campaign_articles_per_country'])) $update['campaign_articles_per_country'] = max(10, min(500, (int) $data['campaign_articles_per_country']));
 
         $update['updated_at'] = now();
 
@@ -112,6 +117,12 @@ class ContentOrchestratorService
         } else {
             $update['created_at'] = now();
             DB::table('content_orchestrator_config')->insert($update);
+        }
+
+        // Invalidate campaign caches when queue or threshold changes
+        if (isset($update['campaign_country_queue']) || isset($update['campaign_articles_per_country'])) {
+            Cache::forget('country_campaign_counts');
+            Cache::forget('country_campaign_focus');
         }
 
         return $this->getConfig();
@@ -340,6 +351,57 @@ class ContentOrchestratorService
         } catch (\Throwable $e) {
             Log::warning("Orchestrator Telegram alert failed: {$e->getMessage()}");
         }
+    }
+
+    /**
+     * Get campaign status: queue with per-country progress.
+     */
+    public function getCampaignStatus(): array
+    {
+        $config = $this->getConfig();
+        $queue = $config['campaign_country_queue'];
+        $threshold = $config['campaign_articles_per_country'];
+
+        // Count articles per country (same criteria as getCurrentCampaignCountry)
+        $counts = DB::table('generated_articles')
+            ->where('language', 'fr')
+            ->whereIn('status', ['review', 'published', 'approved'])
+            ->whereNotNull('country')
+            ->where('word_count', '>', 0)
+            ->groupBy('country')
+            ->selectRaw('country, COUNT(*) as total')
+            ->pluck('total', 'country')
+            ->toArray();
+
+        $currentCountry = null;
+        $queueItems = [];
+        $completedCountries = [];
+
+        foreach ($queue as $code) {
+            $count = (int) ($counts[$code] ?? 0);
+            $isComplete = $count >= $threshold;
+
+            if ($isComplete) {
+                $completedCountries[] = ['code' => $code, 'count' => $count];
+            } else {
+                if ($currentCountry === null) {
+                    $currentCountry = $code;
+                }
+                $queueItems[] = [
+                    'code' => $code,
+                    'count' => $count,
+                    'target' => $threshold,
+                    'status' => $code === $currentCountry ? 'active' : 'pending',
+                ];
+            }
+        }
+
+        return [
+            'queue' => $queueItems,
+            'current_country' => $currentCountry,
+            'articles_per_country' => $threshold,
+            'completed_countries' => $completedCountries,
+        ];
     }
 
     private function defaultConfig(): array

@@ -437,6 +437,48 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/alerts', function () {
             return response()->json(app(\App\Services\Content\ContentOrchestratorService::class)->getAlerts());
         });
+
+        // Country Campaign Management
+        Route::get('/campaign', function () {
+            return response()->json(app(\App\Services\Content\ContentOrchestratorService::class)->getCampaignStatus());
+        });
+        Route::put('/campaign', function (\Illuminate\Http\Request $request) {
+            $svc = app(\App\Services\Content\ContentOrchestratorService::class);
+            $update = [];
+            if ($request->has('country_queue')) $update['campaign_country_queue'] = $request->input('country_queue');
+            if ($request->has('articles_per_country')) $update['campaign_articles_per_country'] = $request->input('articles_per_country');
+            $svc->updateConfig($update);
+            return response()->json($svc->getCampaignStatus());
+        });
+        Route::post('/campaign/add/{country_code}', function (string $country_code) {
+            $svc = app(\App\Services\Content\ContentOrchestratorService::class);
+            $config = $svc->getConfig();
+            $queue = $config['campaign_country_queue'];
+            $code = strtoupper($country_code);
+            if (!in_array($code, $queue)) {
+                $queue[] = $code;
+                $svc->updateConfig(['campaign_country_queue' => $queue]);
+            }
+            return response()->json($svc->getCampaignStatus());
+        });
+        Route::delete('/campaign/remove/{country_code}', function (string $country_code) {
+            $svc = app(\App\Services\Content\ContentOrchestratorService::class);
+            $config = $svc->getConfig();
+            $code = strtoupper($country_code);
+            $queue = array_values(array_filter($config['campaign_country_queue'], fn ($c) => $c !== $code));
+            $svc->updateConfig(['campaign_country_queue' => $queue]);
+            return response()->json($svc->getCampaignStatus());
+        });
+        Route::put('/campaign/reorder', function (\Illuminate\Http\Request $request) {
+            $svc = app(\App\Services\Content\ContentOrchestratorService::class);
+            $svc->updateConfig(['campaign_country_queue' => $request->input('country_queue', [])]);
+            return response()->json($svc->getCampaignStatus());
+        });
+        Route::post('/campaign/launch', function () {
+            \Illuminate\Support\Facades\Artisan::queue('content:country-campaign', ['--auto' => true, '--resume' => true])
+                ->onQueue('content');
+            return response()->json(['message' => 'Campaign lancee', 'status' => 'queued']);
+        });
     });
 
     // ============================================================

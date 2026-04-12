@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import api from '../../api/client';
 import { toast } from '../../components/Toast';
+
+const CountryCampaignManager = lazy(() => import('./CountryCampaignManager'));
 
 /**
  * Content Orchestrator — Full auto-pilot content generation dashboard.
@@ -388,7 +390,12 @@ export default function ContentOrchestrator() {
         </div>
       )}
 
-      {/* ── SECTION 5 — INDEXATION INTELLIGENTE ────────────────────────── */}
+      {/* ── SECTION 5 — COUNTRY CAMPAIGN ────────────────────────────── */}
+      <Suspense fallback={<div className="text-muted text-center py-8">Chargement...</div>}>
+        <CountryCampaignManager />
+      </Suspense>
+
+      {/* ── SECTION 6 — INDEXATION INTELLIGENTE ────────────────────────── */}
       <div className="bg-surface/60 border border-border/20 rounded-xl p-6">
         <h2 className="text-lg font-semibold text-white mb-4">⚡ Indexation intelligente</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

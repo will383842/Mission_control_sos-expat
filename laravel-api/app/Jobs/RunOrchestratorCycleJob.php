@@ -471,12 +471,19 @@ class RunOrchestratorCycleJob implements ShouldQueue
      */
     private function getCurrentCampaignCountry(): ?string
     {
-        // Same order as CountryCampaignCommand — Topical Authority priority
-        $campaignOrder = [
-            'TH', 'VN', 'PT', 'ES', 'ID', 'MX', 'MA', 'AE', 'SG', 'JP',
-            'DE', 'GB', 'US', 'CA', 'AU', 'BR', 'CO', 'CR', 'GR', 'HR',
-            'IT', 'NL', 'BE', 'CH', 'TR', 'PH', 'MY', 'KH', 'IN', 'PL',
-        ];
+        // Read campaign queue and threshold from DB (configurable via dashboard)
+        $config = \Illuminate\Support\Facades\DB::table('content_orchestrator_config')->first();
+        $campaignOrder = json_decode($config->campaign_country_queue ?? '[]', true);
+        $threshold = (int) ($config->campaign_articles_per_country ?? 100);
+
+        // Fallback: if queue is empty, use priority_countries from config
+        if (empty($campaignOrder)) {
+            $campaignOrder = json_decode($config->priority_countries ?? '[]', true);
+        }
+
+        if (empty($campaignOrder)) {
+            return null;
+        }
 
         // Cache the counts for 10 minutes to avoid querying on every cycle
         $counts = \Illuminate\Support\Facades\Cache::remember('country_campaign_counts', 600, function () {
@@ -492,13 +499,13 @@ class RunOrchestratorCycleJob implements ShouldQueue
 
         foreach ($campaignOrder as $code) {
             $existing = $counts[$code] ?? 0;
-            if ($existing < 50) {
-                Log::info("Orchestrator: Country Campaign focus → {$code} ({$existing}/50 articles)");
+            if ($existing < $threshold) {
+                Log::info("Orchestrator: Country Campaign focus → {$code} ({$existing}/{$threshold} articles)");
                 return $code;
             }
         }
 
-        Log::info('Orchestrator: all campaign countries have 50+ articles');
+        Log::info("Orchestrator: all campaign countries have {$threshold}+ articles");
         return null;
     }
 }
