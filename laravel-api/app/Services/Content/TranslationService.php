@@ -119,6 +119,23 @@ class TranslationService
                 'icbm' => $original->icbm,
                 // Adapted JSON-LD with localized URLs
                 'json_ld' => $adaptedJsonLd,
+                // Inherit OG & AEO metadata (will be translated below)
+                'og_type' => $original->og_type ?? 'article',
+                'og_locale' => $this->mapLocale($targetLanguage),
+                'og_site_name' => $original->og_site_name,
+                'twitter_card' => $original->twitter_card ?? 'summary_large_image',
+                'content_language' => $targetLanguage,
+                'last_reviewed_at' => now(),
+            ]);
+
+            // Generate OG title, OG description, and AI summary for translation
+            $this->generateTranslationOgMeta($translatedArticle, $translatedTitle, $translatedExcerpt, $targetLanguage);
+
+            // Set canonical URL for translation
+            $siteUrl = config('services.blog.site_url', config('services.site.url', 'https://sos-expat.com'));
+            $translatedArticle->update([
+                'canonical_url' => "{$siteUrl}/{$targetLanguage}/articles/{$slug}",
+                'og_url' => "{$siteUrl}/{$targetLanguage}/articles/{$slug}",
             ]);
 
             // Translate FAQs
@@ -453,5 +470,57 @@ class TranslationService
     private function countHtmlTags(string $html): int
     {
         return preg_match_all('/<\/?[a-z][a-z0-9]*[^>]*>/i', $html);
+    }
+
+    /**
+     * Generate OG title, OG description, and AI summary for a translated article.
+     */
+    private function generateTranslationOgMeta(GeneratedArticle $article, string $title, string $excerpt, string $lang): void
+    {
+        try {
+            $langNames = [
+                'fr' => 'français', 'en' => 'English', 'es' => 'español', 'de' => 'Deutsch',
+                'pt' => 'português', 'ru' => 'русский', 'zh' => '中文', 'ar' => 'العربية', 'hi' => 'हिन्दी',
+            ];
+            $langName = $langNames[$lang] ?? $lang;
+
+            $result = $this->openAi->complete(
+                "Generate social media metadata in {$langName}. Return valid JSON only.",
+                "Article title: {$title}\nExcerpt: {$excerpt}\n\n"
+                    . "Return JSON: {\"og_title\": \"engaging social title max 95 chars\", "
+                    . "\"og_description\": \"call-to-action max 200 chars\", "
+                    . "\"ai_summary\": \"factual 2-3 sentences max 160 chars, NO 'This article...'\"}",
+                ['temperature' => 0.5, 'max_tokens' => 400, 'json' => true]
+            );
+
+            if ($result['success']) {
+                $data = json_decode($result['content'], true);
+                if ($data) {
+                    $article->update(array_filter([
+                        'og_title' => mb_substr($data['og_title'] ?? '', 0, 95) ?: null,
+                        'og_description' => mb_substr($data['og_description'] ?? '', 0, 200) ?: null,
+                        'ai_summary' => mb_substr($data['ai_summary'] ?? '', 0, 160) ?: null,
+                    ]));
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Translation OG meta generation failed (non-blocking)', [
+                'article_id' => $article->id,
+                'language' => $lang,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Map language code to OG locale format.
+     */
+    private function mapLocale(string $lang): string
+    {
+        return match ($lang) {
+            'fr' => 'fr_FR', 'en' => 'en_US', 'es' => 'es_ES', 'de' => 'de_DE',
+            'pt' => 'pt_BR', 'ru' => 'ru_RU', 'zh' => 'zh_CN', 'ar' => 'ar_SA', 'hi' => 'hi_IN',
+            default => $lang,
+        };
     }
 }

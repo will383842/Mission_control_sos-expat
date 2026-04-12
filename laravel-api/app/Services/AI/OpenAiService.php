@@ -149,14 +149,29 @@ class OpenAiService
         $fromName = $langNames[$fromLang] ?? $fromLang;
         $toName   = $langNames[$toLang] ?? $toLang;
 
+        // CJK languages need more tokens (1 char ≈ 2-3 tokens vs ~1.3 for Latin languages)
+        // Arabic/Hindi also need more tokens due to complex script tokenization
+        $tokenMultiplier = match ($toLang) {
+            'zh', 'ja', 'ko' => 3.0,       // CJK: 1 character ≈ 2-3 tokens
+            'ar', 'hi', 'ru' => 2.0,        // Complex scripts
+            default => 1.5,                  // Latin languages
+        };
+        // Estimate source tokens: ~1.3 tokens per word (French), then multiply for target
+        $sourceWordCount = str_word_count(strip_tags($text));
+        $estimatedMaxTokens = max(1000, (int) ($sourceWordCount * 1.3 * $tokenMultiplier));
+        // Cap at 16384 (GPT-4o-mini limit)
+        $estimatedMaxTokens = min(16384, $estimatedMaxTokens);
+
         $systemPrompt = "You are a professional translator. Translate the following content from {$fromName} to {$toName}. "
             . "CRITICAL: The entire output MUST be in {$toName}. Do NOT return the original {$fromName} text. "
             . "Maintain the same HTML formatting, structure, and tone. "
-            . "Do not translate brand names (SOS-Expat), URLs, or code. Preserve all HTML tags exactly.";
+            . "Do not translate brand names (SOS-Expat), URLs, or code. Preserve all HTML tags exactly."
+            . ($toLang === 'zh' ? " IMPORTANT: Output the FULL translation. Do not truncate or summarize. The Chinese output should be roughly the same length as the original in terms of content coverage." : '');
 
         return $this->complete($systemPrompt, $text, array_merge($options, [
             'model' => $options['model'] ?? $this->translationModel,
             'temperature' => $options['temperature'] ?? 0.3,
+            'max_tokens' => $options['max_tokens'] ?? $estimatedMaxTokens,
         ]));
     }
 

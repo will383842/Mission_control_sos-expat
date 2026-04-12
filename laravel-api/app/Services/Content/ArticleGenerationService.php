@@ -1650,9 +1650,24 @@ class ArticleGenerationService
             Log::warning('DALL-E failed, falling back to Unsplash', ['article_id' => $article->id]);
         }
 
-        // Unsplash search
+        // Unsplash search with fallback keywords strategy
         if ($this->unsplash->isConfigured()) {
-            $result = $this->unsplash->search($keywords, 3);
+            // Try multiple keyword strategies until we get images
+            $keywordStrategies = array_filter([
+                $keywords,                                                              // Original: "Visa digital nomad Thailande"
+                $article->country ? ($keywords . ' ' . $article->country) : null,       // Add country code
+                $article->country ? ('expatriate ' . $article->country) : null,         // Generic: "expatriate TH"
+                $article->country ? ('travel ' . $article->country . ' city') : null,   // Scenic: "travel TH city"
+                'expatriate international',                                              // Ultimate fallback
+            ]);
+
+            $result = ['success' => false, 'images' => []];
+            foreach ($keywordStrategies as $searchTerms) {
+                $result = $this->unsplash->search($searchTerms, 3);
+                if ($result['success'] && !empty($result['images'])) {
+                    break;
+                }
+            }
 
             if ($result['success'] && !empty($result['images'])) {
                 $firstImageUrl = null;
