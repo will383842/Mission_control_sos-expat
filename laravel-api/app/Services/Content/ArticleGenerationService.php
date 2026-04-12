@@ -2726,6 +2726,13 @@ class ArticleGenerationService
      * requested Claude model if GPT fails. Isolates the entire generation
      * pipeline from any single-vendor outage.
      */
+    /**
+     * Route a completion request — GPT primary with retry, Claude only if GPT has no credits.
+     *
+     * Flow: GPT → (if rate-limited: wait 3s + retry GPT) → (if billing error: try Claude) → fail
+     * Claude fallback is ONLY used when GPT returns a billing/payment error (402, insufficient_quota).
+     * Rate limits (429) and transient errors are retried on GPT — no point hitting Claude for those.
+     */
     private function aiComplete(string $systemPrompt, string $userPrompt, array $options = []): array
     {
         $requestedModel    = $options['model'] ?? 'gpt-4o';
@@ -2741,6 +2748,7 @@ class ArticleGenerationService
             default                                      => 'gpt-4o',
         };
 
+        // Attempt 1: GPT
         $gptOptions = $options;
         $gptOptions['model'] = $gptModel;
         $result = $this->openAi->complete($systemPrompt, $userPrompt, $gptOptions);
@@ -2749,16 +2757,57 @@ class ArticleGenerationService
             return $result;
         }
 
-        // Fallback: original Claude model (or sonnet if no Claude was originally requested)
-        $claudeFallback = $isClaudeRequested ? $requestedModel : 'claude-sonnet-4-6';
-        Log::warning('aiComplete: GPT failed, falling back to Claude', [
-            'gpt_model'       => $gptModel,
-            'claude_fallback' => $claudeFallback,
-            'gpt_error'       => $result['error'] ?? 'unknown',
+        $gptError = $result['error'] ?? 'unknown';
+
+        // Check if it's a rate limit (429) or transient error — retry GPT once after 3s
+        $isRateLimit = str_contains($gptError, '429')
+            || str_contains(strtolower($gptError), 'rate')
+            || str_contains(strtolower($gptError), 'too many');
+        $isTransient = str_contains($gptError, '500')
+            || str_contains($gptError, '502')
+            || str_contains($gptError, '503')
+            || str_contains(strtolower($gptError), 'timeout');
+
+        if ($isRateLimit || $isTransient) {
+            Log::info('aiComplete: GPT rate-limited/transient, retrying in 3s', [
+                'model' => $gptModel,
+                'error' => mb_substr($gptError, 0, 100),
+            ]);
+            usleep(3_000_000); // 3 seconds
+
+            $result = $this->openAi->complete($systemPrompt, $userPrompt, $gptOptions);
+            if (!empty($result['success']) && !empty($result['content'])) {
+                return $result;
+            }
+            $gptError = $result['error'] ?? 'unknown';
+        }
+
+        // Check if GPT has a billing/quota problem — only then try Claude
+        $isGptBillingError = str_contains(strtolower($gptError), 'billing')
+            || str_contains(strtolower($gptError), 'quota')
+            || str_contains(strtolower($gptError), 'insufficient')
+            || str_contains($gptError, '402');
+
+        if ($isGptBillingError) {
+            $claudeFallback = $isClaudeRequested ? $requestedModel : 'claude-sonnet-4-6';
+            Log::warning('aiComplete: GPT billing error, falling back to Claude', [
+                'gpt_model'       => $gptModel,
+                'claude_fallback' => $claudeFallback,
+                'gpt_error'       => mb_substr($gptError, 0, 100),
+            ]);
+
+            $claudeOptions = $options;
+            $claudeOptions['model'] = $claudeFallback;
+            return $this->claude->complete($systemPrompt, $userPrompt, $claudeOptions);
+        }
+
+        // GPT failed for non-billing reason and retry didn't help — return the failure
+        // Do NOT try Claude (it would just waste Anthropic credits for a GPT-side issue)
+        Log::warning('aiComplete: GPT failed (non-billing), no Claude fallback', [
+            'model' => $gptModel,
+            'error' => mb_substr($gptError, 0, 200),
         ]);
 
-        $claudeOptions = $options;
-        $claudeOptions['model'] = $claudeFallback;
-        return $this->claude->complete($systemPrompt, $userPrompt, $claudeOptions);
+        return $result;
     }
 }
