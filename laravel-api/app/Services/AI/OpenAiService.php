@@ -168,6 +168,16 @@ class OpenAiService
             . "Do not translate brand names (SOS-Expat), URLs, or code. Preserve all HTML tags exactly."
             . ($toLang === 'zh' ? " IMPORTANT: Output the FULL translation. Do not truncate or summarize. The Chinese output should be roughly the same length as the original in terms of content coverage." : '');
 
+        // Audience context — when the target language has a specific readership
+        // (e.g. EN → Americans, British, Indians, Australians…), adapt culture-specific
+        // examples (banks, tax authorities, organisms) rather than translating literally.
+        if (!empty($options['audience_context'])) {
+            $systemPrompt .= "\n\n" . $options['audience_context']
+                . "\n\nADAPT culture-specific references during translation: if the source text mentions "
+                . "a French bank or authority, replace it with the equivalent for the target-language audience. "
+                . "Keep the overall meaning and SOS-Expat facts intact, but localize examples to the new readership.";
+        }
+
         return $this->complete($systemPrompt, $text, array_merge($options, [
             'model' => $options['model'] ?? $this->translationModel,
             'temperature' => $options['temperature'] ?? 0.3,

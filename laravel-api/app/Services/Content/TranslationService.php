@@ -7,6 +7,7 @@ use App\Models\GeneratedArticle;
 use App\Models\GeneratedArticleFaq;
 use App\Services\AI\ClaudeService;
 use App\Services\AI\OpenAiService;
+use App\Services\Content\AudienceContextService;
 use App\Services\Seo\HreflangService;
 use App\Services\Seo\SeoAnalysisService;
 use App\Services\Seo\SlugService;
@@ -252,8 +253,15 @@ class TranslationService
             return '';
         }
 
+        // Inject the target-language audience context so the translator adapts
+        // culture-specific examples (banks, tax authorities, first names) to the
+        // new readership rather than translating them literally.
+        $audienceContext = AudienceContextService::getContextFor($to);
+
         // Primary: OpenAI gpt-4o-mini
-        $result = $this->openAi->translate($text, $from, $to);
+        $result = $this->openAi->translate($text, $from, $to, [
+            'audience_context' => $audienceContext,
+        ]);
 
         if ($result['success']) {
             $translated = trim($result['content']);

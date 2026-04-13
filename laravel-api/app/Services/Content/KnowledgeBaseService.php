@@ -57,6 +57,11 @@ class KnowledgeBaseService
             ? "\nLANGUE DE GENERATION : {$language}\n"
             : '';
 
+        // Audience context — injects the target nationalities for this language
+        // (e.g. FR → France, Belgique, Suisse, Canada, Maroc, Tunisie…)
+        // along with concrete banks, tax authorities and first names to use.
+        $audienceContext = AudienceContextService::getContextFor($language);
+
         $kbContent = implode("\n\n", array_filter($blocks));
 
         return <<<PROMPT
@@ -69,6 +74,7 @@ class KnowledgeBaseService
 
 {$seoRules}
 {$intentBlock}{$disclaimerBlock}{$countryContext}{$langContext}
+{$audienceContext}
 
 {$this->getHtmlTemplatesBlock()}
 
@@ -106,6 +112,9 @@ PROMPT;
             ? "\nLANGUE : {$language}\n"
             : '';
 
+        // Audience context — per-language target nationalities and examples
+        $audienceContext = AudienceContextService::getContextFor($language);
+
         $kbContent = implode("\n\n", array_filter($blocks));
 
         return <<<PROMPT
@@ -118,6 +127,7 @@ PROMPT;
 
 {$seoRules}
 {$countryContext}{$langContext}
+{$audienceContext}
 
 {$this->getHtmlTemplatesBlock()}
 
