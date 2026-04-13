@@ -78,7 +78,7 @@ class DiscoverPaaCommand extends Command
             $this->line("  ↳ Questions existantes supprimées (--fresh)");
         }
 
-        $this->line("  Interrogation de Google Suggest (~{" . count(\App\Services\Content\GoogleSuggestService::class) . "} seeds)...");
+        $this->line("  Interrogation de Google Suggest (~60 seeds)...");
 
         $results = $suggest->discoverForCountry($code, $name, $prep, $lang);
 

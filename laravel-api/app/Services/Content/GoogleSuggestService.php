@@ -233,10 +233,10 @@ class GoogleSuggestService
         }
 
         // TRANSACTIONNEL — l'utilisateur veut FAIRE quelque chose
-        if (preg_match('/^(comment|étapes?|tutoriel|guide étape|procédure|dossier|formulaire|demande de|faire une demande|obtenir|créer|ouvrir|souscrire|s[\'']inscrire|déposer|remplir|renouveler|valider)/u', $q)) {
+        if (preg_match('/^(comment|étapes?|tutoriel|guide étape|procédure|dossier|formulaire|demande de|faire une demande|obtenir|créer|ouvrir|souscrire|s.inscrire|déposer|remplir|renouveler|valider)/u', $q)) {
             return 'transactional';
         }
-        if (preg_match('/comment (obtenir|cr[eé]er|ouvrir|souscrire|faire|demander|remplir|renouveler|trouver|s[\'']inscrire|d[eé]poser|valider)/u', $q)) {
+        if (preg_match('/comment (obtenir|cr[eé]er|ouvrir|souscrire|faire|demander|remplir|renouveler|trouver|s.inscrire|d[eé]poser|valider)/u', $q)) {
             return 'transactional';
         }
 
