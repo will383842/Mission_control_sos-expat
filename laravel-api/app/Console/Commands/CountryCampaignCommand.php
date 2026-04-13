@@ -402,7 +402,7 @@ class CountryCampaignCommand extends Command
     public function getContentPlan(string $countryCode, string $countryName): array
     {
         $year = date('Y');
-        $cities = self::TOP_CITIES[$countryCode] ?? ['la capitale', 'la deuxieme ville', 'la troisieme ville', 'la quatrieme ville', 'la cinquieme ville', 'la sixieme ville'];
+        $cities = self::TOP_CITIES[$countryCode] ?? ['la capitale', 'la deuxieme ville', 'la troisieme ville', 'la quatrieme ville', 'la cinquieme ville', 'la sixieme ville', 'la septieme ville', 'la huitieme ville', 'la neuvieme ville', 'la dixieme ville'];
         // French prepositions: "en Thailande", "au Japon", "aux Etats-Unis"
         $en = (self::COUNTRY_PREP[$countryCode] ?? 'en') . ' ' . $countryName; // "en Thailande"
         $de = (self::COUNTRY_DE_PREP[$countryCode] ?? 'de') . ' ' . $countryName; // "de Thailande"
@@ -443,13 +443,17 @@ class CountryCampaignCommand extends Command
             ['type' => 'guide', 'intent' => 'informational', 'topic' => "Education {$en} : guide complet ecoles internationales, universites, frais ({$year})"],
             ['type' => 'guide', 'intent' => 'informational', 'topic' => "Retour en France depuis {$countryName} : guide complet fiscalite, logement, demarches ({$year})"],
 
-            // ── GUIDES VILLE (6) — Top 6 cities per country ──
+            // ── GUIDES VILLE (10) — Top 10 cities per country ──
             ['type' => 'guide_city', 'intent' => 'informational', 'topic' => "Vivre a {$cities[0]} en tant qu'expatrie : guide complet ({$year})"],
             ['type' => 'guide_city', 'intent' => 'informational', 'topic' => "Vivre a {$cities[1]} en tant qu'expatrie : guide complet ({$year})"],
             ['type' => 'guide_city', 'intent' => 'informational', 'topic' => "Vivre a {$cities[2]} en tant qu'expatrie : guide complet ({$year})"],
             ['type' => 'guide_city', 'intent' => 'informational', 'topic' => "Vivre a {$cities[3]} en tant qu'expatrie : guide complet ({$year})"],
             ['type' => 'guide_city', 'intent' => 'informational', 'topic' => "Vivre a {$cities[4]} en tant qu'expatrie : guide complet ({$year})"],
             ['type' => 'guide_city', 'intent' => 'informational', 'topic' => "Vivre a {$cities[5]} en tant qu'expatrie : guide complet ({$year})"],
+            ['type' => 'guide_city', 'intent' => 'informational', 'topic' => "Vivre a {$cities[6]} en tant qu'expatrie : guide complet ({$year})"],
+            ['type' => 'guide_city', 'intent' => 'informational', 'topic' => "Vivre a {$cities[7]} en tant qu'expatrie : guide complet ({$year})"],
+            ['type' => 'guide_city', 'intent' => 'informational', 'topic' => "Vivre a {$cities[8]} en tant qu'expatrie : guide complet ({$year})"],
+            ['type' => 'guide_city', 'intent' => 'informational', 'topic' => "Vivre a {$cities[9]} en tant qu'expatrie : guide complet ({$year})"],
 
             // ── ARTICLES JURIDIQUES (22) — High conversion, legal topics ──
             ['type' => 'article', 'intent' => 'informational', 'topic' => "Droit du travail {$en} : droits et obligations des salaries etrangers ({$year})"],
@@ -654,6 +658,30 @@ class CountryCampaignCommand extends Command
             ['type' => 'article', 'intent' => 'informational', 'topic' => "Couple expatrie {$en} : preserver son union loin de chez soi ({$year})"],
             ['type' => 'article', 'intent' => 'informational', 'topic' => "Adoption internationale {$en} : conditions, demarches et delais ({$year})"],
 
+            // ── GUIDES VACANCES (10) — Tourisme + voyageurs longue durée ──
+            // Intent : informational + commercial — capture les "quand partir", "circuit", "budget"
+            ['type' => 'guide_vacances', 'intent' => 'informational', 'topic' => "{$countryName} : quand partir et quelle saison choisir ({$year})"],
+            ['type' => 'guide_vacances', 'intent' => 'informational', 'topic' => "Circuit {en} en 2 semaines : itineraire detaille par etapes ({$year})"],
+            ['type' => 'guide_vacances', 'intent' => 'informational', 'topic' => "Top 10 choses a faire {$en} : incontournables et coups de coeur ({$year})"],
+            ['type' => 'guide_vacances', 'intent' => 'commercial_investigation', 'topic' => "Budget vacances {$en} : cout reel d'un sejour de 2 semaines ({$year})"],
+            ['type' => 'guide_vacances', 'intent' => 'informational', 'topic' => "{$countryName} en famille : activites, hotels et conseils pratiques ({$year})"],
+            ['type' => 'guide_vacances', 'intent' => 'informational', 'topic' => "Ou dormir {$en} : meilleurs hotels, guesthouses et airbnb par region ({$year})"],
+            ['type' => 'guide_vacances', 'intent' => 'informational', 'topic' => "Gastronomie {$de} : plats typiques, restaurants et marches ({$year})"],
+            ['type' => 'guide_vacances', 'intent' => 'informational', 'topic' => "Se deplacer {$en} : transports pratiques pour les voyageurs ({$year})"],
+            ['type' => 'guide_vacances', 'intent' => 'informational', 'topic' => "Activites insolites {$en} : experiences off-the-beaten-track ({$year})"],
+            ['type' => 'guide_vacances', 'intent' => 'informational', 'topic' => "Visas et formalites pour visiter {$countryName} : ce qu'il faut savoir ({$year})"],
+
+            // ── GUIDES EXPAT PROFILS (8) — Segments spécifiques à forte valeur SEO ──
+            // Intent : informational — chaque profil = longue traine unique, forte conversion SOS-Expat
+            ['type' => 'guide_expat', 'intent' => 'informational', 'topic' => "Retraite {$en} : guide complet patrimoine, sante et visa retraite ({$year})"],
+            ['type' => 'guide_expat', 'intent' => 'informational', 'topic' => "Digital nomad {$en} : internet, coworking, visa et fiscalite ({$year})"],
+            ['type' => 'guide_expat', 'intent' => 'informational', 'topic' => "Famille expatriee {$en} : ecoles, sante, logement — les 6 premiers mois ({$year})"],
+            ['type' => 'guide_expat', 'intent' => 'informational', 'topic' => "Femme expatriee seule {$en} : securite, reseau et vie au quotidien ({$year})"],
+            ['type' => 'guide_expat', 'intent' => 'informational', 'topic' => "Entrepreneur expatrie {$en} : creer son business et optimiser sa fiscalite ({$year})"],
+            ['type' => 'guide_expat', 'intent' => 'informational', 'topic' => "Expatrie avec animaux {$en} : importer son chien ou chat, veterinaires ({$year})"],
+            ['type' => 'guide_expat', 'intent' => 'informational', 'topic' => "Couple expatrie {$en} : mariage mixte, papiers, vie a deux en expatriation ({$year})"],
+            ['type' => 'guide_expat', 'intent' => 'informational', 'topic' => "Quitter {$countryName} : radiation consulaire, fiscalite de depart et retour ({$year})"],
+
             // ══════════════════════════════════════════════════════════════════
             // PARTIE 2 — BRAND CONTENT SOS-EXPAT.COM (20 articles)
             // ══════════════════════════════════════════════════════════════════
@@ -708,14 +736,14 @@ class CountryCampaignCommand extends Command
             ['type' => 'brand_content', 'intent' => 'commercial_investigation', 'topic' => "Harcelement au travail {$en} : porter plainte avec l'aide de SOS-Expat.com ({$year})"],
             ['type' => 'brand_content', 'intent' => 'urgency', 'topic' => "Enfant disparu ou enleve {$en} : assistance immediate SOS-Expat.com ({$year})"],
         ];
-        // SEO total (200): statistics(2) + guide(20) + guide_city(6) + juridique(22) + pratique(20)
+        // SEO total (222): statistics(14) + guide(20) + guide_city(10) + juridique(22) + pratique(20)
         //                + pain_point(18) + comparatif(27) + tutorial(29) + lifestyle(12)
-        //                + statistics_data(12) + outreach(6) + testimonial(8) + sante(5)
-        //                + fiscalite(5) + education(4) + famille(4) = 200
+        //                + outreach(6) + testimonial(8) + sante(5) + fiscalite(5)
+        //                + education(4) + famille(4) + guide_vacances(10) + guide_expat(8) = 222
         // Q/R supprimés du plan campagne pays : générés automatiquement par GenerateQrBlogJob
         // sur chaque article publié — pipeline dédié, pas de doublon avec la campagne.
         // Brand SOS-Expat.com (40): brand-info(12) + brand-conversion(8) + brand-pain-solution(20) = 40
-        // GRAND TOTAL: 240 articles per country
+        // GRAND TOTAL: 262 articles per country
     }
 
     /**
