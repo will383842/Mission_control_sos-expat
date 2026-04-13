@@ -182,51 +182,81 @@ class GenerateArticleJob implements ShouldQueue
             ]);
         }
 
-        // Auto-publish gate — must clear 3 thresholds:
-        //   1. Mechanical quality_score >= 60 (SEO/readability/length/FAQ)
-        //   2. Editorial judge overall >= 70 (title/meta/content/facts/intent)
-        //   3. No brand compliance issues, has content, not a translation
-        // The editorial judge (phase14b) runs after phase14 and writes
-        // $article->editorial_score. If it's null (judge was skipped or
-        // unreachable) we fall back to the mechanical score only — i.e.
-        // the gate degrades gracefully to previous behaviour.
+        // Auto-publish gate — "never block" philosophy.
+        //
+        // An article is ALWAYS published if it has usable content. The scores
+        // (quality_score, editorial_score) are informational — they trigger
+        // auto-improvement passes but do NOT block publication. The only hard
+        // blockers are:
+        //   - empty content (nothing to publish)
+        //   - word_count == 0 (same)
+        //   - is a translation (the parent handles publication)
+        //   - compliance issues flagged by the brand-safety check
+        //
+        // Low scores trigger phase14c_improveFromJudgeRecommendations which
+        // rewrites title/meta using the judge's suggestions. The improved
+        // article is then published — it's better to ship an imperfect piece
+        // than to leave it rotting in a review queue forever.
         $article->refresh();
         $editorialScore = $article->editorial_score;
         $editorialReport = $article->editorial_review ?? [];
 
-        $mechanicalOk = $qualityScore >= 60;
-        $editorialOk = $editorialScore === null || $editorialScore >= 70;
-        $baseConditions = empty($qualityIssues)
-            && !$article->parent_article_id
-            && !empty($article->content_html)
-            && $article->word_count > 0;
+        $hasContent = !empty($article->content_html)
+            && $article->word_count > 0
+            && !$article->parent_article_id;
 
-        $canPublish = $mechanicalOk && $editorialOk && $baseConditions;
+        // Hard compliance blockers — the only legitimate reason to withhold
+        // publication. These come from phase08/brand checks and typically
+        // indicate legal/brand risk (inappropriate content, banned claims).
+        $hasCriticalCompliance = !empty($qualityIssues);
 
-        // Build a list of blocking reasons for logging + Telegram context
-        $blockingReasons = [];
-        if (!$mechanicalOk) {
-            $blockingReasons[] = "mechanical_quality={$qualityScore}<60";
+        $canPublish = $hasContent && !$hasCriticalCompliance;
+
+        // Informational breakdown for the Telegram alert + logs
+        $scoreSummary = [
+            'quality_score'   => $qualityScore,
+            'editorial_score' => $editorialScore,
+            'improved'        => false, // set to true below if phase14c fires
+        ];
+        if (!empty($editorialReport['issues']) && is_array($editorialReport['issues'])) {
+            $scoreSummary['issues'] = array_slice($editorialReport['issues'], 0, 3);
         }
-        if (!$editorialOk && $editorialScore !== null) {
-            $blockingReasons[] = "editorial_score={$editorialScore}<70";
-            if (!empty($editorialReport['issues']) && is_array($editorialReport['issues'])) {
-                $blockingReasons[] = 'issues: ' . implode(', ', array_slice($editorialReport['issues'], 0, 3));
+
+        // Auto-improvement pass: if the judge flagged a low editorial_score
+        // (< 70) AND returned concrete recommendations, apply them in-place.
+        // This is a best-effort improvement — if it fails, we still publish
+        // the original article.
+        if ($hasContent && $editorialScore !== null && $editorialScore < 70 && !empty($editorialReport)) {
+            try {
+                $improved = app(\App\Services\Content\ArticleGenerationService::class)
+                    ->phase14c_improveFromJudgeRecommendations($article->fresh(), $editorialReport);
+                if ($improved) {
+                    $scoreSummary['improved'] = true;
+                    Log::info('GenerateArticleJob: article auto-improved from judge recommendations', [
+                        'article_id' => $article->id,
+                        'editorial_score_before' => $editorialScore,
+                    ]);
+                    $article->refresh();
+                }
+            } catch (\Throwable $e) {
+                // Improvement failed — log but do NOT block publication.
+                Log::warning('GenerateArticleJob: auto-improvement failed (non-blocking)', [
+                    'article_id' => $article->id,
+                    'error'      => $e->getMessage(),
+                ]);
             }
-        }
-        if (!empty($qualityIssues)) {
-            $blockingReasons[] = 'compliance: ' . implode(', ', array_slice($qualityIssues, 0, 2));
         }
 
         if (!$canPublish && !$article->parent_article_id && $article->word_count > 0) {
-            // Has content but quality issues → review (not lost, can be published manually)
+            // Only reaches here if there are HARD compliance issues. The
+            // article is kept in review for manual intervention — content
+            // remains intact and can be published manually after fix.
             $article->update(['status' => 'review']);
-            Log::info('GenerateArticleJob: article set to review (blocked from auto-publish)', [
+            Log::warning('GenerateArticleJob: article held in review due to compliance issues', [
                 'article_id' => $article->id,
+                'compliance_issues' => $qualityIssues,
                 'quality_score' => $qualityScore,
                 'editorial_score' => $editorialScore,
-                'issues' => $qualityIssues,
-                'blocking_reasons' => $blockingReasons,
             ]);
         }
 

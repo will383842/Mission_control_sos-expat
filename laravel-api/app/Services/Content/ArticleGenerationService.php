@@ -2114,6 +2114,111 @@ class ArticleGenerationService
         }
     }
 
+    /**
+     * Phase 14c — Auto-improve from judge recommendations.
+     *
+     * When the editorial judge (phase14b) returns an overall score below the
+     * quality bar AND provides concrete recommended rewrites, this method
+     * applies them in-place on the article. This is a best-effort pass —
+     * if the recommendations are invalid (empty strings, too long, etc.)
+     * we silently skip them and let the original content stand.
+     *
+     * Public on purpose: GenerateArticleJob::autoPublish() calls this right
+     * before the publication queue push so the final version sent to the
+     * blog is the improved one.
+     *
+     * Returns true if at least one field was actually changed.
+     */
+    public function phase14c_improveFromJudgeRecommendations(GeneratedArticle $article, array $judgeReport): bool
+    {
+        $updates = [];
+        $changedFields = [];
+
+        // Title improvement — only if judge scored it < 70 AND gave a recommendation
+        $titleScore = (int) ($judgeReport['title_score'] ?? 100);
+        $recommendedTitle = trim((string) ($judgeReport['recommended_title'] ?? ''));
+        if ($titleScore < 70 && $recommendedTitle !== '' && $recommendedTitle !== 'null') {
+            // Run the recommended title through cleanTitle to enforce year,
+            // capitalisation rules, and length limits just like fresh output.
+            $primaryKeyword = $article->keywords_primary
+                ?? ($article->title ?? $recommendedTitle);
+            $cleaned = $this->cleanTitle(
+                $recommendedTitle,
+                $primaryKeyword,
+                $article->country,
+                (string) date('Y')
+            );
+            if (mb_strlen($cleaned) >= 20 && $cleaned !== $article->title) {
+                $updates['title'] = $cleaned;
+                $changedFields[] = 'title';
+            }
+        }
+
+        // Meta title improvement
+        $metaScore = (int) ($judgeReport['meta_score'] ?? 100);
+        $recommendedMetaTitle = trim((string) ($judgeReport['recommended_meta_title'] ?? ''));
+        if ($metaScore < 70 && $recommendedMetaTitle !== '' && $recommendedMetaTitle !== 'null') {
+            // Strip trailing pipe/whitespace and clamp to 60 chars (Google cap).
+            $clean = preg_replace('/[\s|]+$/u', '', $recommendedMetaTitle);
+            if (mb_strlen($clean) > 60) {
+                $truncated = mb_substr($clean, 0, 60);
+                $lastSpace = mb_strrpos($truncated, ' ');
+                $clean = ($lastSpace && $lastSpace > 40) ? mb_substr($truncated, 0, $lastSpace) : $truncated;
+            }
+            if (mb_strlen($clean) >= 20 && $clean !== $article->meta_title) {
+                $updates['meta_title'] = $clean;
+                $changedFields[] = 'meta_title';
+            }
+        }
+
+        // Meta description improvement — 140-155 chars target
+        $recommendedMetaDesc = trim((string) ($judgeReport['recommended_meta_description'] ?? ''));
+        if ($metaScore < 70 && $recommendedMetaDesc !== '' && $recommendedMetaDesc !== 'null') {
+            $clean = strip_tags($recommendedMetaDesc);
+            if (mb_strlen($clean) > 155) {
+                $truncated = mb_substr($clean, 0, 155);
+                $lastDot = mb_strrpos($truncated, '.');
+                $clean = ($lastDot && $lastDot > 100) ? mb_substr($truncated, 0, $lastDot + 1) : $truncated;
+            }
+            if (mb_strlen($clean) >= 80 && $clean !== $article->meta_description) {
+                $updates['meta_description'] = $clean;
+                $changedFields[] = 'meta_description';
+            }
+        }
+
+        if (empty($updates)) {
+            return false;
+        }
+
+        $article->update($updates);
+
+        // Mark the editorial_review JSON so we can audit what was changed
+        // and never re-apply the same recommendation twice.
+        $report = $article->editorial_review ?? [];
+        $report['auto_improvements'] = [
+            'applied_at' => now()->toIso8601String(),
+            'fields'     => $changedFields,
+        ];
+        $article->update(['editorial_review' => $report]);
+
+        $this->logPhase(
+            $article,
+            'editorial_improve',
+            'success',
+            'fields=' . implode(',', $changedFields),
+            0, 0, 0
+        );
+
+        Log::info('phase14c: auto-improvement applied', [
+            'article_id'    => $article->id,
+            'changed_fields' => $changedFields,
+            'title_score_before' => $titleScore,
+            'meta_score_before'  => $metaScore,
+        ]);
+
+        return true;
+    }
+
     private function phase15_dispatchTranslations(GeneratedArticle $article, array $languages): void
     {
         foreach ($languages as $targetLang) {
