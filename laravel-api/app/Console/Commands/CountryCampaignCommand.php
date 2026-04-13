@@ -420,7 +420,7 @@ class CountryCampaignCommand extends Command
             ['type' => 'statistics', 'intent' => 'informational', 'topic' => "{$countryName} : superficie, population, langues, monnaie, economie et chiffres cles ({$year})"],
             ['type' => 'statistics', 'intent' => 'informational', 'topic' => "{$countryName} en chiffres : indicateurs sociaux, economiques et politiques ({$year})"],
 
-            // ── PILLAR CONTENT / GUIDES (10) — Foundation of the cluster ──
+            // ── PILLAR CONTENT / GUIDES (20) — Foundation of the cluster (+10 vs ancien plan) ──
             ['type' => 'guide', 'intent' => 'informational', 'topic' => "S'expatrier {$en} : guide complet {$year}"],
             ['type' => 'guide', 'intent' => 'informational', 'topic' => "Cout de la vie {$en} en {$year} : budget detaille"],
             ['type' => 'guide', 'intent' => 'informational', 'topic' => "Visa et permis de sejour {$en} : toutes les options {$year}"],
@@ -431,6 +431,17 @@ class CountryCampaignCommand extends Command
             ['type' => 'guide', 'intent' => 'informational', 'topic' => "Investir {$en} : opportunites, fiscalite et risques ({$year})"],
             ['type' => 'guide', 'intent' => 'informational', 'topic' => "Prendre sa retraite {$en} : guide patrimoine, sante et qualite de vie ({$year})"],
             ['type' => 'guide', 'intent' => 'informational', 'topic' => "Emigration {$en} : conditions, etapes et delais ({$year})"],
+            // +10 nouveaux guides (remplacement Q/R)
+            ['type' => 'guide', 'intent' => 'informational', 'topic' => "Famille expatriee {$en} : guide complet logement, ecole, sante ({$year})"],
+            ['type' => 'guide', 'intent' => 'informational', 'topic' => "Digital nomad {$en} : guide complet visas, fiscalite et vie pratique ({$year})"],
+            ['type' => 'guide', 'intent' => 'informational', 'topic' => "Droit immobilier {$en} pour les etrangers : guide complet ({$year})"],
+            ['type' => 'guide', 'intent' => 'informational', 'topic' => "Securite sociale et protection {$en} : ce a quoi ont droit les expatries ({$year})"],
+            ['type' => 'guide', 'intent' => 'informational', 'topic' => "Entreprendre {$en} : guide complet creation d'entreprise pour etrangers ({$year})"],
+            ['type' => 'guide', 'intent' => 'informational', 'topic' => "Fiscalite internationale depuis {$countryName} : guide complet double imposition, declarations ({$year})"],
+            ['type' => 'guide', 'intent' => 'informational', 'topic' => "Logement {$en} : guide complet location, achat, quartiers pour expatries ({$year})"],
+            ['type' => 'guide', 'intent' => 'informational', 'topic' => "Transport et mobilite {$en} : guide complet voiture, transports en commun, moto ({$year})"],
+            ['type' => 'guide', 'intent' => 'informational', 'topic' => "Education {$en} : guide complet ecoles internationales, universites, frais ({$year})"],
+            ['type' => 'guide', 'intent' => 'informational', 'topic' => "Retour en France depuis {$countryName} : guide complet fiscalite, logement, demarches ({$year})"],
 
             // ── GUIDES VILLE (6) — Top 6 cities per country ──
             ['type' => 'guide_city', 'intent' => 'informational', 'topic' => "Vivre a {$cities[0]} en tant qu'expatrie : guide complet ({$year})"],
@@ -506,7 +517,9 @@ class CountryCampaignCommand extends Command
             ['type' => 'pain_point', 'intent' => 'urgency', 'topic' => "Refus d'entree {$en} a la frontiere : droits et recours ({$year})"],
             ['type' => 'pain_point', 'intent' => 'urgency', 'topic' => "Fraude immobiliere {$en} : detecter et porter plainte ({$year})"],
 
-            // ── COMPARATIFS (17) — Commercial investigation intent ──
+            // ── COMPARATIFS (27) — Commercial investigation intent ──
+            // Note: Q/R supprimés de la campagne pays (pipeline Q/R séparé génère automatiquement
+            // les FAQ entries pour chaque article publié). +10 comparatifs à haute valeur SEO.
             ['type' => 'comparative', 'intent' => 'commercial_investigation', 'topic' => "Meilleure assurance sante {$en} pour expatries : comparatif {$year}"],
             ['type' => 'comparative', 'intent' => 'commercial_investigation', 'topic' => "Meilleure banque {$en} pour expatries : comparatif {$year}"],
             ['type' => 'comparative', 'intent' => 'commercial_investigation', 'topic' => "Meilleur forfait telephone {$en} : comparatif operateurs {$year}"],
@@ -524,13 +537,20 @@ class CountryCampaignCommand extends Command
             ['type' => 'comparative', 'intent' => 'commercial_investigation', 'topic' => "Avocats francophones {$en} : criteres de choix et tarifs moyens ({$year})"],
             ['type' => 'comparative', 'intent' => 'commercial_investigation', 'topic' => "Operateurs internet fibre {$en} : comparatif debit, prix, fiabilite ({$year})"],
             ['type' => 'comparative', 'intent' => 'commercial_investigation', 'topic' => "Cliniques privees {$en} : comparatif tarifs et specialites ({$year})"],
+            // +10 nouveaux comparatifs (remplacement Q/R)
+            ['type' => 'comparative', 'intent' => 'commercial_investigation', 'topic' => "Assurance vie {$en} pour expatries : comparatif des meilleures offres ({$year})"],
+            ['type' => 'comparative', 'intent' => 'commercial_investigation', 'topic' => "Visa de retraite {$en} vs visa investisseur : quel statut choisir ({$year})"],
+            ['type' => 'comparative', 'intent' => 'commercial_investigation', 'topic' => "Acheter vs louer {$en} : analyse financiere pour expatries ({$year})"],
+            ['type' => 'comparative', 'intent' => 'commercial_investigation', 'topic' => "Agences immobilieres {$en} pour expatries : comparatif services et commissions ({$year})"],
+            ['type' => 'comparative', 'intent' => 'commercial_investigation', 'topic' => "Ecoles primaires internationales {$en} : IB vs Cambridge vs lycee francais ({$year})"],
+            ['type' => 'comparative', 'intent' => 'commercial_investigation', 'topic' => "Crypto et finances {$en} : exchanges legaux vs banque traditionnelle ({$year})"],
+            ['type' => 'comparative', 'intent' => 'commercial_investigation', 'topic' => "Assurance rapatriement {$en} : comparatif des garanties essentielles ({$year})"],
+            ['type' => 'comparative', 'intent' => 'commercial_investigation', 'topic' => "Freelance {$en} : statut auto-entrepreneur vs societe locale vs portage salarial ({$year})"],
+            ['type' => 'comparative', 'intent' => 'commercial_investigation', 'topic' => "Retraite complementaire {$en} : comparer PERP, assurance vie et fonds locaux ({$year})"],
+            ['type' => 'comparative', 'intent' => 'commercial_investigation', 'topic' => "Applications de rencontre {$en} : comparatif pour expatries ({$year})"],
 
-            // ── Q/R — VRAIES REQUÊTES GOOGLE (35) — Featured snippets ──
-            // Priorité : questions réelles Google Suggest (paa:discover) → fallback templates
-            // Les questions PAA sont exactement ce que les internautes tapent → intent natif
-            ...($this->loadPaaQuestionsOrFallback($countryCode, $en, $year)),
-
-            // ── TUTORIELS (14) — Step-by-step, how-to schema ──
+            // ── TUTORIELS (29) — Step-by-step, how-to schema ──
+            // +15 tutorials (remplacement partiel Q/R) — fort potentiel position 0 + schema HowTo
             ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "Comment obtenir un visa pour {$countryName} etape par etape ({$year})"],
             ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "Demenager {$en} : checklist complete ({$year})"],
             ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "Ouvrir un compte bancaire {$en} en ligne : tutoriel ({$year})"],
@@ -545,6 +565,22 @@ class CountryCampaignCommand extends Command
             ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "Importer ses meubles {$en} : douane et logistique etape par etape ({$year})"],
             ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "Creer une SARL ou equivalent {$en} : tutoriel pour expatries ({$year})"],
             ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "Acheter un telephone et obtenir un numero {$en} : etape par etape ({$year})"],
+            // +15 nouveaux tutoriels (remplacement Q/R)
+            ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "Transferer son argent {$en} sans perdre en change : tutoriel Wise, Revolut, Western Union ({$year})"],
+            ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "Dematerialiser ses documents administratifs {$en} : etape par etape ({$year})"],
+            ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "Obtenir un certificat de residence {$en} : procedure complete ({$year})"],
+            ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "Faire une procuration depuis {$countryName} : demarches et notaire ({$year})"],
+            ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "Souscrire a une mutuelle complementaire {$en} : guide pas a pas ({$year})"],
+            ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "Enregistrer un mariage {$en} aupres du consulat francais : tutoriel ({$year})"],
+            ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "Legalisez vos diplomes pour {$countryName} : apostille, traduction assermentee, etapes ({$year})"],
+            ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "Creer un blog ou business en ligne depuis {$countryName} : statut juridique et fiscal ({$year})"],
+            ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "Louer un appartement {$en} depuis l'etranger : annonce, visite virtuelle, contrat ({$year})"],
+            ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "Importer sa voiture {$en} : dedouanement, homologation, assurance ({$year})"],
+            ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "Acheter de l'immobilier {$en} a distance : notaire, virement international, signature ({$year})"],
+            ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "Acceder aux soins {$en} sans carte vitale : demarche pratique ({$year})"],
+            ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "Retirer de l'argent {$en} sans frais : banques, ATM et astuces ({$year})"],
+            ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "Inscrire son enfant au lycee francais {$en} : dossier, delais et frais ({$year})"],
+            ['type' => 'tutorial', 'intent' => 'transactional', 'topic' => "Quitter {$countryName} et rentrer en France : radiation consulaire, fiscal, logement ({$year})"],
 
             // ── DIGITAL NOMAD / LIFESTYLE (12) — Growing segment ──
             ['type' => 'article', 'intent' => 'informational', 'topic' => "Digital nomad {$en} : visa, coworking et cout de vie ({$year})"],
@@ -672,10 +708,12 @@ class CountryCampaignCommand extends Command
             ['type' => 'brand_content', 'intent' => 'commercial_investigation', 'topic' => "Harcelement au travail {$en} : porter plainte avec l'aide de SOS-Expat.com ({$year})"],
             ['type' => 'brand_content', 'intent' => 'urgency', 'topic' => "Enfant disparu ou enleve {$en} : assistance immediate SOS-Expat.com ({$year})"],
         ];
-        // SEO total (200): statistics(2) + guide(10) + guide_city(6) + juridique(22) + pratique(20)
-        //                + pain_point(18) + comparatif(17) + qa(35) + tutorial(14) + lifestyle(12)
+        // SEO total (200): statistics(2) + guide(20) + guide_city(6) + juridique(22) + pratique(20)
+        //                + pain_point(18) + comparatif(27) + tutorial(29) + lifestyle(12)
         //                + statistics_data(12) + outreach(6) + testimonial(8) + sante(5)
         //                + fiscalite(5) + education(4) + famille(4) = 200
+        // Q/R supprimés du plan campagne pays : générés automatiquement par GenerateQrBlogJob
+        // sur chaque article publié — pipeline dédié, pas de doublon avec la campagne.
         // Brand SOS-Expat.com (40): brand-info(12) + brand-conversion(8) + brand-pain-solution(20) = 40
         // GRAND TOTAL: 240 articles per country
     }
