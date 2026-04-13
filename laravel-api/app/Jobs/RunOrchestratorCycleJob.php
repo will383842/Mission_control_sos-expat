@@ -482,7 +482,13 @@ class RunOrchestratorCycleJob implements ShouldQueue
 
     /**
      * Get next articles from the CountryCampaignCommand plan that haven't been generated yet.
-     * Uses the same dedup logic as the command (keyword-based matching).
+     *
+     * Quota-aware selection: the plan is structured as N items per type (e.g. 72 article,
+     * 40 brand_content, 29 tutorial, 27 comparative, ...). We count how many of each type
+     * already exist in the DB and SKIP any plan item whose type quota is exhausted. This
+     * ensures every type in the plan gets its fair share, instead of letting the types at
+     * the START of the plan monopolize all slots (which was the bug: the old code broke
+     * after 1 match and never reached types at the END of the plan).
      */
     private function getNextCampaignArticles(string $countryCode, int $count): array
     {
@@ -491,43 +497,87 @@ class RunOrchestratorCycleJob implements ShouldQueue
 
         $plan = $command->getContentPlan($countryCode, $name);
 
-        // Get existing articles for dedup — include ALL statuses to prevent re-generation
-        $existingTitles = \App\Models\GeneratedArticle::where('country', $countryCode)
+        // Compute expected quota per type from the plan
+        $planQuotaByType = [];
+        foreach ($plan as $item) {
+            $t = $item['type'] ?? 'article';
+            $planQuotaByType[$t] = ($planQuotaByType[$t] ?? 0) + 1;
+        }
+
+        // Statuses that count as a "taken slot" for the quota. Includes in-flight
+        // ('generating', 'draft') to prevent double-dispatch while a job is running,
+        // as well as completed states. Excludes 'deleted' and 'failed' so we can retry.
+        $activeStatuses = ['generating', 'draft', 'review', 'approved', 'published', 'translating', 'translated'];
+
+        // Count existing articles per type for this country
+        $existingByType = \App\Models\GeneratedArticle::where('country', $countryCode)
             ->where('language', 'fr')
-            ->whereIn('status', ['generating', 'review', 'published', 'approved', 'deleted', 'draft', 'failed'])
-            ->pluck('title')
+            ->whereIn('status', $activeStatuses)
+            ->groupBy('content_type')
+            ->selectRaw('content_type, COUNT(*) as n')
+            ->pluck('n', 'content_type')
             ->toArray();
 
-        // Also include the PLAN topics of already-dispatched items (prevent same-cycle duplicates)
-        // We track dispatched topics in a static array within this job execution
-        static $dispatchedTopics = [];
-        $allTitles = array_merge($existingTitles, $dispatchedTopics);
+        // Compute remaining quota per type (plan - existing)
+        $remainingByType = [];
+        foreach ($planQuotaByType as $type => $expected) {
+            $existing = (int) ($existingByType[$type] ?? 0);
+            $remainingByType[$type] = max(0, $expected - $existing);
+        }
 
-        // Keyword-based dedup — threshold 1 keyword overlap (was 2, too lenient)
-        $existingKeywordSets = array_map(fn ($t) => $command->extractDedupKeywords($t, $name), $allTitles);
+        // If every type is at or above its quota, nothing to generate for this country
+        if (array_sum($remainingByType) === 0) {
+            Log::info("Orchestrator Campaign: {$countryCode} plan complete (all types fulfilled)");
+            return [];
+        }
+
+        // Get existing titles GROUPED BY content_type for scoped dedup.
+        // We use EXACT title match (case-insensitive, trimmed) per type instead of the
+        // previous keyword-based fuzzy match. Reason: the plan contains 262 hand-curated
+        // distinct topics by design, so fuzzy matching only blocks legitimate items that
+        // share template words ("Thailande 2026", "guide complet", "SOS-Expat.com", ...)
+        // with existing titles. Exact match is more predictable and avoids false positives.
+        $existingByTypeAndTitle = \App\Models\GeneratedArticle::where('country', $countryCode)
+            ->where('language', 'fr')
+            ->whereIn('status', array_merge($activeStatuses, ['deleted', 'failed']))
+            ->get(['content_type', 'title']);
+
+        $normalize = fn (string $s) => mb_strtolower(trim($s));
+
+        $titleSetByType = [];
+        foreach ($existingByTypeAndTitle as $row) {
+            $titleSetByType[$row->content_type][$normalize($row->title)] = true;
+        }
+
+        // Also track in-process topics to prevent same-cycle duplicates (static per job run)
+        static $dispatchedByType = [];
+        foreach ($dispatchedByType as $type => $topics) {
+            foreach ($topics as $t) {
+                $titleSetByType[$type][$normalize($t)] = true;
+            }
+        }
 
         $toGenerate = [];
         foreach ($plan as $item) {
-            $topicKeywords = $command->extractDedupKeywords($item['topic'], $name);
-            $isDuplicate = false;
-            foreach ($existingKeywordSets as $existingKw) {
-                // 1 overlapping keyword = duplicate (was 2, which missed "expatrier" alone)
-                if (count(array_intersect($topicKeywords, $existingKw)) >= 1 && count($topicKeywords) <= 3) {
-                    $isDuplicate = true;
-                    break;
-                }
-                // For topics with many keywords, require 2 overlap
-                if (count(array_intersect($topicKeywords, $existingKw)) >= 2) {
-                    $isDuplicate = true;
-                    break;
-                }
+            $type = $item['type'] ?? 'article';
+
+            // Skip: this type has already reached its plan quota
+            if (($remainingByType[$type] ?? 0) <= 0) {
+                continue;
             }
-            if (!$isDuplicate) {
-                $toGenerate[] = $item;
-                // Track this topic so it's not dispatched again in the same cycle
-                $dispatchedTopics[] = $item['topic'];
-                $existingKeywordSets[] = $topicKeywords;
+
+            // Skip: exact title already exists for this type (case-insensitive)
+            $normalizedTopic = $normalize($item['topic']);
+            if (isset($titleSetByType[$type][$normalizedTopic])) {
+                continue;
             }
+
+            // Accept this item
+            $toGenerate[] = $item;
+            $dispatchedByType[$type][] = $item['topic'];
+            $titleSetByType[$type][$normalizedTopic] = true;
+            $remainingByType[$type]--; // decrement in-memory so subsequent items in the same cycle respect quota
+
             if (count($toGenerate) >= $count) {
                 break;
             }
@@ -613,12 +663,14 @@ class RunOrchestratorCycleJob implements ShouldQueue
             return null;
         }
 
-        // Cache the counts for 10 minutes to avoid querying on every cycle
+        // Cache the counts for 10 minutes to avoid querying on every cycle.
+        // Status filter is aligned with getNextCampaignArticles() quota check: we count
+        // every in-flight or completed article as a "slot taken", so the country-level
+        // threshold check stays consistent with the per-type quota enforcement.
         $counts = \Illuminate\Support\Facades\Cache::remember('country_campaign_counts', 600, function () {
             return \App\Models\GeneratedArticle::where('language', 'fr')
-                ->whereIn('status', ['review', 'published', 'approved'])
+                ->whereIn('status', ['generating', 'draft', 'review', 'approved', 'published', 'translating', 'translated'])
                 ->whereNotNull('country')
-                ->where('word_count', '>', 0)
                 ->groupBy('country')
                 ->selectRaw('country, COUNT(*) as total')
                 ->pluck('total', 'country')
