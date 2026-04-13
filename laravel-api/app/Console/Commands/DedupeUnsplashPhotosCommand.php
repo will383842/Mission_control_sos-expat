@@ -140,6 +140,13 @@ class DedupeUnsplashPhotosCommand extends Command
                 }
 
                 $result = $unsplash->searchUnique($searchTerm, 1, 'landscape');
+                // Narrow French queries often return 0 results — fall back to
+                // a generic English term keyed on the country.
+                if (empty($result['success']) || empty($result['images'])) {
+                    $fallback = $this->fallbackSearchTerm($parent);
+                    $this->line("      retry with fallback: \"{$fallback}\"");
+                    $result = $unsplash->searchUnique($fallback, 1, 'landscape');
+                }
                 if (empty($result['success']) || empty($result['images'])) {
                     $this->warn('      no fresh image found, leaving as-is');
                     $failed++;
@@ -205,5 +212,39 @@ class DedupeUnsplashPhotosCommand extends Command
             return mb_substr($keywords, 0, 60);
         }
         return mb_substr((string) $article->title, 0, 60);
+    }
+
+    private const COUNTRY_FALLBACKS = [
+        'TH' => 'Thailand landscape temple',
+        'VE' => 'Venezuela landscape Caracas',
+        'FR' => 'France Paris landscape',
+        'DE' => 'Germany landscape',
+        'JP' => 'Japan landscape',
+        'PT' => 'Portugal Lisbon coast',
+        'AE' => 'Dubai skyline',
+        'ES' => 'Spain landscape',
+        'IT' => 'Italy landscape',
+        'GB' => 'United Kingdom London',
+        'US' => 'United States landscape',
+        'CA' => 'Canada landscape',
+        'AU' => 'Australia landscape',
+        'BR' => 'Brazil landscape',
+        'MX' => 'Mexico landscape',
+        'MA' => 'Morocco landscape',
+        'TN' => 'Tunisia landscape',
+        'DZ' => 'Algeria landscape',
+        'SN' => 'Senegal landscape',
+    ];
+
+    private function fallbackSearchTerm(GeneratedArticle $article): string
+    {
+        $country = strtoupper(trim((string) ($article->country ?? '')));
+        if ($country !== '' && isset(self::COUNTRY_FALLBACKS[$country])) {
+            return self::COUNTRY_FALLBACKS[$country];
+        }
+        if ($country !== '') {
+            return $country . ' travel city landscape';
+        }
+        return 'travel landscape';
     }
 }
