@@ -42,9 +42,12 @@ class CountryCampaignCommand extends Command
     protected $description = 'Generate a complete country content cluster (240 articles: 200 SEO + 40 brand SOS-Expat.com)';
 
     /**
-     * Top 6 expat cities per country for city guides.
+     * Top 6 expat cities per country for city guides. Covers ~80 of the most
+     * relevant expat destinations. For countries not listed here, the city guide
+     * topics fall back to generic placeholders ("la capitale", etc.).
      */
     private const TOP_CITIES = [
+        // ── PRIORITY 11 + main expat hubs (existing 30) ──
         'TH' => ['Bangkok', 'Chiang Mai', 'Phuket', 'Pattaya', 'Krabi', 'Hua Hin'],
         'US' => ['New York', 'Miami', 'Los Angeles', 'San Francisco', 'Austin', 'Chicago'],
         'VN' => ['Ho Chi Minh-Ville', 'Hanoi', 'Da Nang', 'Hoi An', 'Nha Trang', 'Hue'],
@@ -75,6 +78,86 @@ class CountryCampaignCommand extends Command
         'KH' => ['Phnom Penh', 'Siem Reap', 'Sihanoukville', 'Battambang', 'Kep', 'Kampot'],
         'IN' => ['Mumbai', 'Bangalore', 'Goa', 'New Delhi', 'Pondichery', 'Pune'],
         'PL' => ['Varsovie', 'Cracovie', 'Wroclaw', 'Gdansk', 'Poznan', 'Lodz'],
+
+        // ── EUROPE (additional hubs) ──
+        'FR' => ['Paris', 'Lyon', 'Marseille', 'Bordeaux', 'Nice', 'Toulouse'],
+        'AT' => ['Vienne', 'Salzbourg', 'Innsbruck', 'Graz', 'Linz', 'Klagenfurt'],
+        'IE' => ['Dublin', 'Cork', 'Galway', 'Limerick', 'Waterford', 'Killarney'],
+        'SE' => ['Stockholm', 'Goteborg', 'Malmo', 'Uppsala', 'Linkoping', 'Helsingborg'],
+        'NO' => ['Oslo', 'Bergen', 'Trondheim', 'Stavanger', 'Tromso', 'Kristiansand'],
+        'DK' => ['Copenhague', 'Aarhus', 'Odense', 'Aalborg', 'Esbjerg', 'Helsingor'],
+        'FI' => ['Helsinki', 'Tampere', 'Turku', 'Espoo', 'Oulu', 'Rovaniemi'],
+        'IS' => ['Reykjavik', 'Akureyri', 'Hafnarfjordur', 'Keflavik', 'Selfoss', 'Vik'],
+        'CZ' => ['Prague', 'Brno', 'Ostrava', 'Plzen', 'Cesky Krumlov', 'Karlovy Vary'],
+        'HU' => ['Budapest', 'Debrecen', 'Szeged', 'Pecs', 'Gyor', 'Miskolc'],
+        'RO' => ['Bucarest', 'Cluj-Napoca', 'Brasov', 'Timisoara', 'Sibiu', 'Iasi'],
+        'BG' => ['Sofia', 'Plovdiv', 'Varna', 'Bourgas', 'Veliko Tarnovo', 'Bansko'],
+        'EE' => ['Tallinn', 'Tartu', 'Parnu', 'Narva', 'Viljandi', 'Kuressaare'],
+        'LV' => ['Riga', 'Liepaja', 'Daugavpils', 'Jurmala', 'Ventspils', 'Cesis'],
+        'LT' => ['Vilnius', 'Kaunas', 'Klaipeda', 'Siauliai', 'Panevezys', 'Trakai'],
+        'SI' => ['Ljubljana', 'Maribor', 'Bled', 'Piran', 'Koper', 'Celje'],
+        'SK' => ['Bratislava', 'Kosice', 'Banska Bystrica', 'Zilina', 'Nitra', 'Poprad'],
+        'LU' => ['Luxembourg-Ville', 'Esch-sur-Alzette', 'Differdange', 'Dudelange', 'Ettelbruck', 'Diekirch'],
+        'MT' => ['La Valette', 'Sliema', 'Saint-Julien', 'Mdina', 'Gozo', 'Mellieha'],
+        'CY' => ['Nicosie', 'Limassol', 'Larnaca', 'Paphos', 'Ayia Napa', 'Famagouste'],
+        'RU' => ['Moscou', 'Saint-Petersbourg', 'Sotchi', 'Kazan', 'Ekaterinbourg', 'Vladivostok'],
+        'UA' => ['Kiev', 'Lviv', 'Odessa', 'Kharkiv', 'Dnipro', 'Tchernivtsi'],
+
+        // ── ASIE (additional hubs) ──
+        'CN' => ['Pekin', 'Shanghai', 'Shenzhen', 'Guangzhou', 'Chengdu', 'Hangzhou'],
+        'HK' => ['Central', 'Kowloon', 'Causeway Bay', 'Tsim Sha Tsui', 'Mong Kok', 'Wan Chai'],
+        'TW' => ['Taipei', 'Kaohsiung', 'Taichung', 'Tainan', 'Hsinchu', 'Hualien'],
+        'KR' => ['Seoul', 'Busan', 'Incheon', 'Daegu', 'Jeju', 'Gwangju'],
+        'IL' => ['Tel Aviv', 'Jerusalem', 'Haifa', 'Eilat', 'Netanya', 'Herzliya'],
+        'LB' => ['Beyrouth', 'Byblos', 'Tripoli', 'Tyr', 'Saida', 'Baalbek'],
+        'JO' => ['Amman', 'Petra', 'Aqaba', 'Madaba', 'Jerash', 'Wadi Rum'],
+        'SA' => ['Riyad', 'Djeddah', 'La Mecque', 'Medine', 'Dammam', 'Khobar'],
+        'QA' => ['Doha', 'Al Wakrah', 'Al Khor', 'Lusail', 'Al Rayyan', 'Mesaieed'],
+        'BH' => ['Manama', 'Riffa', 'Muharraq', 'Hamad Town', 'Isa Town', 'Sitra'],
+        'OM' => ['Mascate', 'Salalah', 'Sohar', 'Nizwa', 'Sur', 'Khasab'],
+        'KW' => ['Koweit-Ville', 'Hawalli', 'Salmiya', 'Farwaniya', 'Mahboula', 'Ahmadi'],
+        'PK' => ['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Peshawar', 'Faisalabad'],
+        'BD' => ['Dacca', 'Chittagong', 'Sylhet', 'Khulna', 'Rajshahi', 'Cox\'s Bazar'],
+        'LK' => ['Colombo', 'Kandy', 'Galle', 'Negombo', 'Jaffna', 'Trincomalee'],
+        'NP' => ['Katmandou', 'Pokhara', 'Lalitpur', 'Bhaktapur', 'Chitwan', 'Lumbini'],
+        'MM' => ['Yangon', 'Mandalay', 'Bagan', 'Naypyidaw', 'Inle Lake', 'Taunggyi'],
+        'LA' => ['Vientiane', 'Luang Prabang', 'Pakse', 'Vang Vieng', 'Savannakhet', 'Champasak'],
+
+        // ── AMERIQUES (additional hubs) ──
+        'AR' => ['Buenos Aires', 'Cordoba', 'Mendoza', 'Bariloche', 'Rosario', 'Salta'],
+        'CL' => ['Santiago', 'Valparaiso', 'Vina del Mar', 'Concepcion', 'La Serena', 'Pucon'],
+        'PE' => ['Lima', 'Cusco', 'Arequipa', 'Trujillo', 'Iquitos', 'Puno'],
+        'EC' => ['Quito', 'Guayaquil', 'Cuenca', 'Banos', 'Galapagos', 'Otavalo'],
+        'BO' => ['La Paz', 'Santa Cruz', 'Cochabamba', 'Sucre', 'Potosi', 'Uyuni'],
+        'PY' => ['Asuncion', 'Ciudad del Este', 'Encarnacion', 'San Lorenzo', 'Luque', 'Lambare'],
+        'UY' => ['Montevideo', 'Punta del Este', 'Colonia del Sacramento', 'Maldonado', 'Salto', 'Paysandu'],
+        'PA' => ['Panama City', 'Boquete', 'Bocas del Toro', 'David', 'Coronado', 'El Valle'],
+        'GT' => ['Guatemala City', 'Antigua', 'Atitlan', 'Quetzaltenango', 'Tikal', 'Flores'],
+        'NI' => ['Managua', 'Granada', 'Leon', 'San Juan del Sur', 'Ometepe', 'Esteli'],
+        'DO' => ['Saint-Domingue', 'Punta Cana', 'Santiago', 'Puerto Plata', 'Las Terrenas', 'Samana'],
+        'CU' => ['La Havane', 'Varadero', 'Trinidad', 'Vinales', 'Santiago de Cuba', 'Cienfuegos'],
+        'JM' => ['Kingston', 'Montego Bay', 'Negril', 'Ocho Rios', 'Port Antonio', 'Falmouth'],
+
+        // ── AFRIQUE (additional hubs) ──
+        'EG' => ['Le Caire', 'Alexandrie', 'Hurghada', 'Charm el-Cheikh', 'Louxor', 'Assouan'],
+        'TN' => ['Tunis', 'Sousse', 'Hammamet', 'Djerba', 'Sfax', 'Monastir'],
+        'DZ' => ['Alger', 'Oran', 'Constantine', 'Annaba', 'Tlemcen', 'Setif'],
+        'SN' => ['Dakar', 'Saint-Louis', 'Thies', 'Ziguinchor', 'Saly', 'Mbour'],
+        'CI' => ['Abidjan', 'Yamoussoukro', 'Bouake', 'San-Pedro', 'Korhogo', 'Grand-Bassam'],
+        'KE' => ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Malindi', 'Lamu'],
+        'TZ' => ['Dar es Salaam', 'Zanzibar', 'Arusha', 'Mwanza', 'Dodoma', 'Kilimandjaro'],
+        'ZA' => ['Le Cap', 'Johannesbourg', 'Durban', 'Pretoria', 'Port Elizabeth', 'Stellenbosch'],
+        'NG' => ['Lagos', 'Abuja', 'Port Harcourt', 'Kano', 'Ibadan', 'Calabar'],
+        'GH' => ['Accra', 'Kumasi', 'Cape Coast', 'Tamale', 'Takoradi', 'Ho'],
+        'CM' => ['Yaounde', 'Douala', 'Bafoussam', 'Limbe', 'Kribi', 'Garoua'],
+        'MU' => ['Port Louis', 'Grand Baie', 'Flic en Flac', 'Curepipe', 'Quatre Bornes', 'Belle Mare'],
+        'MG' => ['Antananarivo', 'Nosy Be', 'Antsirabe', 'Tulear', 'Diego Suarez', 'Sainte Marie'],
+        'RW' => ['Kigali', 'Butare', 'Gisenyi', 'Ruhengeri', 'Cyangugu', 'Kibuye'],
+        'ET' => ['Addis-Abeba', 'Lalibela', 'Gondar', 'Bahir Dar', 'Axoum', 'Harar'],
+
+        // ── OCEANIE (additional hubs) ──
+        'NZ' => ['Auckland', 'Wellington', 'Christchurch', 'Queenstown', 'Rotorua', 'Dunedin'],
+        'FJ' => ['Suva', 'Nadi', 'Lautoka', 'Denarau', 'Coral Coast', 'Mamanuca'],
     ];
 
     /**
@@ -667,28 +750,38 @@ class CountryCampaignCommand extends Command
         $plan = $this->getContentPlan($countryCode, $countryName);
 
         // Check what already exists for this country
-        $existingTitles = GeneratedArticle::where('country', $countryCode)
+        $existingArticles = GeneratedArticle::where('country', $countryCode)
             ->where('language', 'fr')
             ->whereIn('status', ['generating', 'review', 'published', 'approved'])
-            ->pluck('title')
+            ->select(['title', 'content_type'])
+            ->get()
+            ->map(fn ($a) => [
+                'title' => $a->title,
+                'type' => $a->content_type,
+                'keywords' => $this->extractDedupKeywords($a->title, $countryName),
+            ])
             ->toArray();
 
-        $existingCount = count($existingTitles);
+        $existingCount = count($existingArticles);
         $this->info("Existing articles for {$countryCode}: {$existingCount}");
 
-        // Filter out already-generated topics using keyword-based semantic dedup
-        $existingKeywordSets = array_map(fn ($t) => $this->extractDedupKeywords($t, $countryName), $existingTitles);
-
+        // Filter out already-generated topics using content_type-aware semantic dedup.
+        // Two articles with the SAME content_type are considered duplicates if they share
+        // >= 2 core keywords. Articles with DIFFERENT content_type need >= 4 keywords overlap
+        // to be considered duplicates — this prevents false positives between e.g. a Q/R
+        // ("Faut-il un permis de conduire ?") and a long article ("Permis de conduire :
+        // obtention et conversion") that target different intents and formats.
         $toGenerate = [];
         foreach ($plan as $item) {
             $topicKeywords = $this->extractDedupKeywords($item['topic'], $countryName);
             $isDuplicate = false;
-            foreach ($existingKeywordSets as $existingKw) {
-                // Count overlapping keywords — if >= 2 core keywords match, it's a duplicate
-                $overlap = count(array_intersect($topicKeywords, $existingKw));
-                if ($overlap >= 2) {
+            foreach ($existingArticles as $existing) {
+                $overlap = count(array_intersect($topicKeywords, $existing['keywords']));
+                $sameType = ($item['type'] === $existing['type']);
+                $threshold = $sameType ? 2 : 4;
+                if ($overlap >= $threshold) {
                     $isDuplicate = true;
-                    $this->line("  [SKIP] \"{$item['topic']}\" — overlaps with existing article");
+                    $this->line("  [SKIP] \"{$item['topic']}\" — overlaps with existing {$existing['type']} (overlap={$overlap}, threshold={$threshold})");
                     break;
                 }
             }
