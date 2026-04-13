@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\GeneratedArticle;
 use App\Services\AI\UnsplashService;
+use App\Services\AI\UnsplashUsageTracker;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -41,7 +42,7 @@ class FixMissingImagesCommand extends Command
         'état civil' => 'official documents paperwork',
     ];
 
-    public function handle(UnsplashService $unsplash): int
+    public function handle(UnsplashService $unsplash, UnsplashUsageTracker $tracker): int
     {
         $dryRun = $this->option('dry-run');
         $limit  = (int) $this->option('limit');
@@ -90,7 +91,7 @@ class FixMissingImagesCommand extends Command
             }
 
             try {
-                $result = $unsplash->search($searchTerm, 1, 'landscape');
+                $result = $unsplash->searchUnique($searchTerm, 1, 'landscape');
 
                 if (!($result['success'] ?? false) || empty($result['images'])) {
                     $error = $result['error'] ?? 'no results';
@@ -129,6 +130,17 @@ class FixMissingImagesCommand extends Command
                     $translationCount = $article->translations()
                         ->whereNull('featured_image_url')
                         ->update($imageData);
+
+                    // Mark photo as used so it's never picked again
+                    $tracker->markUsed(
+                        $image['url'],
+                        $article->id,
+                        $article->language,
+                        $article->country,
+                        $searchTerm,
+                        $image['photographer_name'] ?? null,
+                        $image['photographer_url'] ?? null,
+                    );
 
                     $this->info("    -> OK: {$image['photographer_name']} (Unsplash) — propagated to {$translationCount} translations");
                     $fixed++;

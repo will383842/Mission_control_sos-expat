@@ -386,15 +386,15 @@ class ArticleFromQuestionsService
             return;
         }
         $query = $article->keywords_primary ?? $article->title;
-        $result = $this->unsplash->search($query, $count);
+        // Use searchUnique() to enforce never-reuse-the-same-photo policy
+        $result = $this->unsplash->searchUnique($query, $count, 'landscape', 5);
         if (!$result['success'] || empty($result['images'])) {
             return;
         }
 
+        $tracker = app(\App\Services\AI\UnsplashUsageTracker::class);
+
         foreach ($result['images'] as $i => $img) {
-            // Alt = article title (+ country). Do NOT concat Unsplash's English
-            // alt_text (photographer caption) or keywords_primary (may be
-            // polluted). See ArticleGenerationService::phase12_addImages.
             $altText = $article->title . ($article->country ? ' (' . $article->country . ')' : '');
             GeneratedArticleImage::create([
                 'article_id' => $article->id,
@@ -406,6 +406,16 @@ class ArticleFromQuestionsService
                 'height' => $img['height'] ?? null,
                 'sort_order' => $i,
             ]);
+
+            $tracker->markUsed(
+                $img['url'],
+                $article->id,
+                $article->language,
+                $article->country,
+                $query,
+                $img['photographer_name'] ?? null,
+                $img['photographer_url'] ?? null,
+            );
 
             if ($i === 0) {
                 $article->update([

@@ -59,8 +59,15 @@ class UnsplashService
 
     /**
      * Search for photos on Unsplash.
+     *
+     * @param string $query        Search query
+     * @param int    $perPage      Results per page (1-30)
+     * @param string $orientation  landscape|portrait|squarish
+     * @param int    $page         Page number (1-based) — used by callers
+     *                             that need to paginate past already-used
+     *                             photos to find fresh ones
      */
-    public function search(string $query, int $perPage = 5, string $orientation = 'landscape'): array
+    public function search(string $query, int $perPage = 5, string $orientation = 'landscape', int $page = 1): array
     {
         if (!$this->isConfigured()) {
             return ['success' => false, 'images' => [], 'error' => 'Unsplash access key not configured'];
@@ -77,6 +84,7 @@ class UnsplashService
                 'query' => $query,
                 'per_page' => $perPage,
                 'orientation' => $orientation,
+                'page' => max(1, $page),
             ]);
 
             if ($response->successful()) {
@@ -154,6 +162,71 @@ class UnsplashService
                 'error' => $e->getMessage(),
             ];
         }
+    }
+
+    /**
+     * Search for photos on Unsplash, returning only photos that have NEVER
+     * been used on the blog. Paginates up to maxPages searching for fresh
+     * results. Falls back to allowing reuse if the entire query space is
+     * exhausted (rare, only for very narrow niche queries).
+     *
+     * Returns the same shape as search(): ['success' => bool, 'images' => array]
+     */
+    public function searchUnique(
+        string $query,
+        int $count = 3,
+        string $orientation = 'landscape',
+        int $maxPages = 5,
+    ): array {
+        $tracker = app(UnsplashUsageTracker::class);
+        $unique = [];
+        $page = 1;
+        $perPage = 20; // pull a wider batch per page so dedup has more to work with
+        $lastResult = null;
+
+        while (count($unique) < $count && $page <= $maxPages) {
+            $result = $this->search($query, $perPage, $orientation, $page);
+            $lastResult = $result;
+            if (empty($result['success']) || empty($result['images'])) {
+                break;
+            }
+
+            foreach ($result['images'] as $img) {
+                $url = $img['url'] ?? '';
+                if (empty($url)) continue;
+                $photoId = $tracker->extractPhotoId($url);
+                if (!$photoId || $tracker->isUsed($photoId)) {
+                    continue;
+                }
+                $unique[] = $img;
+                if (count($unique) >= $count) break 2;
+            }
+
+            // If this page returned fewer than perPage results, the query is
+            // exhausted on Unsplash's side — no point requesting another page.
+            if (count($result['images']) < $perPage) {
+                break;
+            }
+
+            $page++;
+        }
+
+        if (empty($unique)) {
+            // Last resort: query exhausted or all duplicates. Return the
+            // standard search result so the caller still gets *something*
+            // and the pipeline keeps moving. Reuse is logged for analytics.
+            Log::warning('UnsplashService::searchUnique exhausted, falling back to reuse', [
+                'query' => $query,
+                'pages_tried' => $page,
+            ]);
+            if ($lastResult && !empty($lastResult['images'])) {
+                return $lastResult;
+            }
+            // Try one more search without dedup as final fallback
+            return $this->search($query, $count, $orientation, 1);
+        }
+
+        return ['success' => true, 'images' => $unique];
     }
 
     /**

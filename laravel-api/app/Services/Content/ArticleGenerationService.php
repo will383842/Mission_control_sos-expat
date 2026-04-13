@@ -1818,25 +1818,25 @@ class ArticleGenerationService
                 'expatriate international',                                              // Ultimate fallback
             ]);
 
+            // Use searchUnique() instead of search() so we get photos that
+            // have NEVER been published on the blog. Tries each keyword
+            // strategy until we find at least one fresh photo.
             $result = ['success' => false, 'images' => []];
+            $usedQuery = '';
             foreach ($keywordStrategies as $searchTerms) {
-                $result = $this->unsplash->search($searchTerms, 3);
+                $result = $this->unsplash->searchUnique($searchTerms, 3, 'landscape', 5);
                 if ($result['success'] && !empty($result['images'])) {
+                    $usedQuery = $searchTerms;
                     break;
                 }
             }
 
             if ($result['success'] && !empty($result['images'])) {
+                $tracker = app(\App\Services\AI\UnsplashUsageTracker::class);
                 $firstImageUrl = null;
                 $firstImageAlt = null;
 
                 foreach ($result['images'] as $index => $image) {
-                    // Alt text = article title (in the article's language) + optional country.
-                    // We deliberately do NOT concatenate $image['alt_text'] because it comes
-                    // from the Unsplash photographer's English caption ("a wooden table topped
-                    // with scrabble tiles ...") and pollutes French/Spanish/Arabic articles.
-                    // For accessibility + SEO, the page-context title is a better descriptor
-                    // than an unrelated stock-photo caption in a foreign language.
                     $altText = $article->title
                         . ($article->country ? ' (' . $article->country . ')' : '');
                     $altText = mb_substr(trim($altText), 0, 125);
@@ -1850,6 +1850,17 @@ class ArticleGenerationService
                         'height' => $image['height'],
                         'sort_order' => $index,
                     ]);
+
+                    // Mark this photo as used so no other article picks it up
+                    $tracker->markUsed(
+                        $image['url'],
+                        $article->id,
+                        $article->language,
+                        $article->country,
+                        $usedQuery,
+                        $image['photographer_name'] ?? null,
+                        $image['photographer_url'] ?? null,
+                    );
 
                     if ($index === 0) {
                         $firstImageUrl = $image['url'];
@@ -1868,9 +1879,10 @@ class ArticleGenerationService
                         'photographer_name' => $firstImage['photographer_name'] ?? null,
                         'photographer_url' => $firstImage['photographer_url'] ?? null,
                     ]);
-                    Log::info('Phase 12: Featured image set from Unsplash', [
+                    Log::info('Phase 12: Featured image set from Unsplash (unique)', [
                         'article_id' => $article->id,
                         'photographer' => $firstImage['photographer_name'] ?? 'unknown',
+                        'query' => $usedQuery,
                     ]);
                     return;
                 }
