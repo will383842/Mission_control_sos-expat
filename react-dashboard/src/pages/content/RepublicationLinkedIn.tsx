@@ -12,11 +12,25 @@ interface LiStats {
   posts_this_week: number;
   posts_scheduled: number;
   posts_published: number;
+  posts_generating: number;
   total_reach: number;
   avg_engagement_rate: number;
   top_performing_day: string;
   available_articles: number;
   available_faqs: number;
+  available_sondages: number;
+  linkedin_connected: boolean;
+  upcoming_posts: UpcomingPost[];
+}
+
+interface UpcomingPost {
+  id: number;
+  day_type: string;
+  lang: string;
+  account: string;
+  hook_preview: string;
+  scheduled_at: string;
+  source_type: string;
 }
 
 interface LiPost {
@@ -31,7 +45,11 @@ interface LiPost {
   body: string;
   hashtags: string[];
   first_comment: string | null;
+  first_comment_status: 'pending' | 'posted' | 'failed' | null;
+  first_comment_posted_at: string | null;
+  reply_variants: string[] | null;
   featured_image_url: string | null;
+  auto_scheduled: boolean;
   status: 'generating' | 'draft' | 'scheduled' | 'published' | 'failed';
   scheduled_at: string | null;
   published_at: string | null;
@@ -148,6 +166,7 @@ export default function RepublicationLinkedIn() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [scheduleModal, setScheduleModal] = useState<{ postId: number; date: string } | null>(null);
   const [weekGenProgress, setWeekGenProgress] = useState<string | null>(null);
+  const [replyModal, setReplyModal] = useState<{ post: LiPost; commentText: string; variants: string[] | null } | null>(null);
 
   // ── Queries ───────────────────────────────────────────────────────────
 
@@ -221,6 +240,15 @@ export default function RepublicationLinkedIn() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['li-queue'] });
       qc.invalidateQueries({ queryKey: ['li-stats'] });
+    },
+  });
+
+  const mutateGenerateReplies = useMutation({
+    mutationFn: ({ postId, comment }: { postId: number; comment: string }) =>
+      api.post(`${BASE}/posts/${postId}/generate-replies`, { comment_text: comment }).then(r => r.data),
+    onSuccess: (data) => {
+      setReplyModal(m => m ? { ...m, variants: data.variants ?? [] } : null);
+      qc.invalidateQueries({ queryKey: ['li-queue'] });
     },
   });
 
@@ -331,6 +359,32 @@ export default function RepublicationLinkedIn() {
       {/* ── DASHBOARD ────────────────────────────────────────────────── */}
       {tab === 'dashboard' && (
         <div className="space-y-6">
+          {/* LinkedIn OAuth status */}
+          <div className={`rounded-xl border p-4 flex items-center justify-between ${
+            stats?.linkedin_connected
+              ? 'border-green-500/30 bg-green-500/8'
+              : 'border-amber-500/30 bg-amber-500/8'
+          }`}>
+            <div className="flex items-center gap-3">
+              <span className="text-xl">{stats?.linkedin_connected ? '🔗' : '🔓'}</span>
+              <div>
+                <p className={`font-semibold text-sm ${stats?.linkedin_connected ? 'text-green-300' : 'text-amber-300'}`}>
+                  {stats?.linkedin_connected ? 'LinkedIn API v2 connectée' : 'LinkedIn API non connectée'}
+                </p>
+                <p className="text-text-muted text-xs mt-0.5">
+                  {stats?.linkedin_connected
+                    ? 'Publication automatique + premier commentaire actifs'
+                    : 'Publication manuelle uniquement · Premier commentaire stocké, pas encore publié'}
+                </p>
+              </div>
+            </div>
+            {!stats?.linkedin_connected && (
+              <span className="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-1.5 shrink-0">
+                Phase 2 — Sept 2026
+              </span>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard label="Cette semaine" value={stats?.posts_this_week ?? 0} icon="📅" />
             <StatCard label="Planifiés" value={stats?.posts_scheduled ?? 0} icon="⏰" color="text-amber-300" />
@@ -338,7 +392,7 @@ export default function RepublicationLinkedIn() {
             <StatCard label="Portée totale" value={stats?.total_reach ?? 0} icon="👁" color="text-blue-300" />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div className="bg-surface2 rounded-xl p-4 border border-border">
               <p className="text-text-muted text-xs mb-1">Engagement moyen</p>
               <p className="text-2xl font-bold text-text">{stats?.avg_engagement_rate ?? 0}%</p>
@@ -356,7 +410,41 @@ export default function RepublicationLinkedIn() {
               <p className="text-2xl font-bold text-violet-light">{stats?.available_faqs ?? 0}</p>
               <p className="text-text-muted text-xs mt-1">Non encore republié</p>
             </div>
+            <div className="bg-surface2 rounded-xl p-4 border border-border">
+              <p className="text-text-muted text-xs mb-1">Sondages disponibles</p>
+              <p className="text-2xl font-bold text-blue-300">{stats?.available_sondages ?? 0}</p>
+              <p className="text-text-muted text-xs mt-1">Non encore republié</p>
+            </div>
           </div>
+
+          {/* Upcoming posts calendar */}
+          {stats?.upcoming_posts && stats.upcoming_posts.length > 0 && (
+            <div className="bg-surface2 rounded-xl border border-border p-5">
+              <h3 className="font-semibold text-text mb-4">📅 Prochaines publications (7 jours)</h3>
+              <div className="space-y-2">
+                {stats.upcoming_posts.map(p => (
+                  <div key={p.id} className="flex items-center gap-3 py-2 border-b border-border/50 last:border-0">
+                    <div className="w-24 shrink-0 text-center">
+                      <p className="text-amber-300 font-mono text-xs">
+                        {new Date(p.scheduled_at).toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: '2-digit' })}
+                      </p>
+                      <p className="text-text-muted text-[10px]">
+                        {new Date(p.scheduled_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className="text-text-muted text-[10px] uppercase font-mono">{p.lang}</span>
+                      <span className="text-text-muted text-[10px]">
+                        {p.account === 'page' ? '🏢' : p.account === 'personal' ? '👤' : '🔀'}
+                      </span>
+                    </div>
+                    <p className="text-text text-sm truncate flex-1">{p.hook_preview || SOURCE_LABEL[p.source_type]?.split('—')[0]?.trim()}</p>
+                    <span className="text-text-muted text-[10px] shrink-0">{DAY_SHORT[p.day_type] ?? p.day_type}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Weekly rhythm */}
           <div>
@@ -450,6 +538,7 @@ export default function RepublicationLinkedIn() {
                   mutateDelete.mutate(post.id);
                 }
               }}
+              onGenerateReplies={() => setReplyModal({ post, commentText: '', variants: post.reply_variants ?? null })}
             />
           ))}
 
@@ -560,10 +649,84 @@ export default function RepublicationLinkedIn() {
             />
           </div>
 
+          {genParams.lang === 'both' && (
+            <div className="rounded-lg bg-blue-500/10 border border-blue-500/30 p-3 text-xs text-blue-300">
+              🌍 <strong>2 posts seront créés</strong> : un en français + un en anglais, chacun planifié sur le prochain créneau libre de sa langue.
+            </div>
+          )}
+
           <p className="text-text-muted text-xs">
             💡 La génération est asynchrone — le post apparaîtra dans la file d'attente sous 10-30 secondes.
           </p>
         </div>
+      </Modal>
+
+      {/* ── REPLY MODAL ──────────────────────────────────────────────── */}
+      <Modal
+        open={replyModal !== null}
+        onClose={() => setReplyModal(null)}
+        title="💬 Générer des réponses au commentaire"
+        size="md"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setReplyModal(null)}>Fermer</Button>
+            <Button
+              onClick={() => replyModal && mutateGenerateReplies.mutate({ postId: replyModal.post.id, comment: replyModal.commentText })}
+              loading={mutateGenerateReplies.isPending}
+              disabled={mutateGenerateReplies.isPending || !replyModal?.commentText?.trim()}
+            >
+              Générer 10 variantes
+            </Button>
+          </>
+        }
+      >
+        {replyModal && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-text mb-1.5">Commentaire reçu</label>
+              <textarea
+                className="w-full rounded-lg border border-border bg-surface2 px-3.5 py-2.5 text-sm text-text focus:outline-none focus:border-violet resize-none"
+                rows={3}
+                placeholder="Collez ici le commentaire LinkedIn reçu..."
+                value={replyModal.commentText}
+                onChange={e => setReplyModal(m => m ? { ...m, commentText: e.target.value } : null)}
+              />
+              <p className="text-text-muted text-xs mt-1">
+                Post : <span className="text-text">{replyModal.post.hook?.slice(0, 80) || '(sans hook)'}</span>
+              </p>
+            </div>
+
+            {replyModal.variants && replyModal.variants.length > 0 && (
+              <div>
+                <p className="text-sm font-medium text-text mb-2">10 variantes générées — copiez celle qui convient</p>
+                <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                  {replyModal.variants.map((v, i) => (
+                    <div key={i} className="flex items-start gap-2 group">
+                      <span className="text-text-muted text-xs w-5 shrink-0 mt-2">{i + 1}.</span>
+                      <div className="flex-1 bg-surface rounded-lg border border-border/60 px-3 py-2 text-sm text-text">
+                        {v}
+                      </div>
+                      <button
+                        className="shrink-0 mt-2 text-text-muted hover:text-violet-light transition-colors opacity-0 group-hover:opacity-100"
+                        title="Copier"
+                        onClick={() => navigator.clipboard.writeText(v)}
+                      >
+                        📋
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-text-muted text-xs mt-2">
+                  💡 Phase 2 : validation 1-tap via Telegram — la réponse sélectionnée sera postée automatiquement via LinkedIn API
+                </p>
+              </div>
+            )}
+
+            {mutateGenerateReplies.isError && (
+              <p className="text-red-300 text-sm">Erreur lors de la génération — réessayez.</p>
+            )}
+          </div>
+        )}
       </Modal>
 
       {/* ── SCHEDULE MODAL ───────────────────────────────────────────── */}
@@ -620,6 +783,12 @@ function StatCard({
   );
 }
 
+const FC_STATUS: Record<string, { label: string; color: string }> = {
+  pending: { label: '⏳ 1er commentaire en attente',    color: 'text-amber-300' },
+  posted:  { label: '✅ 1er commentaire publié',         color: 'text-green-300' },
+  failed:  { label: '❌ 1er commentaire échoué',         color: 'text-red-300'   },
+};
+
 function PostCard({
   post,
   expanded,
@@ -627,6 +796,7 @@ function PostCard({
   onPublish,
   onSchedule,
   onDelete,
+  onGenerateReplies,
 }: {
   post: LiPost;
   expanded: boolean;
@@ -634,6 +804,7 @@ function PostCard({
   onPublish: () => void;
   onSchedule: () => void;
   onDelete: () => void;
+  onGenerateReplies: () => void;
 }) {
   const s = STATUS_META[post.status] ?? { label: post.status, variant: 'neutral' as const };
 
@@ -651,6 +822,11 @@ function PostCard({
             <Badge variant={s.variant} dot={post.status === 'generating' || post.status === 'scheduled'} size="sm">
               {s.label}
             </Badge>
+            {post.auto_scheduled && (
+              <span className="text-violet-light text-[10px] bg-violet/10 border border-violet/20 rounded-full px-2 py-0.5 font-medium">
+                ⚡ Auto-planifié
+              </span>
+            )}
             <span className="text-text-muted text-xs">{DAY_SHORT[post.day_type] ?? post.day_type}</span>
             <span className="text-text-muted text-xs uppercase font-mono">{post.lang}</span>
             <span className="text-text-muted text-xs">
@@ -682,6 +858,16 @@ function PostCard({
           {post.published_at && (
             <p className="text-green-300 text-xs mt-1">
               ✅ Publié le {new Date(post.published_at).toLocaleDateString('fr-FR')}
+            </p>
+          )}
+          {post.first_comment_status && FC_STATUS[post.first_comment_status] && (
+            <p className={`text-[11px] mt-1 ${FC_STATUS[post.first_comment_status].color}`}>
+              {FC_STATUS[post.first_comment_status].label}
+              {post.first_comment_posted_at && (
+                <span className="text-text-muted ml-1">
+                  · {new Date(post.first_comment_posted_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
             </p>
           )}
         </div>
@@ -723,9 +909,14 @@ function PostCard({
           {/* First comment */}
           {post.first_comment && (
             <div>
-              <p className="text-xs font-semibold text-text-muted mb-1.5 uppercase tracking-wide flex items-center gap-1.5">
+              <p className="text-xs font-semibold text-text-muted mb-1.5 uppercase tracking-wide flex items-center gap-1.5 flex-wrap">
                 💬 Premier commentaire
                 <span className="text-violet-light text-[10px] font-normal normal-case tracking-normal">auto-posté 3 min après publication</span>
+                {post.first_comment_status && FC_STATUS[post.first_comment_status] && (
+                  <span className={`text-[10px] font-medium ${FC_STATUS[post.first_comment_status].color}`}>
+                    · {FC_STATUS[post.first_comment_status].label}
+                  </span>
+                )}
               </p>
               <div className="bg-violet/8 rounded-lg p-3 text-sm text-text-muted border border-violet/20 whitespace-pre-line">
                 {post.first_comment}
@@ -757,6 +948,11 @@ function PostCard({
                 <Button variant="secondary" size="sm" onClick={onSchedule}>⏰ Planifier</Button>
                 <Button size="sm" onClick={onPublish}>🚀 Publier maintenant</Button>
               </>
+            )}
+            {post.status === 'published' && (
+              <Button variant="secondary" size="sm" onClick={onGenerateReplies}>
+                💬 Répondre à un commentaire
+              </Button>
             )}
             <Button variant="danger" size="sm" onClick={onDelete}>🗑</Button>
           </div>

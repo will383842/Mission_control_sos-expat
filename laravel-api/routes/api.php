@@ -687,14 +687,16 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // LinkedIn Republication
         Route::prefix('linkedin')->group(function () {
-            Route::get('/stats',                    [LinkedInController::class, 'stats']);
-            Route::get('/queue',                    [LinkedInController::class, 'queue']);
-            Route::get('/auto-select',              [LinkedInController::class, 'autoSelect']);
-            Route::post('/generate',                [LinkedInController::class, 'generate']);
-            Route::put('/posts/{post}',             [LinkedInController::class, 'update']);
-            Route::post('/posts/{post}/schedule',   [LinkedInController::class, 'schedule']);
-            Route::post('/posts/{post}/publish',    [LinkedInController::class, 'publish']);
-            Route::delete('/posts/{post}',          [LinkedInController::class, 'destroy']);
+            Route::get('/stats',                                [LinkedInController::class, 'stats']);
+            Route::get('/queue',                                [LinkedInController::class, 'queue']);
+            Route::get('/auto-select',                          [LinkedInController::class, 'autoSelect']);
+            Route::get('/next-slot',                            [LinkedInController::class, 'nextSlot']);
+            Route::post('/generate',                            [LinkedInController::class, 'generate']);
+            Route::put('/posts/{post}',                         [LinkedInController::class, 'update']);
+            Route::post('/posts/{post}/schedule',               [LinkedInController::class, 'schedule']);
+            Route::post('/posts/{post}/publish',                [LinkedInController::class, 'publish']);
+            Route::post('/posts/{post}/generate-replies',       [LinkedInController::class, 'generateReplies']);
+            Route::delete('/posts/{post}',                      [LinkedInController::class, 'destroy']);
         });
 
         // Landing Pages (CRUD manuel existant)

@@ -136,15 +136,22 @@ USER;
             // ── 6. Image: use source article featured image ──────────
             $featuredImage = $source['image_url'] ?? null;
 
-            // ── 7. Update post record ────────────────────────────────
+            // ── 7. Auto-schedule to next free optimal slot ──────────
+            $controller   = new \App\Http\Controllers\LinkedInController();
+            $nextSlot     = $controller->nextFreeSlot($lang);
+
+            // ── 8. Update post record (scheduled, not just draft) ────
             $post->update([
-                'hook'               => $data['hook']  ?? $this->defaultHook($dayType, $lang),
-                'body'               => $data['body']  ?? $this->defaultBody($lang),
-                'hashtags'           => $hashtags,
-                'first_comment'      => $firstComment,
-                'featured_image_url' => $featuredImage,
-                'status'             => 'draft',
-                'error_message'      => null,
+                'hook'                  => $data['hook']  ?? $this->defaultHook($dayType, $lang),
+                'body'                  => $data['body']  ?? $this->defaultBody($lang),
+                'hashtags'              => $hashtags,
+                'first_comment'         => $firstComment,
+                'featured_image_url'    => $featuredImage,
+                'first_comment_status'  => $firstComment ? 'pending' : null,
+                'status'                => 'scheduled',
+                'scheduled_at'          => $nextSlot,
+                'auto_scheduled'        => true,
+                'error_message'         => null,
             ]);
 
             Log::info('GenerateLinkedInPostJob: done', [

@@ -26,22 +26,26 @@ class LinkedInPost extends Model
         'day_type', 'lang', 'account',
         'hook', 'body', 'hashtags',
         'first_comment', 'featured_image_url',
-        'status', 'scheduled_at', 'published_at',
+        'first_comment_posted_at', 'first_comment_status', 'reply_variants',
+        'status', 'scheduled_at', 'published_at', 'auto_scheduled',
         'li_post_id_page', 'li_post_id_personal',
         'reach', 'likes', 'comments', 'shares', 'clicks', 'engagement_rate',
         'phase', 'error_message',
     ];
 
     protected $casts = [
-        'hashtags'     => AsArray::class,
-        'scheduled_at' => 'datetime',
-        'published_at' => 'datetime',
-        'phase'        => 'integer',
-        'reach'        => 'integer',
-        'likes'        => 'integer',
-        'comments'     => 'integer',
-        'shares'       => 'integer',
-        'clicks'       => 'integer',
+        'hashtags'                 => AsArray::class,
+        'reply_variants'           => AsArray::class,
+        'scheduled_at'             => 'datetime',
+        'published_at'             => 'datetime',
+        'first_comment_posted_at'  => 'datetime',
+        'auto_scheduled'           => 'boolean',
+        'phase'                    => 'integer',
+        'reach'                    => 'integer',
+        'likes'                    => 'integer',
+        'comments'                 => 'integer',
+        'shares'                   => 'integer',
+        'clicks'                   => 'integer',
     ];
 
     // ── Relationships ──────────────────────────────────────────────────
