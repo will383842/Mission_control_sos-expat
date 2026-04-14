@@ -88,6 +88,13 @@ class LinkedInController extends Controller
         ]);
     }
 
+    // ── Single post ────────────────────────────────────────────────────
+
+    public function show(LinkedInPost $post): JsonResponse
+    {
+        return response()->json($post);
+    }
+
     // ── Queue (paginated) ──────────────────────────────────────────────
 
     public function queue(Request $request): JsonResponse

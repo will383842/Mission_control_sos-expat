@@ -704,6 +704,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/queue',                                [LinkedInController::class, 'queue']);
             Route::get('/auto-select',                          [LinkedInController::class, 'autoSelect']);
             Route::get('/next-slot',                            [LinkedInController::class, 'nextSlot']);
+            Route::get('/posts/{post}',                         [LinkedInController::class, 'show']);
             Route::post('/generate',                            [LinkedInController::class, 'generate']);
             Route::put('/posts/{post}',                         [LinkedInController::class, 'update']);
             Route::post('/posts/{post}/schedule',               [LinkedInController::class, 'schedule']);

@@ -155,6 +155,32 @@ C'est ICI que SOS-Expat.com apparaît — naturellement, pas comme pub :
 "Pour ceux qui veulent aller plus loin sur ce sujet → [URL ou SOS-Expat.com]"
 + 1 question de rebond pour relancer les commentaires.
 150-250 caractères.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROFIL PERSONNEL — ALGORITHME LINKEDIN 2026
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Tu écris pour un PROFIL PERSONNEL, pas une page entreprise.
+→ Les profils personnels ont 5-8× plus de portée que les pages.
+→ La voix FONDATEUR authentique surperforme systématiquement le contenu corporate.
+
+GOLDEN HOUR (90 min décisives) :
+Les 90 premières minutes après publication = 70% de la portée finale.
+L'algorithme mesure : vitesse des premiers commentaires + dwell time + taux "voir plus".
+→ Le hook doit forcer à cliquer "voir plus" (jamais finir le hook sur une idée complète).
+→ Un post qui génère 5 commentaires dans les 15 min → distribution ×10.
+→ Termine sur une question précise = engagement = reach.
+
+DWELL TIME (métrique cachée 2026) :
+LinkedIn mesure le temps passé sur le post, pas les clics.
+→ Paragraphes de 1-3 lignes max → l'œil descend → le temps de lecture augmente.
+→ Ligne vide obligatoire entre chaque bloc → respiration visuelle (80% de lecture mobile).
+→ 1200 chars lus en 45s >>> 400 chars lus en 8s.
+
+POSTS EN ANGLAIS (si lang = EN) :
+L'audience LinkedIn anglophone est internationale, plus senior et plus saturée.
+→ Angle encore plus counter-intuitive, chiffres encore plus précis.
+→ Les expats anglophones : professionnels 30-50 ans, visas de travail, mobilité internationale.
+→ Ton expert-to-expert, jamais condescendant ou "conseils de base".
 SYSTEM;
 
             $userPrompt = <<<USER
@@ -530,8 +556,8 @@ CRITIQUE;
         ];
 
         $bodies = [
-            'fr' => "SOS-Expat.com accompagne les expatriés dans leurs démarches administratives et juridiques dans 197 pays.\n\nNotre réseau d'avocats partenaires et d'expats expérimentés est là pour vous guider pas à pas.\n\n→ {$title}\n\nVous avez vécu une situation similaire ? Partagez votre expérience en commentaire 👇\n\n(Lien complet en 1er commentaire)",
-            'en' => "SOS-Expat.com supports expats with administrative and legal challenges in 197 countries.\n\nOur network of partner lawyers and experienced expats is here to guide you step by step.\n\n→ {$title}\n\nHave you faced a similar situation? Share your experience in the comments 👇\n\n(Full link in first comment)",
+            'fr' => "J'accompagne des expatriés dans leurs démarches administratives et juridiques depuis plusieurs années.\n\nUn sujet revient souvent : {$title}.\n\nCe que j'ai appris sur le terrain :\n→ Les démarches varient énormément selon le pays et la situation personnelle.\n→ L'erreur la plus courante : sous-estimer les délais administratifs.\n→ Le bon interlocuteur au bon moment change tout.\n\nVotre plus grand défi d'expatrié à ce stade ? Partagez en commentaire 👇\n\n(Ressources complètes en 1er commentaire)",
+            'en' => "I've been helping expats navigate administrative and legal challenges for years.\n\nOne topic keeps coming up: {$title}.\n\nWhat I've learned from experience:\n→ Processes vary dramatically by country and personal situation.\n→ The most common mistake: underestimating administrative timelines.\n→ The right contact at the right time changes everything.\n\nWhat's your biggest expat challenge right now? Drop it in the comments 👇\n\n(Full resources in first comment)",
         ];
 
         $l    = ($lang === 'en') ? 'en' : 'fr';
@@ -795,7 +821,7 @@ CRITIQUE;
     {
         $fr = [
             'monday'    => 'Format carrousel/liste : "Les X erreurs / conseils pour les expats". Commencer par un chiffre choc. Style pratique, liste numérotée dans le corps.',
-            'tuesday'   => 'Story fictive : un personnage type ("Marie voulait s\'installer au Vietnam..."). Hook émotionnel fort. Situation → problème → résolution via SOS-Expat.',
+            'tuesday'   => 'Story à la première personne ou d\'un type d\'expat (sans prénom inventé). Hook émotionnel fort. Structure : Situation → Problème → Insight rare → Leçon actionnable. Aucune mention de service ou plateforme — la valeur vient de l\'expérience racontée.',
             'wednesday' => 'Actu légale/visa OU opinion tranchée. Format "🚨 N changements" ou affirmation provocante. Concis, factuel, chiffres si possible.',
             'thursday'  => 'Q&A ou statistique choc. Commencer par une question ou un chiffre surprenant. Réponse structurée avec valeur max. Stats sondage si disponibles.',
             'friday'    => 'Témoignage / tip / story partenaire. Ton inspirant et positif. Finir sur fierté ou espoir. Ou story d\'un avocat/helper partenaire.',
@@ -803,7 +829,7 @@ CRITIQUE;
 
         $en = [
             'monday'    => '"X mistakes / tips for expats" carousel format. Start with a shocking stat. Practical style, numbered list.',
-            'tuesday'   => 'Fictional story: a typical character ("Sarah wanted to move to Thailand..."). Strong emotional hook. Situation → problem → resolution via SOS-Expat.',
+            'Founder\'s own story or a relatable expat archetype (no invented first names). Strong emotional hook. Structure: Situation → Problem → Rare insight → Actionable lesson. No mention of any service or platform — value comes from the experience itself.',
             'wednesday' => 'Legal/visa news OR strong opinion. "🚨 N important changes" or provocative statement. Concise, factual, figures when possible.',
             'thursday'  => 'Q&A or shocking statistic. Start with a question or surprising figure. Structured answer with maximum value. Survey stats if available.',
             'friday'    => 'Testimonial / tip / partner story. Inspiring, positive tone. End on pride or hope. Or a lawyer/helper partner story.',
@@ -824,12 +850,12 @@ CRITIQUE;
             'poll'              => 'Créer un post avec sondage LinkedIn natif intégré. Formuler 4 options concises. La question doit être universelle pour les expats.',
             'serie'             => 'Post numéroté d\'une série éducative. Format "Expat tip #[N]" ou "Le guide de l\'expat #[N]". Crée l\'habitude de revenir.',
             'reactive'          => 'Réagir à une actualité ou tendance. Lier l\'événement à l\'expérience expat. Être parmi les premiers à commenter = visibilité × 5.',
-            'milestone'         => 'Célébrer un chiffre ou une étape de SOS-Expat. Ex: "1000 expatriés aidés". Humaniser avec des données concrètes. Ton humble et fier.',
-            'partner_story'     => 'Story d\'un avocat ou helper partenaire. Fictif ou inspiré. Montrer l\'impact humain du réseau SOS-Expat. Humanise la plateforme.',
+            'milestone'         => 'Célébrer une étape personnelle du fondateur ou un chiffre marquant. Ex: "J\'ai aidé 1000 expatriés cette année." Humaniser avec des détails concrets. Ton humble et fier, jamais publicitaire.',
+            'partner_story'     => 'Story d\'un type d\'avocat ou d\'expert expat (fictif ou inspiré de vrais cas). Montrer l\'impact humain d\'un conseil juridique au bon moment. Aucune mention de plateforme — la valeur vient de l\'histoire.',
             'counter_intuition' => 'Affirmation contre-intuitive sur l\'expatriation. Commence par l\'idée reçue, puis la surprise. Curiosité garantit le "voir plus".',
             'tip'               => 'Conseil pratique rapide et actionnable pour les expatriés. Concis, direct, immédiatement utile.',
             'news'              => 'Actualité récente liée à l\'expatriation ou aux changements légaux/visa. Factuel, chiffres, importance pour les expats.',
-            'case_study'        => 'Cas client (fictif ou anonymisé) : problème rencontré → solution SOS-Expat → résultat. Format story avec données concrètes.',
+            'case_study'        => 'Cas client (fictif ou anonymisé) : problème rencontré → démarche effectuée → résultat chiffré. Format story avec données concrètes. JAMAIS de mention de plateforme dans le corps — la solution vient du SAVOIR, pas d\'un service.',
         ];
 
         $en = [
@@ -841,12 +867,12 @@ CRITIQUE;
             'poll'              => 'Create a post with integrated LinkedIn native poll. 4 concise options. The question must be universal for expats.',
             'serie'             => 'Numbered post from an educational series. "Expat tip #[N]" format. Builds habit of coming back.',
             'reactive'          => 'React to breaking news or trend. Link the event to the expat experience. Being among the first to comment = 5× visibility.',
-            'milestone'         => 'Celebrate a milestone for SOS-Expat. Humanize with concrete data. Humble and proud tone.',
-            'partner_story'     => 'A partner lawyer or helper story. Fictional or inspired. Show the human impact of the SOS-Expat network.',
+            'milestone'         => 'Celebrate a personal founder milestone or a meaningful number. Ex: "I helped 1,000 expats this year." Humanize with concrete details. Humble and proud tone, never promotional.',
+            'partner_story'     => 'Story of a lawyer or expat expert type (fictional or inspired by real cases). Show the human impact of expert legal advice at the right moment. No platform mention — the value comes from the story.',
             'counter_intuition' => 'Counter-intuitive statement about expat life. Start with the assumption, then the surprise. Curiosity ensures "see more".',
             'tip'               => 'Quick, practical, actionable tip for expats. Concise, direct, immediately useful.',
             'news'              => 'Recent news related to expat life or legal/visa changes. Factual, figures, relevance for expats.',
-            'case_study'        => 'Client case (fictional or anonymized): problem → SOS-Expat solution → result. Story format with concrete data.',
+            'case_study'        => 'Client case (fictional or anonymized): problem encountered → steps taken → measurable result. Story format with concrete data. NEVER mention any platform in the body — the solution comes from KNOWLEDGE, not a service.',
         ];
 
         $map = ($lang === 'en') ? $en : $fr;
@@ -857,8 +883,8 @@ CRITIQUE;
 
     private function buildHashtags(array $aiHashtags, array $seeds): array
     {
-        // Base tags always included
-        $base = ['expatriation', 'expat', 'sosexpat'];
+        // Base niche tags (no brand hashtag — avoid appearing promotional)
+        $base = ['expatriation', 'expat'];
 
         // Merge AI tags + seeds + base
         $all = array_merge($aiHashtags, $seeds, $base);
@@ -929,7 +955,7 @@ CRITIQUE;
     private function defaultBody(string $lang): string
     {
         return $lang === 'en'
-            ? "SOS-Expat helps expats navigate legal and administrative challenges abroad.\n\nOur network of partner lawyers and experienced expat helpers is available to guide you step by step.\n\n→ Visa questions, tax issues, finding the right contact: we cover it all in 197 countries.\n\nHave you faced this situation? Share your experience in the comments 👇\n\n(Link in first comment)"
-            : "SOS-Expat aide les expatriés à naviguer dans les défis juridiques et administratifs à l'étranger.\n\nNotre réseau d'avocats partenaires et d'expats aidants est disponible pour vous guider pas à pas.\n\n→ Questions de visa, fiscalité, trouver le bon interlocuteur dans un nouveau pays : on couvre tout dans 197 pays.\n\nVous avez vécu cette situation ? Partagez votre expérience en commentaire 👇\n\n(Lien en premier commentaire)";
+            ? "After years of working with expats across dozens of countries, I keep seeing the same mistakes.\n\nThe biggest one?\n\nAssuming that what worked back home will work abroad.\n\nVisa rules, tax obligations, banking, healthcare — they all reset to zero when you cross a border.\n\nWhat I've learned:\n→ Start administrative steps 3× earlier than you think necessary.\n→ Local legal advice beats generic online forums every single time.\n→ Your network is your safety net — build it before you need it.\n\nWhat's the one thing you wish you'd known before moving abroad?\n\n(Resources in first comment)"
+            : "Après des années à accompagner des expatriés dans des dizaines de pays, je vois toujours les mêmes erreurs.\n\nLa plus fréquente ?\n\nPenser que ce qui fonctionnait en France marchera de la même façon à l'étranger.\n\nVisa, fiscalité, banque, assurance — tout repart de zéro quand on franchit une frontière.\n\nCe que j'ai appris :\n→ Démarrer les démarches 3 fois plus tôt que prévu.\n→ Un conseil juridique local vaut cent fois un forum généraliste.\n→ Ton réseau est ton filet de sécurité — constitue-le avant d'en avoir besoin.\n\nQuel est le truc que tu aurais aimé savoir avant de partir ?\n\n(Ressources complètes en 1er commentaire)";
     }
 }

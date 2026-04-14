@@ -156,9 +156,11 @@ const DAY_SHORT: Record<string, string> = {
 function UpcomingCalendar({
   posts,
   onGenerate,
+  onViewPost,
 }: {
   posts: UpcomingPost[];
   onGenerate: (dayType: string) => void;
+  onViewPost: (post: UpcomingPost) => void;
 }) {
   // Build list of next 30 weekdays
   const today = new Date();
@@ -214,13 +216,13 @@ function UpcomingCalendar({
                   return (
                     <div
                       key={key}
-                      className={`rounded-lg border p-2 text-center text-xs transition-all ${
+                      className={`rounded-lg border p-2 text-center text-xs transition-all cursor-pointer ${
                         post
-                          ? 'border-amber-500/40 bg-amber-500/10'
-                          : 'border-border/50 bg-surface/50 hover:border-violet/40 cursor-pointer'
+                          ? 'border-amber-500/40 bg-amber-500/10 hover:border-amber-400/60 hover:bg-amber-500/15'
+                          : 'border-border/50 bg-surface/50 hover:border-violet/40'
                       } ${isToday ? 'ring-1 ring-violet/50' : ''}`}
-                      title={post ? (post.hook_preview || post.source_type) : 'Cliquer pour générer'}
-                      onClick={() => !post && onGenerate(dayType)}
+                      title={post ? `Voir le post : ${post.hook_preview || post.source_type}` : 'Cliquer pour générer'}
+                      onClick={() => post ? onViewPost(post) : onGenerate(dayType)}
                     >
                       <p className={`font-semibold text-[10px] ${isToday ? 'text-violet-300' : 'text-text-muted'}`}>
                         {DAY_FR[dayIdx]} {day.getDate()}
@@ -233,7 +235,7 @@ function UpcomingCalendar({
                           <div className="flex items-center justify-center gap-1 mt-1">
                             <span className="text-[8px] text-text-muted uppercase font-mono">{post.lang}</span>
                             {post.has_image && <span className="text-[8px]">🖼</span>}
-                            <span className={`text-[8px] ${post.status === 'scheduled' ? 'text-green-400' : 'text-amber-400'}`}>●</span>
+                            <span className={`text-[8px] ${post.status === 'scheduled' ? 'text-green-400' : post.status === 'generating' ? 'text-blue-400 animate-pulse' : 'text-amber-400'}`}>●</span>
                           </div>
                         </>
                       ) : (
@@ -282,6 +284,7 @@ export default function RepublicationLinkedIn() {
   });
 
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [calendarPreviewId, setCalendarPreviewId] = useState<number | null>(null);
   const [scheduleModal, setScheduleModal] = useState<{ postId: number; date: string } | null>(null);
   const [weekGenProgress, setWeekGenProgress] = useState<string | null>(null);
   const [replyModal, setReplyModal] = useState<{ post: LiPost; commentText: string; variants: string[] | null } | null>(null);
@@ -329,6 +332,13 @@ export default function RepublicationLinkedIn() {
       const posts = (query.state.data as PaginatedPosts | undefined)?.data ?? [];
       return posts.some(p => p.status === 'generating') ? 5_000 : false;
     },
+  });
+
+  const { data: calendarPreviewPost, isLoading: calendarPreviewLoading } = useQuery<LiPost>({
+    queryKey: ['li-post', calendarPreviewId],
+    queryFn: () => api.get(`${BASE}/posts/${calendarPreviewId}`).then(r => r.data),
+    enabled: calendarPreviewId !== null,
+    staleTime: 30_000,
   });
 
   const { data: autoSelect, isLoading: autoSelLoading } = useQuery<AutoSelectResult>({
@@ -560,6 +570,7 @@ export default function RepublicationLinkedIn() {
               setGenParams(p => ({ ...p, day_type: dayType as typeof p.day_type, source_id: null }));
               setShowGenModal(true);
             }}
+            onViewPost={(post) => setCalendarPreviewId(post.id)}
           />
 
           {/* Weekly rhythm */}
@@ -598,7 +609,8 @@ export default function RepublicationLinkedIn() {
                 '✅ Ligne vide entre chaque paragraphe (mobile)',
                 '✅ CTA : question ouverte pour les commentaires',
                 '✅ Style : humain, empathique, conversationnel',
-                '✅ Horaires optimaux : 07h30 et 12h15',
+                '✅ Horaire : 07h30 UTC (09h30 Paris) — golden hour matinal',
+                '✅ Golden hour : 70% de la portée dans les 90 min après publication',
               ].map(r => <p key={r}>{r}</p>)}
             </div>
           </div>
@@ -948,6 +960,130 @@ export default function RepublicationLinkedIn() {
         </div>
       </Modal>
 
+      {/* ── CALENDAR POST PREVIEW MODAL ──────────────────────────────── */}
+      <Modal
+        open={calendarPreviewId !== null}
+        onClose={() => setCalendarPreviewId(null)}
+        title="📄 Aperçu du post LinkedIn"
+        size="lg"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setCalendarPreviewId(null)}>Fermer</Button>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setCalendarPreviewId(null);
+                setTab('queue');
+                setExpandedId(calendarPreviewId);
+              }}
+            >
+              📋 Voir dans la file
+            </Button>
+          </>
+        }
+      >
+        {calendarPreviewLoading && (
+          <div className="py-12 text-center text-text-muted animate-pulse">Chargement du post...</div>
+        )}
+        {calendarPreviewPost && !calendarPreviewLoading && (
+          <div className="space-y-4">
+            {/* Meta */}
+            <div className="flex items-center gap-2 flex-wrap text-xs text-text-muted border-b border-border pb-3">
+              <Badge variant={STATUS_META[calendarPreviewPost.status]?.variant ?? 'neutral'} size="sm">
+                {STATUS_META[calendarPreviewPost.status]?.label ?? calendarPreviewPost.status}
+              </Badge>
+              <span className="uppercase font-mono">{calendarPreviewPost.lang}</span>
+              <span>{DAY_SHORT[calendarPreviewPost.day_type] ?? calendarPreviewPost.day_type}</span>
+              {calendarPreviewPost.scheduled_at && (
+                <span className="text-amber-300">
+                  📅 {new Date(calendarPreviewPost.scheduled_at).toLocaleString('fr-FR', { weekday: 'long', day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
+              {calendarPreviewPost.source_title && (
+                <span className="truncate max-w-[200px]" title={calendarPreviewPost.source_title}>
+                  · {calendarPreviewPost.source_title}
+                </span>
+              )}
+            </div>
+
+            {/* Image — shown first for visual context */}
+            {calendarPreviewPost.featured_image_url && (
+              <div>
+                <img
+                  src={calendarPreviewPost.featured_image_url}
+                  alt="Image LinkedIn"
+                  className="rounded-xl w-full max-h-72 object-cover border border-border/50 shadow"
+                />
+              </div>
+            )}
+
+            {/* LinkedIn post preview — styled like the actual post */}
+            <div className="bg-surface rounded-xl border border-border/60 p-4 space-y-3">
+              {/* Profile header mock */}
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet/60 to-blue-500/60 flex items-center justify-center text-sm font-bold text-white shrink-0">
+                  WJ
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-text">Williams Jullin</p>
+                  <p className="text-[11px] text-text-muted">Fondateur SOS-Expat.com · 1er</p>
+                  <p className="text-[10px] text-text-muted">{calendarPreviewPost.scheduled_at ? new Date(calendarPreviewPost.scheduled_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long' }) : 'À venir'} · 🌐</p>
+                </div>
+              </div>
+
+              {/* Hook */}
+              {calendarPreviewPost.hook && (
+                <p className="text-sm text-text font-semibold leading-snug">{calendarPreviewPost.hook}</p>
+              )}
+
+              {/* Body */}
+              {calendarPreviewPost.body && (
+                <div className="text-sm text-text whitespace-pre-line leading-relaxed max-h-56 overflow-y-auto pr-1">
+                  {calendarPreviewPost.body}
+                </div>
+              )}
+
+              {/* Hashtags */}
+              {calendarPreviewPost.hashtags?.length > 0 && (
+                <p className="text-blue-400 text-xs">
+                  {calendarPreviewPost.hashtags.map(h => `#${h}`).join(' ')}
+                </p>
+              )}
+
+              {/* LinkedIn engagement mock */}
+              <div className="flex items-center justify-between border-t border-border/40 pt-2 mt-1">
+                <div className="flex gap-4 text-[11px] text-text-muted">
+                  <span>👍 J'aime</span>
+                  <span>💬 Commenter</span>
+                  <span>🔁 Partager</span>
+                  <span>✉️ Envoyer</span>
+                </div>
+              </div>
+            </div>
+
+            {/* First comment */}
+            {calendarPreviewPost.first_comment && (
+              <div>
+                <p className="text-xs font-semibold text-text-muted mb-1.5 uppercase tracking-wide flex items-center gap-1.5">
+                  💬 Premier commentaire
+                  <span className="text-violet-light font-normal normal-case tracking-normal">auto-posté 3 min après</span>
+                </p>
+                <div className="bg-violet/8 rounded-xl border border-violet/20 p-3 text-sm text-text-muted whitespace-pre-line">
+                  {calendarPreviewPost.first_comment}
+                </div>
+              </div>
+            )}
+
+            {/* Char count */}
+            <div className="flex gap-4 text-xs text-text-muted border-t border-border pt-2">
+              <span>Hook : <span className={`font-mono ${(calendarPreviewPost.hook?.length ?? 0) > 140 ? 'text-red-400' : 'text-green-400'}`}>{calendarPreviewPost.hook?.length ?? 0}</span>/140 chars</span>
+              <span>Corps total : <span className={`font-mono ${((calendarPreviewPost.hook?.length ?? 0) + (calendarPreviewPost.body?.length ?? 0)) < 1000 ? 'text-amber-400' : 'text-green-400'}`}>{(calendarPreviewPost.hook?.length ?? 0) + (calendarPreviewPost.body?.length ?? 0)}</span> chars</span>
+              <span>Hashtags : <span className="font-mono text-blue-400">{calendarPreviewPost.hashtags?.length ?? 0}</span></span>
+            </div>
+          </div>
+        )}
+      </Modal>
+
       {/* ── SCHEDULE MODAL ───────────────────────────────────────────── */}
       <Modal
         open={scheduleModal !== null}
@@ -1189,8 +1325,17 @@ function PostCard({
           {/* Featured image */}
           {post.featured_image_url && (
             <div>
-              <p className="text-xs font-semibold text-text-muted mb-1.5 uppercase tracking-wide">Image</p>
-              <img src={post.featured_image_url} alt="" className="rounded-lg max-h-32 object-cover border border-border" />
+              <p className="text-xs font-semibold text-text-muted mb-1.5 uppercase tracking-wide flex items-center gap-2">
+                🖼 Image LinkedIn
+                <a href={post.featured_image_url} target="_blank" rel="noopener noreferrer" className="text-violet-light font-normal normal-case tracking-normal text-[10px] hover:underline" onClick={e => e.stopPropagation()}>
+                  Ouvrir en plein écran ↗
+                </a>
+              </p>
+              <img
+                src={post.featured_image_url}
+                alt="Image LinkedIn"
+                className="rounded-lg w-full max-h-64 object-cover border border-border/50 shadow-sm"
+              />
             </div>
           )}
 
