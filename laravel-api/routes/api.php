@@ -106,6 +106,12 @@ Route::get('/linkedin/oauth/authorize', [\App\Http\Controllers\LinkedInOAuthCont
 Route::get('/linkedin/oauth/callback',  [\App\Http\Controllers\LinkedInOAuthController::class, 'callback']);
 
 // ============================================================
+// TELEGRAM WEBHOOK — PUBLIC (Telegram sends callback_query events here)
+// Secured via X-Telegram-Bot-Api-Secret-Token header (TELEGRAM_LINKEDIN_WEBHOOK_SECRET)
+// ============================================================
+Route::post('/telegram/linkedin', [\App\Http\Controllers\LinkedInTelegramController::class, 'webhook']);
+
+// ============================================================
 // COUNTRY DIRECTORY — PUBLIC (lecture seule, pour sos-expat.com/annuaire)
 // ============================================================
 Route::prefix('public/country-directory')->group(function () {

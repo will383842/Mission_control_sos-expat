@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * LinkedIn post record.
  *
- * status:      generating | draft | scheduled | published | failed
+ * status:      generating | draft | scheduled | pending_confirm | published | failed
  * phase:       1 = Francophone clients (FR dominant, now → Aug 2026)
  *              2 = Global expansion (FR + EN, Sep 2026+)
  * source_type: article | faq | sondage | hot_take | myth | poll | serie |
@@ -29,7 +29,7 @@ class LinkedInPost extends Model
         'first_comment_posted_at', 'first_comment_status', 'reply_variants',
         'status', 'scheduled_at', 'published_at', 'auto_scheduled',
         'page_publish_after', 'page_published_at', 'publish_error_page',
-        'li_post_id_page', 'li_post_id_personal',
+        'li_post_id_page', 'li_post_id_personal', 'li_telegram_msg_id',
         'reach', 'likes', 'comments', 'shares', 'clicks', 'engagement_rate',
         'phase', 'error_message',
     ];

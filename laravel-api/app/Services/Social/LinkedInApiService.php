@@ -8,22 +8,27 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
- * LinkedIn API v2 — publish posts, upload images, post first comments.
+ * LinkedIn REST API v202401 — publish posts, upload images, post first comments.
  *
- * Endpoints used:
- *   POST /v2/ugcPosts           — create text or image post
- *   POST /v2/assets?action=registerUpload — register image upload
- *   PUT  {uploadUrl}            — binary upload of image
- *   POST /v2/socialActions/{urn}/comments — post first comment
- *   GET  /v2/me                 — get personal profile ID
- *   GET  /v2/organizationAcls?q=roleAssignee — get managed org IDs
+ * Endpoints (Share on LinkedIn product, approved 2026-04-14):
+ *   POST /rest/posts                           — create text or image post
+ *   POST /rest/images?action=initializeUpload  — register image upload slot
+ *   PUT  {uploadUrl}                           — binary upload of image
+ *   POST /rest/socialActions/{urn}/comments    — post first comment
+ *   GET  /v2/userinfo                          — get personal profile ID (OpenID)
+ *   GET  /v2/organizationAcls?q=roleAssignee   — get managed org IDs
  *
  * account_type: 'personal' → urn:li:person:{id}
  *               'page'     → urn:li:organization:{id}
+ *
+ * Required header on all REST v202401 calls: LinkedIn-Version: 202401
  */
 class LinkedInApiService
 {
-    private const API = 'https://api.linkedin.com/v2';
+    private const BASE    = 'https://api.linkedin.com';
+    private const REST    = 'https://api.linkedin.com/rest';
+    private const V2      = 'https://api.linkedin.com/v2';
+    private const VERSION = '202401';
 
     // ── Public interface ───────────────────────────────────────────────
 
@@ -40,13 +45,13 @@ class LinkedInApiService
 
         return [
             'personal' => [
-                'connected'      => $personal?->isValid() ?? false,
-                'name'           => $personal?->linkedin_name,
+                'connected'       => $personal?->isValid() ?? false,
+                'name'            => $personal?->linkedin_name,
                 'expires_in_days' => $personal?->expiresInDays() ?? 0,
             ],
             'page' => [
-                'connected'      => $page?->isValid() ?? false,
-                'name'           => $page?->linkedin_name,
+                'connected'       => $page?->isValid() ?? false,
+                'name'            => $page?->linkedin_name,
                 'expires_in_days' => $page?->expiresInDays() ?? 0,
             ],
         ];
@@ -93,6 +98,101 @@ class LinkedInApiService
     }
 
     /**
+     * Fetch comments on a published post.
+     * Returns array of ['urn', 'author_name', 'author_urn', 'text', 'commented_at'].
+     */
+    public function getComments(string $postUrn, string $accountType): array
+    {
+        $token = $this->resolveToken($accountType);
+        if (!$token) return [];
+
+        try {
+            $r = Http::withHeaders($this->headers($token->access_token))
+                ->get(self::REST . '/socialActions/' . urlencode($postUrn) . '/comments', [
+                    'count' => 50,
+                ]);
+
+            if (!$r->successful()) {
+                Log::warning('LinkedInApiService: getComments failed', [
+                    'urn'    => $postUrn,
+                    'status' => $r->status(),
+                    'body'   => mb_substr($r->body(), 0, 300),
+                ]);
+                return [];
+            }
+
+            $elements = $r->json()['elements'] ?? [];
+            $result   = [];
+
+            foreach ($elements as $el) {
+                $urn        = $el['$URN'] ?? $el['id'] ?? null;
+                $authorUrn  = $el['actor'] ?? null;
+                $text       = $el['message']['text'] ?? '';
+                $createdMs  = $el['created']['time'] ?? null;
+
+                // Try to extract author name from commenter field (v202401 format)
+                $name = null;
+                $commenter = $el['commenter'] ?? [];
+                if (!empty($commenter['member'])) {
+                    $first = $commenter['member']['firstName']['localized'] ?? [];
+                    $last  = $commenter['member']['lastName']['localized'] ?? [];
+                    $name  = trim(implode(' ', [reset($first) ?: '', reset($last) ?: '']));
+                }
+
+                if ($urn && $text) {
+                    $result[] = [
+                        'urn'          => $urn,
+                        'author_name'  => $name ?: 'Inconnu',
+                        'author_urn'   => $authorUrn,
+                        'text'         => $text,
+                        'commented_at' => $createdMs ? \Carbon\Carbon::createFromTimestampMs($createdMs) : now(),
+                    ];
+                }
+            }
+
+            return $result;
+
+        } catch (\Throwable $e) {
+            Log::error('LinkedInApiService: getComments exception', ['error' => $e->getMessage()]);
+            return [];
+        }
+    }
+
+    /**
+     * Post a reply comment on a LinkedIn post.
+     * We post as a regular comment (mentioning the author in text).
+     * Returns true on success.
+     */
+    public function postReply(string $postUrn, string $replyText, string $accountType): bool
+    {
+        $token = $this->resolveToken($accountType);
+        if (!$token) return false;
+
+        try {
+            $response = Http::withHeaders($this->headers($token->access_token))
+                ->post(self::REST . '/socialActions/' . urlencode($postUrn) . '/comments', [
+                    'actor'   => $this->authorUrn($accountType, $token->linkedin_id),
+                    'message' => ['text' => $replyText],
+                ]);
+
+            if ($response->successful()) {
+                Log::info('LinkedInApiService: reply posted', ['urn' => $postUrn]);
+                return true;
+            }
+
+            Log::warning('LinkedInApiService: reply failed', [
+                'status' => $response->status(),
+                'body'   => $response->body(),
+            ]);
+            return false;
+
+        } catch (\Throwable $e) {
+            Log::error('LinkedInApiService: postReply exception', ['error' => $e->getMessage()]);
+            return false;
+        }
+    }
+
+    /**
      * Post the first comment 3 minutes after publication.
      * Returns true on success.
      */
@@ -102,14 +202,11 @@ class LinkedInApiService
         if (!$token) return false;
 
         try {
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $token->access_token,
-                'Content-Type'  => 'application/json',
-                'X-Restli-Protocol-Version' => '2.0.0',
-            ])->post(self::API . '/socialActions/' . urlencode($postUrn) . '/comments', [
-                'actor'   => $this->authorUrn($accountType, $token->linkedin_id),
-                'message' => ['text' => $commentText],
-            ]);
+            $response = Http::withHeaders($this->headers($token->access_token))
+                ->post(self::REST . '/socialActions/' . urlencode($postUrn) . '/comments', [
+                    'actor'   => $this->authorUrn($accountType, $token->linkedin_id),
+                    'message' => ['text' => $commentText],
+                ]);
 
             if ($response->successful()) {
                 Log::info('LinkedInApiService: first comment posted', ['urn' => $postUrn]);
@@ -129,7 +226,7 @@ class LinkedInApiService
     }
 
     /**
-     * Fetch personal profile ID from LinkedIn API.
+     * Fetch personal profile ID via OpenID userinfo endpoint.
      * Called once during OAuth callback to populate linkedin_id.
      */
     public function fetchPersonalId(string $accessToken): ?array
@@ -137,17 +234,36 @@ class LinkedInApiService
         try {
             $r = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $accessToken,
-            ])->get(self::API . '/me', [
-                'projection' => '(id,localizedFirstName,localizedLastName)',
-            ]);
+            ])->get(self::V2 . '/userinfo');
 
             if ($r->successful()) {
                 $data = $r->json();
+                $name = trim(($data['given_name'] ?? '') . ' ' . ($data['family_name'] ?? ''));
+                if (!$name) {
+                    $name = $data['name'] ?? '';
+                }
+                return [
+                    'id'   => $data['sub'] ?? null,
+                    'name' => $name,
+                ];
+            }
+
+            // Fallback: try legacy /v2/me
+            $r2 = Http::withHeaders([
+                'Authorization'              => 'Bearer ' . $accessToken,
+                'X-Restli-Protocol-Version'  => '2.0.0',
+            ])->get(self::V2 . '/me', [
+                'projection' => '(id,localizedFirstName,localizedLastName)',
+            ]);
+
+            if ($r2->successful()) {
+                $data = $r2->json();
                 return [
                     'id'   => $data['id'] ?? null,
                     'name' => trim(($data['localizedFirstName'] ?? '') . ' ' . ($data['localizedLastName'] ?? '')),
                 ];
             }
+
         } catch (\Throwable $e) {
             Log::error('LinkedInApiService: fetchPersonalId failed', ['error' => $e->getMessage()]);
         }
@@ -161,9 +277,10 @@ class LinkedInApiService
     {
         try {
             $r = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $accessToken,
-                'X-Restli-Protocol-Version' => '2.0.0',
-            ])->get(self::API . '/organizationAcls', [
+                'Authorization'              => 'Bearer ' . $accessToken,
+                'LinkedIn-Version'           => self::VERSION,
+                'X-Restli-Protocol-Version'  => '2.0.0',
+            ])->get(self::V2 . '/organizationAcls', [
                 'q'          => 'roleAssignee',
                 'role'       => 'ADMINISTRATOR',
                 'projection' => '(elements*(organization~(id,localizedName)))',
@@ -198,71 +315,86 @@ class LinkedInApiService
             : "urn:li:person:{$id}";
     }
 
-    /** Publish a text-only post. Returns post URN. */
-    private function publishText(string $text, string $authorUrn, string $accessToken): string
+    /** Common headers for REST v202401 API calls */
+    private function headers(string $accessToken): array
     {
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $accessToken,
-            'Content-Type'  => 'application/json',
+        return [
+            'Authorization'             => 'Bearer ' . $accessToken,
+            'Content-Type'              => 'application/json',
+            'LinkedIn-Version'          => self::VERSION,
             'X-Restli-Protocol-Version' => '2.0.0',
-        ])->post(self::API . '/ugcPosts', [
-            'author'         => $authorUrn,
-            'lifecycleState' => 'PUBLISHED',
-            'specificContent' => [
-                'com.linkedin.ugc.ShareContent' => [
-                    'shareCommentary'    => ['text' => $text],
-                    'shareMediaCategory' => 'NONE',
-                ],
-            ],
-            'visibility' => [
-                'com.linkedin.ugc.MemberNetworkVisibility' => 'PUBLIC',
-            ],
-        ]);
-
-        if (!$response->successful()) {
-            throw new \RuntimeException("ugcPosts error {$response->status()}: {$response->body()}");
-        }
-
-        return $response->header('X-RestLi-Id') ?? $response->json()['id'] ?? '';
+        ];
     }
 
-    /** Upload image to LinkedIn Assets, then publish post. Returns post URN. */
+    /**
+     * Publish a text-only post via REST v202401 API.
+     * Returns post URN.
+     */
+    private function publishText(string $text, string $authorUrn, string $accessToken): string
+    {
+        $response = Http::withHeaders($this->headers($accessToken))
+            ->post(self::REST . '/posts', [
+                'author'          => $authorUrn,
+                'commentary'      => $text,
+                'visibility'      => 'PUBLIC',
+                'distribution'    => [
+                    'feedDistribution'             => 'MAIN_FEED',
+                    'targetEntities'               => [],
+                    'thirdPartyDistributionChannels' => [],
+                ],
+                'lifecycleState'             => 'PUBLISHED',
+                'isReshareDisabledByAuthor'  => false,
+            ]);
+
+        if (!$response->successful()) {
+            throw new \RuntimeException("POST /rest/posts error {$response->status()}: {$response->body()}");
+        }
+
+        // New REST API returns post URN in X-RestLi-Id header
+        return $response->header('X-RestLi-Id')
+            ?? $response->header('x-restli-id')
+            ?? $response->json()['id']
+            ?? '';
+    }
+
+    /**
+     * Upload image to LinkedIn then publish post with media.
+     * Falls back to text-only if any upload step fails.
+     * Returns post URN.
+     */
     private function publishWithImage(string $text, string $imageUrl, string $authorUrn, string $accessToken): string
     {
-        // 1. Register upload
-        $regResp = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $accessToken,
-            'Content-Type'  => 'application/json',
-            'X-Restli-Protocol-Version' => '2.0.0',
-        ])->post(self::API . '/assets?action=registerUpload', [
-            'registerUploadRequest' => [
-                'recipes'              => ['urn:li:digitalmediaRecipe:feedshare-image'],
-                'owner'                => $authorUrn,
-                'serviceRelationships' => [[
-                    'relationshipType' => 'OWNER',
-                    'identifier'       => 'urn:li:userGeneratedContent',
-                ]],
-            ],
-        ]);
+        // 1. Initialize image upload
+        $initResp = Http::withHeaders($this->headers($accessToken))
+            ->post(self::REST . '/images?action=initializeUpload', [
+                'initializeUploadRequest' => [
+                    'owner' => $authorUrn,
+                ],
+            ]);
 
-        if (!$regResp->successful()) {
-            // Fall back to text-only if image upload fails
-            Log::warning('LinkedInApiService: image register failed, falling back to text', [
-                'status' => $regResp->status(),
+        if (!$initResp->successful()) {
+            Log::warning('LinkedInApiService: image initializeUpload failed, falling back to text', [
+                'status' => $initResp->status(),
+                'body'   => $initResp->body(),
             ]);
             return $this->publishText($text, $authorUrn, $accessToken);
         }
 
-        $uploadData = $regResp->json()['value'] ?? [];
-        $uploadUrl  = $uploadData['uploadMechanism']['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest']['uploadUrl'] ?? null;
-        $assetUrn   = $uploadData['asset'] ?? null;
+        $value     = $initResp->json()['value'] ?? [];
+        $uploadUrl = $value['uploadUrl'] ?? null;
+        $imageUrn  = $value['image'] ?? null;  // urn:li:image:{id}
 
-        if (!$uploadUrl || !$assetUrn) {
+        if (!$uploadUrl || !$imageUrn) {
             return $this->publishText($text, $authorUrn, $accessToken);
         }
 
         // 2. Download image and upload binary to LinkedIn
-        $imageContent = Http::timeout(30)->get($imageUrl)->body();
+        try {
+            $imageContent = Http::timeout(30)->get($imageUrl)->body();
+        } catch (\Throwable) {
+            return $this->publishText($text, $authorUrn, $accessToken);
+        }
+
         $uploadResp = Http::withHeaders([
             'Authorization' => 'Bearer ' . $accessToken,
         ])->withBody($imageContent, 'image/jpeg')->put($uploadUrl);
@@ -272,35 +404,37 @@ class LinkedInApiService
             return $this->publishText($text, $authorUrn, $accessToken);
         }
 
-        // 3. Publish post with image asset
-        $postResp = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $accessToken,
-            'Content-Type'  => 'application/json',
-            'X-Restli-Protocol-Version' => '2.0.0',
-        ])->post(self::API . '/ugcPosts', [
-            'author'         => $authorUrn,
-            'lifecycleState' => 'PUBLISHED',
-            'specificContent' => [
-                'com.linkedin.ugc.ShareContent' => [
-                    'shareCommentary'    => ['text' => $text],
-                    'shareMediaCategory' => 'IMAGE',
-                    'media'              => [[
-                        'status'      => 'READY',
-                        'media'       => $assetUrn,
-                        'description' => ['text' => 'SOS-Expat.com'],
-                        'title'       => ['text' => 'SOS-Expat'],
-                    ]],
+        // 3. Publish post with image media reference
+        $postResp = Http::withHeaders($this->headers($accessToken))
+            ->post(self::REST . '/posts', [
+                'author'       => $authorUrn,
+                'commentary'   => $text,
+                'visibility'   => 'PUBLIC',
+                'distribution' => [
+                    'feedDistribution'               => 'MAIN_FEED',
+                    'targetEntities'                 => [],
+                    'thirdPartyDistributionChannels' => [],
                 ],
-            ],
-            'visibility' => [
-                'com.linkedin.ugc.MemberNetworkVisibility' => 'PUBLIC',
-            ],
-        ]);
+                'content' => [
+                    'media' => [
+                        'id' => $imageUrn,
+                    ],
+                ],
+                'lifecycleState'            => 'PUBLISHED',
+                'isReshareDisabledByAuthor' => false,
+            ]);
 
         if (!$postResp->successful()) {
-            throw new \RuntimeException("ugcPosts image error {$postResp->status()}: {$postResp->body()}");
+            Log::warning('LinkedInApiService: image post failed, falling back to text', [
+                'status' => $postResp->status(),
+                'body'   => $postResp->body(),
+            ]);
+            return $this->publishText($text, $authorUrn, $accessToken);
         }
 
-        return $postResp->header('X-RestLi-Id') ?? $postResp->json()['id'] ?? '';
+        return $postResp->header('X-RestLi-Id')
+            ?? $postResp->header('x-restli-id')
+            ?? $postResp->json()['id']
+            ?? '';
     }
 }

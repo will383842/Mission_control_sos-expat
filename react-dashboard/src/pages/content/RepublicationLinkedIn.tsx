@@ -60,7 +60,7 @@ interface LiPost {
   reply_variants: string[] | null;
   featured_image_url: string | null;
   auto_scheduled: boolean;
-  status: 'generating' | 'draft' | 'scheduled' | 'published' | 'failed';
+  status: 'generating' | 'draft' | 'scheduled' | 'pending_confirm' | 'published' | 'failed';
   scheduled_at: string | null;
   published_at: string | null;
   reach: number;
@@ -137,11 +137,12 @@ const ALL_SOURCE_TYPES = [...SOURCE_TYPES_DB, ...SOURCE_TYPES_FREE];
 const SOURCE_LABEL: Record<string, string> = Object.fromEntries(ALL_SOURCE_TYPES.map(t => [t.value, t.label]));
 
 const STATUS_META: Record<string, { label: string; variant: 'neutral' | 'info' | 'warning' | 'success' | 'danger' }> = {
-  generating: { label: 'Génération...', variant: 'info' },
-  draft:      { label: 'Brouillon',     variant: 'neutral' },
-  scheduled:  { label: 'Planifié',      variant: 'warning' },
-  published:  { label: 'Publié',        variant: 'success' },
-  failed:     { label: 'Échec',         variant: 'danger' },
+  generating:      { label: 'Génération...', variant: 'info' },
+  draft:           { label: 'Brouillon',     variant: 'neutral' },
+  scheduled:       { label: 'Planifié',      variant: 'warning' },
+  pending_confirm: { label: '✋ Confirmation Telegram', variant: 'warning' },
+  published:       { label: 'Publié',        variant: 'success' },
+  failed:          { label: 'Échec',         variant: 'danger' },
 };
 
 const DAY_SHORT: Record<string, string> = {
@@ -357,6 +358,18 @@ export default function RepublicationLinkedIn() {
         </div>
       </div>
 
+      {/* API approval banner */}
+      <div className="rounded-xl border border-green-500/40 bg-green-500/8 p-4 flex items-start gap-3">
+        <span className="text-xl shrink-0">✅</span>
+        <div className="flex-1">
+          <p className="text-green-300 font-semibold text-sm">Share on LinkedIn API approuvée ! (14 avr. 2026)</p>
+          <p className="text-text-muted text-xs mt-0.5">
+            App ID 244000247 · REST API v202401 active · Profil personnel opérationnel ·{' '}
+            <span className="text-amber-300">Community Management API (page entreprise) : demande en cours</span>
+          </p>
+        </div>
+      </div>
+
       {/* Phase banner */}
       <div className="rounded-xl border border-blue-500/30 bg-blue-500/8 p-4 flex items-start gap-3">
         <span className="text-xl shrink-0">🎯</span>
@@ -364,7 +377,7 @@ export default function RepublicationLinkedIn() {
           <p className="text-blue-300 font-semibold text-sm">Phase 1 — Clients francophones (Now → Août 2026)</p>
           <p className="text-text-muted text-xs mt-0.5">
             Posts dominants en FR · Expatriés francophones worldwide ·{' '}
-            <span className="text-text-muted">Phase 2 (Sept 2026+) : expansion EN+FR, avocats et helpers partenaires, API LinkedIn v2</span>
+            <span className="text-text-muted">Phase 2 (Sept 2026+) : expansion EN+FR, avocats et helpers partenaires, page entreprise automatique</span>
           </p>
         </div>
       </div>

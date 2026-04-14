@@ -79,6 +79,10 @@ return [
         'redirect_uri'  => env('LINKEDIN_REDIRECT_URI', ''),
         // URL where user lands after OAuth (your Mission Control dashboard)
         'dashboard_url' => env('LINKEDIN_DASHBOARD_URL', '/'),
+        // Telegram 1-tap confirm mode (ToS-compliant interim while Community Management API pending)
+        // Set to true to require manual tap on Telegram before each LinkedIn post goes live
+        'telegram_confirm'          => (bool) env('LINKEDIN_TELEGRAM_CONFIRM', false),
+        'telegram_webhook_secret'   => env('TELEGRAM_LINKEDIN_WEBHOOK_SECRET', ''),
     ],
 
     'ai' => [

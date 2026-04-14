@@ -279,3 +279,10 @@ Schedule::job(new \App\Jobs\RunLandingCampaignJob)->dailyAt('05:00')->withoutOve
 // Optimal posting times : 07h30 et 12h15 heure locale → planifier depuis l'UI.
 // ══════════════════════════════════════════════════════════════════════
 Schedule::command('linkedin:auto-publish')->everyFiveMinutes()->withoutOverlapping();
+
+// ══════════════════════════════════════════════════════════════════════
+// LINKEDIN CHECK COMMENTS — toutes les 15 minutes
+// Poll les commentaires sur les posts publiés (30 derniers jours).
+// Nouveaux commentaires → Telegram avec 3 variantes de réponse + boutons.
+// ══════════════════════════════════════════════════════════════════════
+Schedule::command('linkedin:check-comments')->everyFifteenMinutes()->withoutOverlapping();

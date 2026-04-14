@@ -28,7 +28,7 @@ class LinkedInController extends Controller
               ->orWhereBetween('created_at', [$weekStart, $weekEnd]);
         })->count();
 
-        $scheduled     = LinkedInPost::where('status', 'scheduled')->count();
+        $scheduled     = LinkedInPost::whereIn('status', ['scheduled', 'pending_confirm'])->count();
         $published     = LinkedInPost::where('status', 'published')->count();
         $generating    = LinkedInPost::where('status', 'generating')->count();
         $totalReach    = LinkedInPost::where('status', 'published')->sum('reach');
@@ -75,7 +75,7 @@ class LinkedInController extends Controller
             'available_faqs'       => $availableFaqs,
             'available_sondages'   => $availableSondages,
             'upcoming_posts'       => $upcoming,
-            'linkedin_connected'   => false, // TODO: check OAuth token
+            'linkedin_connected'   => \App\Models\LinkedInToken::forPersonal()->exists(),
         ]);
     }
 
@@ -366,7 +366,7 @@ USER;
     /** IDs already used for a given source_type (dedup check) */
     private function usedSourceIds(string $sourceType): \Illuminate\Support\Collection
     {
-        return LinkedInPost::whereIn('status', ['draft', 'scheduled', 'published', 'generating'])
+        return LinkedInPost::whereIn('status', ['draft', 'scheduled', 'pending_confirm', 'published', 'generating'])
             ->where('source_type', $sourceType)
             ->whereNotNull('source_id')
             ->pluck('source_id');
