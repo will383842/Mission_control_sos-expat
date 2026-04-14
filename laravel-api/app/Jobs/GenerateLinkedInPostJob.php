@@ -6,6 +6,7 @@ use App\Models\GeneratedArticle;
 use App\Models\LinkedInPost;
 use App\Models\QaEntry;
 use App\Models\Sondage;
+use App\Services\AI\ClaudeService;
 use App\Services\AI\OpenAiService;
 use App\Services\AI\UnsplashService;
 use App\Services\Content\AudienceContextService;
@@ -114,19 +115,8 @@ Retourne UNIQUEMENT un objet JSON valide avec exactement ces 4 clés :
 }
 USER;
 
-            // ── 3. Generate with GPT-4o (full model for hook quality) ──
-            $result = $openai->complete($systemPrompt, $userPrompt, [
-                'model'       => 'gpt-4o',
-                'max_tokens'  => 1800,
-                'temperature' => 0.78,
-                'json_mode'   => true,
-            ]);
-
-            if (!($result['success'] ?? false)) {
-                throw new \RuntimeException($result['error'] ?? 'Claude API error');
-            }
-
-            $data = json_decode($result['content'] ?? '', true) ?? [];
+            // ── 3. Generate: GPT-4o → Claude fallback → template fallback ─
+            $data = $this->generateWithFallback($openai, $systemPrompt, $userPrompt, $post, $source, $lang, $dayType);
 
             // ── 4. Hashtags: sanitize + fallback from keywords ───────
             $hashtags = $this->buildHashtags($data['hashtags'] ?? [], $source['hashtag_seeds']);
@@ -190,6 +180,154 @@ USER;
             $post->update(['status' => 'failed', 'error_message' => $e->getMessage()]);
             throw $e;
         }
+    }
+
+    // ── AI generation with fallback chain ─────────────────────────────
+
+    /**
+     * Try GPT-4o → Claude Sonnet → built-in template (3 levels).
+     * Returns parsed array with keys: hook, body, hashtags, first_comment.
+     * Never throws — worst case returns pre-built template so the post
+     * always ends up as 'scheduled' (never 'failed') due to a quota issue.
+     */
+    private function generateWithFallback(
+        OpenAiService $openai,
+        string        $systemPrompt,
+        string        $userPrompt,
+        LinkedInPost  $post,
+        array         $source,
+        string        $lang,
+        string        $dayType,
+    ): array {
+        // ── Level 1: GPT-4o ────────────────────────────────────────────
+        if ($openai->isConfigured()) {
+            $r = $openai->complete($systemPrompt, $userPrompt, [
+                'model'       => 'gpt-4o',
+                'max_tokens'  => 1800,
+                'temperature' => 0.78,
+                'json_mode'   => true,
+            ]);
+
+            if ($r['success'] ?? false) {
+                $data = json_decode($r['content'] ?? '', true) ?? [];
+                if (!empty($data['hook']) && !empty($data['body'])) {
+                    Log::info('GenerateLinkedInPostJob: generated via GPT-4o', ['post_id' => $post->id]);
+                    return $data;
+                }
+            }
+
+            // Check if it's a quota/billing error (don't retry with Claude for transient errors)
+            $err = $r['error'] ?? '';
+            $isQuota = str_contains($err, '429') || str_contains($err, 'quota')
+                    || str_contains($err, 'billing') || str_contains($err, 'budget');
+
+            Log::warning('GenerateLinkedInPostJob: GPT-4o failed', [
+                'post_id' => $post->id,
+                'error'   => mb_substr($err, 0, 200),
+                'is_quota' => $isQuota,
+            ]);
+        }
+
+        // ── Level 2: Claude Sonnet fallback ────────────────────────────
+        try {
+            $claude = app(ClaudeService::class);
+            if ($claude->isConfigured()) {
+                $r2 = $claude->complete($systemPrompt, $userPrompt, [
+                    'model'      => 'claude-haiku-4-5-20251001', // fast + cheap for fallback
+                    'max_tokens' => 1800,
+                    'json_mode'  => true,
+                ]);
+
+                if ($r2['success'] ?? false) {
+                    $data2 = json_decode($r2['content'] ?? '', true) ?? [];
+                    if (!empty($data2['hook']) && !empty($data2['body'])) {
+                        Log::info('GenerateLinkedInPostJob: generated via Claude (GPT fallback)', ['post_id' => $post->id]);
+
+                        // Notify Telegram that we had to use the fallback
+                        $this->notifyFallback($post, 'GPT-4o quota — Claude utilisé à la place');
+
+                        return $data2;
+                    }
+                }
+
+                Log::warning('GenerateLinkedInPostJob: Claude fallback also failed', [
+                    'post_id' => $post->id,
+                    'error'   => mb_substr($r2['error'] ?? '', 0, 200),
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('GenerateLinkedInPostJob: Claude fallback exception', [
+                'post_id' => $post->id,
+                'error'   => $e->getMessage(),
+            ]);
+        }
+
+        // ── Level 3: Built-in template (no AI required) ────────────────
+        Log::warning('GenerateLinkedInPostJob: both AI services failed — using template', ['post_id' => $post->id]);
+        $this->notifyFallback($post, '⚠️ GPT + Claude indisponibles — post généré depuis template. Vérifiez vos crédits API.');
+
+        return $this->buildTemplatePost($source, $lang, $dayType, $post->source_type);
+    }
+
+    /** Build a decent post from the source content without any AI */
+    private function buildTemplatePost(array $source, string $lang, string $day, string $sourceType): array
+    {
+        $title    = mb_substr($source['title'] ?? 'SOS-Expat', 0, 80);
+        $url      = $source['url'] ?? '';
+        $keywords = array_slice(
+            array_filter(array_map('trim', explode(',', $source['keywords'] ?? ''))),
+            0, 3
+        );
+
+        $hooks = [
+            'fr' => [
+                'monday'    => "5 conseils essentiels pour les expatriés sur : {$title} 👇",
+                'tuesday'   => "Ce que personne ne vous dit sur : {$title}",
+                'wednesday' => "🚨 Ce que tout expatrié doit savoir : {$title}",
+                'thursday'  => "La question du jour : {$title}",
+                'friday'    => "Retour d'expérience sur : {$title} ✈️",
+            ],
+            'en' => [
+                'monday'    => "5 essential tips for expats on: {$title} 👇",
+                'tuesday'   => "What nobody tells you about: {$title}",
+                'wednesday' => "🚨 Every expat needs to know: {$title}",
+                'thursday'  => "Question of the day: {$title}",
+                'friday'    => "Real expat experience on: {$title} ✈️",
+            ],
+        ];
+
+        $bodies = [
+            'fr' => "SOS-Expat.com accompagne les expatriés dans leurs démarches administratives et juridiques dans 197 pays.\n\nNotre réseau d'avocats partenaires et d'expats expérimentés est là pour vous guider pas à pas.\n\n→ {$title}\n\nVous avez vécu une situation similaire ? Partagez votre expérience en commentaire 👇\n\n(Lien complet en 1er commentaire)",
+            'en' => "SOS-Expat.com supports expats with administrative and legal challenges in 197 countries.\n\nOur network of partner lawyers and experienced expats is here to guide you step by step.\n\n→ {$title}\n\nHave you faced a similar situation? Share your experience in the comments 👇\n\n(Full link in first comment)",
+        ];
+
+        $l    = ($lang === 'en') ? 'en' : 'fr';
+        $hook = $hooks[$l][$day] ?? $hooks[$l]['monday'];
+        $body = $bodies[$l];
+
+        $firstCommentText = $url
+            ? ($lang === 'en' ? "Read the full article: {$url}" : "Lire l'article complet : {$url}")
+            : ($lang === 'en' ? 'Find all our resources at SOS-Expat.com' : 'Retrouvez toutes nos ressources sur SOS-Expat.com');
+
+        return [
+            'hook'          => $hook,
+            'body'          => $body,
+            'hashtags'      => array_merge(['expatriation', 'expat', 'sosexpat'], $keywords),
+            'first_comment' => $firstCommentText,
+        ];
+    }
+
+    /** Send Telegram alert when falling back from AI */
+    private function notifyFallback(LinkedInPost $post, string $reason): void
+    {
+        try {
+            $telegram = app(\App\Services\Social\TelegramAlertService::class);
+            if ($telegram->isConfigured()) {
+                $telegram->sendMessage(
+                    "⚠️ <b>LinkedIn post #{$post->id}</b> — fallback activé\n\n{$reason}\n\nPost programmé avec contenu template."
+                );
+            }
+        } catch (\Throwable) {}
     }
 
     // ── Source resolution ──────────────────────────────────────────────
