@@ -154,7 +154,22 @@ export interface ComparativeEntity {
 // LANDING PAGES
 // ============================================================
 
-export type AudienceType = 'clients' | 'lawyers' | 'helpers' | 'matching';
+export type AudienceType =
+  // Audiences originales
+  | 'clients' | 'lawyers' | 'helpers' | 'matching'
+  // Nouveaux types 2026
+  | 'category_pillar' | 'profile' | 'emergency' | 'nationality';
+
+export type UserProfile =
+  | 'digital_nomade' | 'retraite' | 'famille'
+  | 'entrepreneur' | 'etudiant' | 'investisseur' | 'expatrie';
+
+export type ProblemCategory =
+  | 'sante' | 'immigration' | 'securite' | 'documents' | 'banque_argent'
+  | 'travail' | 'logement' | 'famille' | 'voyage' | 'police_justice'
+  | 'fiscalite' | 'assurance' | 'etudes' | 'transport' | 'geopolitique_crise'
+  | 'entreprise_investissement' | 'langue_culture_orientation' | 'consommation_litiges'
+  | 'ambassade_consulat' | 'profils_vulnerables' | 'douane_animaux_rarete' | 'humain_orientation';
 
 export type LandingTemplateId =
   // clients
@@ -164,7 +179,15 @@ export type LandingTemplateId =
   // helpers
   | 'recruitment' | 'opportunity' | 'reassurance'
   // matching
-  | 'expert' | 'lawyer' | 'helper';
+  | 'expert' | 'lawyer' | 'helper'
+  // category_pillar
+  | 'overview' | 'guide'
+  // profile
+  | 'profile_general' | 'profile_guide'
+  // emergency
+  | 'emergency'
+  // nationality
+  | 'nationality_general';
 
 export interface LandingPage {
   id: number;
@@ -181,6 +204,10 @@ export interface LandingPage {
   country_code?: string | null;
   generation_source?: 'ai_generated' | 'manual' | null;
   generation_params?: Record<string, unknown> | null;
+  // Nouveaux types 2026
+  category_slug?: ProblemCategory | string | null;  // pour category_pillar
+  user_profile?: UserProfile | null;                // pour profile
+  origin_nationality?: string | null;               // pour nationality (ISO 3166-1 alpha-2)
   // Content
   sections: LandingSection[];
   meta_title: string | null;
@@ -193,6 +220,9 @@ export interface LandingPage {
   featured_image_attribution?: string | null;
   photographer_name?: string | null;
   photographer_url?: string | null;
+  // Keywords SEO (migration 000004)
+  keywords_primary?: string | null;
+  keywords_secondary?: string[] | null;
   // SEO complet
   seo_score: number;
   canonical_url?: string | null;
@@ -200,12 +230,23 @@ export interface LandingPage {
   og_type?: string | null;
   og_url?: string | null;
   og_site_name?: string | null;
+  og_title?: string | null;
+  og_description?: string | null;
+  og_image?: string | null;
   twitter_card?: string | null;
+  twitter_title?: string | null;
+  twitter_description?: string | null;
+  twitter_image?: string | null;
+  robots?: string | null;
   content_language?: string | null;
   geo_region?: string | null;
   geo_placename?: string | null;
   geo_position?: string | null;
   icbm?: string | null;
+  // Design & freshness (migration 000004)
+  design_template?: string | null;
+  date_published_at?: string | null;
+  date_modified_at?: string | null;
   // Status & dates
   status: ContentStatus;
   external_url?: string | null;

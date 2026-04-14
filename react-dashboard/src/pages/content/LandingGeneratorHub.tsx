@@ -21,10 +21,16 @@ interface AudienceStat {
 // ── Helpers ────────────────────────────────────────────────────────────
 
 const AUDIENCES: { type: AudienceType; label: string; icon: string; route: string }[] = [
-  { type: 'clients',  label: 'Clients',  icon: '👤', route: '/content/landing-generator/clients' },
-  { type: 'lawyers',  label: 'Avocats',  icon: '⚖️', route: '/content/landing-generator/avocats' },
-  { type: 'helpers',  label: 'Helpers',  icon: '🧳', route: '/content/landing-generator/helpers' },
-  { type: 'matching', label: 'Matching', icon: '🎯', route: '/content/landing-generator/matching' },
+  // Audiences originales
+  { type: 'clients',         label: 'Clients',           icon: '👤', route: '/content/landing-generator/clients' },
+  { type: 'lawyers',         label: 'Avocats',           icon: '⚖️', route: '/content/landing-generator/avocats' },
+  { type: 'helpers',         label: 'Helpers',           icon: '🧳', route: '/content/landing-generator/helpers' },
+  { type: 'matching',        label: 'Matching',          icon: '🎯', route: '/content/landing-generator/matching' },
+  // Nouveaux types 2026
+  { type: 'category_pillar', label: 'Piliers catégories',icon: '🏛️', route: '/content/landing-generator/piliers' },
+  { type: 'profile',         label: 'Profils expatriés', icon: '🧑‍💻', route: '/content/landing-generator/profils' },
+  { type: 'emergency',       label: 'Urgences',          icon: '🚨', route: '/content/landing-generator/urgences' },
+  { type: 'nationality',     label: 'Nationalités',      icon: '🌍', route: '/content/landing-generator/nationalites' },
 ];
 
 const STATUS_DOT: Record<string, string> = {

@@ -99,6 +99,13 @@ Route::get('/enums', function () {
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1')->name('login');
 
 // ============================================================
+// LINKEDIN OAUTH CALLBACK — PUBLIC (LinkedIn redirects here after authorization)
+// Must be outside auth middleware — LinkedIn doesn't send a Bearer token
+// ============================================================
+Route::get('/linkedin/oauth/authorize', [\App\Http\Controllers\LinkedInOAuthController::class, 'authorize']);
+Route::get('/linkedin/oauth/callback',  [\App\Http\Controllers\LinkedInOAuthController::class, 'callback']);
+
+// ============================================================
 // COUNTRY DIRECTORY — PUBLIC (lecture seule, pour sos-expat.com/annuaire)
 // ============================================================
 Route::prefix('public/country-directory')->group(function () {
@@ -697,6 +704,11 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/posts/{post}/publish',                [LinkedInController::class, 'publish']);
             Route::post('/posts/{post}/generate-replies',       [LinkedInController::class, 'generateReplies']);
             Route::delete('/posts/{post}',                      [LinkedInController::class, 'destroy']);
+            // OAuth management (admin only)
+            Route::get('/oauth/status',                         [\App\Http\Controllers\LinkedInOAuthController::class, 'status']);
+            Route::get('/oauth/orgs',                           [\App\Http\Controllers\LinkedInOAuthController::class, 'orgs']);
+            Route::post('/oauth/set-page',                      [\App\Http\Controllers\LinkedInOAuthController::class, 'setPage']);
+            Route::delete('/oauth/disconnect',                  [\App\Http\Controllers\LinkedInOAuthController::class, 'disconnect']);
         });
 
         // Landing Pages (CRUD manuel existant)

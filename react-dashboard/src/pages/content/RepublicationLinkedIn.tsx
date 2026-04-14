@@ -23,6 +23,16 @@ interface LiStats {
   upcoming_posts: UpcomingPost[];
 }
 
+interface OAuthStatus {
+  personal: { connected: boolean; name: string | null; expires_in_days: number };
+  page:     { connected: boolean; name: string | null; expires_in_days: number };
+}
+
+interface LinkedInOrg {
+  id: string;
+  name: string;
+}
+
 interface UpcomingPost {
   id: number;
   day_type: string;
@@ -167,8 +177,33 @@ export default function RepublicationLinkedIn() {
   const [scheduleModal, setScheduleModal] = useState<{ postId: number; date: string } | null>(null);
   const [weekGenProgress, setWeekGenProgress] = useState<string | null>(null);
   const [replyModal, setReplyModal] = useState<{ post: LiPost; commentText: string; variants: string[] | null } | null>(null);
+  const [oauthModal, setOauthModal] = useState(false);
 
   // ── Queries ───────────────────────────────────────────────────────────
+
+  const { data: oauthStatus, refetch: refetchOauth } = useQuery<OAuthStatus>({
+    queryKey: ['li-oauth'],
+    queryFn: () => api.get(BASE + '/oauth/status').then(r => r.data),
+    staleTime: 60_000,
+    refetchInterval: 120_000,
+  });
+
+  const { data: orgs } = useQuery<{ orgs: LinkedInOrg[] }>({
+    queryKey: ['li-orgs'],
+    queryFn: () => api.get(BASE + '/oauth/orgs').then(r => r.data),
+    enabled: oauthModal && (oauthStatus?.personal.connected ?? false) && !(oauthStatus?.page.connected ?? false),
+    staleTime: 300_000,
+  });
+
+  const mutateSetPage = useMutation({
+    mutationFn: (org: LinkedInOrg) => api.post(BASE + '/oauth/set-page', { org_id: org.id, org_name: org.name }).then(r => r.data),
+    onSuccess: () => { refetchOauth(); qc.invalidateQueries({ queryKey: ['li-stats'] }); },
+  });
+
+  const mutateDisconnect = useMutation({
+    mutationFn: (accountType: string) => api.delete(BASE + '/oauth/disconnect', { params: { account_type: accountType } }),
+    onSuccess: () => { refetchOauth(); qc.invalidateQueries({ queryKey: ['li-stats'] }); },
+  });
 
   const { data: stats } = useQuery<LiStats>({
     queryKey: ['li-stats'],
@@ -359,31 +394,12 @@ export default function RepublicationLinkedIn() {
       {/* ── DASHBOARD ────────────────────────────────────────────────── */}
       {tab === 'dashboard' && (
         <div className="space-y-6">
-          {/* LinkedIn OAuth status */}
-          <div className={`rounded-xl border p-4 flex items-center justify-between ${
-            stats?.linkedin_connected
-              ? 'border-green-500/30 bg-green-500/8'
-              : 'border-amber-500/30 bg-amber-500/8'
-          }`}>
-            <div className="flex items-center gap-3">
-              <span className="text-xl">{stats?.linkedin_connected ? '🔗' : '🔓'}</span>
-              <div>
-                <p className={`font-semibold text-sm ${stats?.linkedin_connected ? 'text-green-300' : 'text-amber-300'}`}>
-                  {stats?.linkedin_connected ? 'LinkedIn API v2 connectée' : 'LinkedIn API non connectée'}
-                </p>
-                <p className="text-text-muted text-xs mt-0.5">
-                  {stats?.linkedin_connected
-                    ? 'Publication automatique + premier commentaire actifs'
-                    : 'Publication manuelle uniquement · Premier commentaire stocké, pas encore publié'}
-                </p>
-              </div>
-            </div>
-            {!stats?.linkedin_connected && (
-              <span className="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-1.5 shrink-0">
-                Phase 2 — Sept 2026
-              </span>
-            )}
-          </div>
+          {/* LinkedIn OAuth status — real connect buttons */}
+          <LinkedInOAuthWidget
+            status={oauthStatus}
+            onConnect={() => setOauthModal(true)}
+            onDisconnect={(type) => mutateDisconnect.mutate(type)}
+          />
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard label="Cette semaine" value={stats?.posts_this_week ?? 0} icon="📅" />
@@ -729,6 +745,112 @@ export default function RepublicationLinkedIn() {
         )}
       </Modal>
 
+      {/* ── LINKEDIN OAUTH MODAL ─────────────────────────────────────── */}
+      <Modal
+        open={oauthModal}
+        onClose={() => setOauthModal(false)}
+        title="🔗 Connecter LinkedIn API v2"
+        size="md"
+        footer={<Button variant="secondary" onClick={() => setOauthModal(false)}>Fermer</Button>}
+      >
+        <div className="space-y-5">
+          {/* Step 1: Personal */}
+          <div className={`rounded-xl border p-4 ${oauthStatus?.personal.connected ? 'border-green-500/30 bg-green-500/8' : 'border-border bg-surface'}`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-text flex items-center gap-2">
+                  👤 Profil personnel
+                  {oauthStatus?.personal.connected && (
+                    <span className="text-green-300 text-xs">✅ Connecté — {oauthStatus.personal.name}</span>
+                  )}
+                </p>
+                <p className="text-text-muted text-xs mt-0.5">
+                  {oauthStatus?.personal.connected
+                    ? `Token expire dans ${oauthStatus.personal.expires_in_days} jours`
+                    : 'Publie sur ton profil LinkedIn (portée ×3-5 vs page)'}
+                </p>
+              </div>
+              {oauthStatus?.personal.connected ? (
+                <Button variant="danger" size="sm" onClick={() => mutateDisconnect.mutate('personal')}>
+                  Déconnecter
+                </Button>
+              ) : (
+                <Button size="sm" onClick={() => {
+                  window.location.href = '/api/linkedin/oauth/authorize?account_type=personal';
+                }}>
+                  Connecter
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Step 2: Company page */}
+          <div className={`rounded-xl border p-4 ${oauthStatus?.page.connected ? 'border-blue-500/30 bg-blue-500/8' : 'border-border bg-surface'}`}>
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="text-sm font-semibold text-text flex items-center gap-2">
+                  🏢 Page SOS-Expat
+                  {oauthStatus?.page.connected && (
+                    <span className="text-blue-300 text-xs">✅ Connectée — {oauthStatus.page.name}</span>
+                  )}
+                </p>
+                <p className="text-text-muted text-xs mt-0.5">
+                  {oauthStatus?.page.connected
+                    ? `Token expire dans ${oauthStatus.page.expires_in_days} jours`
+                    : 'Nécessite d\'abord de connecter le profil personnel'}
+                </p>
+              </div>
+              {oauthStatus?.page.connected && (
+                <Button variant="danger" size="sm" onClick={() => mutateDisconnect.mutate('page')}>
+                  Déconnecter
+                </Button>
+              )}
+            </div>
+
+            {/* Org picker — shown when personal connected but page not yet configured */}
+            {oauthStatus?.personal.connected && !oauthStatus?.page.connected && orgs?.orgs && orgs.orgs.length > 0 && (
+              <div>
+                <p className="text-xs text-text-muted mb-2">Choisir la page à connecter :</p>
+                <div className="space-y-1.5">
+                  {orgs.orgs.map(org => (
+                    <button
+                      key={org.id}
+                      className="w-full text-left px-3 py-2 rounded-lg bg-surface2 border border-border hover:border-violet/40 text-sm text-text transition-colors"
+                      onClick={() => mutateSetPage.mutate(org)}
+                    >
+                      🏢 {org.name} <span className="text-text-muted text-xs ml-1">#{org.id}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {oauthStatus?.personal.connected && !oauthStatus?.page.connected && !orgs?.orgs?.length && (
+              <p className="text-xs text-amber-300">Aucune page LinkedIn gérée trouvée avec ce compte.</p>
+            )}
+            {!oauthStatus?.personal.connected && (
+              <p className="text-xs text-amber-300">Connecte d'abord le profil personnel ci-dessus.</p>
+            )}
+          </div>
+
+          {/* Publishing strategy reminder */}
+          <div className="rounded-lg bg-violet/8 border border-violet/20 p-3 text-xs text-text-muted space-y-1">
+            <p className="font-medium text-violet-light">⚡ Stratégie auto-publication 2026</p>
+            <p>• <strong className="text-text">07h30</strong> → profil personnel (reach ×3-5)</p>
+            <p>• <strong className="text-text">12h15</strong> → page SOS-Expat (même jour, 4h30 plus tard)</p>
+            <p>• Même contenu, audience différente, algorithme ne pénalise pas</p>
+          </div>
+
+          {/* What to add in .env */}
+          <div className="rounded-lg bg-surface border border-border p-3 font-mono text-xs text-text-muted">
+            <p className="text-text-muted mb-1 font-sans font-medium text-xs">Variables à ajouter dans .env.production :</p>
+            <p>LINKEDIN_CLIENT_ID=<span className="text-amber-300">ton_client_id</span></p>
+            <p>LINKEDIN_CLIENT_SECRET=<span className="text-amber-300">ton_client_secret</span></p>
+            <p>LINKEDIN_REDIRECT_URI=<span className="text-amber-300">https://ton-api.com/api/linkedin/oauth/callback</span></p>
+            <p>LINKEDIN_DASHBOARD_URL=<span className="text-amber-300">https://ton-dashboard.com/content/republication-rs/linkedin</span></p>
+          </div>
+        </div>
+      </Modal>
+
       {/* ── SCHEDULE MODAL ───────────────────────────────────────────── */}
       <Modal
         open={scheduleModal !== null}
@@ -769,6 +891,49 @@ export default function RepublicationLinkedIn() {
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
+
+function LinkedInOAuthWidget({
+  status,
+  onConnect,
+  onDisconnect,
+}: {
+  status: OAuthStatus | undefined;
+  onConnect: () => void;
+  onDisconnect: (type: string) => void;
+}) {
+  const personalOk = status?.personal.connected ?? false;
+  const pageOk     = status?.page.connected ?? false;
+  const bothOk     = personalOk && pageOk;
+
+  return (
+    <div className={`rounded-xl border p-4 flex items-center justify-between gap-4 flex-wrap ${
+      bothOk ? 'border-green-500/30 bg-green-500/8' : personalOk ? 'border-blue-500/30 bg-blue-500/8' : 'border-amber-500/30 bg-amber-500/8'
+    }`}>
+      <div className="flex items-center gap-3 min-w-0">
+        <span className="text-xl shrink-0">{bothOk ? '🔗' : personalOk ? '⚡' : '🔓'}</span>
+        <div className="min-w-0">
+          <p className={`font-semibold text-sm ${bothOk ? 'text-green-300' : personalOk ? 'text-blue-300' : 'text-amber-300'}`}>
+            {bothOk
+              ? `LinkedIn connecté — ${status!.personal.name} + ${status!.page.name}`
+              : personalOk
+              ? `Profil ${status!.personal.name} connecté · Page non configurée`
+              : 'LinkedIn non connecté — publication manuelle uniquement'}
+          </p>
+          <p className="text-text-muted text-xs mt-0.5">
+            {bothOk
+              ? `Auto-publication activée · Perso expire dans ${status!.personal.expires_in_days}j · Page dans ${status!.page.expires_in_days}j`
+              : personalOk
+              ? 'Configure la page SOS-Expat pour activer la double publication automatique'
+              : 'Connecte LinkedIn pour activer la publication automatique des posts générés'}
+          </p>
+        </div>
+      </div>
+      <Button size="sm" variant={bothOk ? 'secondary' : 'primary'} onClick={onConnect} className="shrink-0">
+        {bothOk ? '⚙️ Gérer la connexion' : '🔗 Connecter LinkedIn'}
+      </Button>
+    </div>
+  );
+}
 
 function StatCard({
   label, value, icon, color = 'text-text',

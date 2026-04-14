@@ -110,10 +110,14 @@ const OutilsVisiteursAdmin = lazy(() => import('./pages/content/OutilsVisiteursA
 const NewsHub = lazy(() => import('./pages/content/NewsHub'));
 const ArtStatistiques = lazy(() => import('./pages/content/ArtStatistiques'));
 const LandingGeneratorHub = lazy(() => import('./pages/content/LandingGeneratorHub'));
-const LandingGeneratorClients = lazy(() => import('./pages/content/LandingGeneratorClients'));
-const LandingGeneratorAvocats = lazy(() => import('./pages/content/LandingGeneratorAvocats'));
-const LandingGeneratorHelpers = lazy(() => import('./pages/content/LandingGeneratorHelpers'));
-const LandingGeneratorMatching = lazy(() => import('./pages/content/LandingGeneratorMatching'));
+const LandingGeneratorClients        = lazy(() => import('./pages/content/LandingGeneratorClients'));
+const LandingGeneratorAvocats        = lazy(() => import('./pages/content/LandingGeneratorAvocats'));
+const LandingGeneratorHelpers        = lazy(() => import('./pages/content/LandingGeneratorHelpers'));
+const LandingGeneratorMatching       = lazy(() => import('./pages/content/LandingGeneratorMatching'));
+const LandingGeneratorCategoryPillar = lazy(() => import('./pages/content/LandingGeneratorCategoryPillar'));
+const LandingGeneratorProfile        = lazy(() => import('./pages/content/LandingGeneratorProfile'));
+const LandingGeneratorEmergency      = lazy(() => import('./pages/content/LandingGeneratorEmergency'));
+const LandingGeneratorNationality    = lazy(() => import('./pages/content/LandingGeneratorNationality'));
 const RepublicationRS = lazy(() => import('./pages/content/RepublicationRS'));
 const RepublicationLinkedIn = lazy(() => import('./pages/content/RepublicationLinkedIn'));
 
@@ -304,7 +308,11 @@ export default function App() {
                 <Route path="content/landing-generator/clients" element={<AdminRoute><LandingGeneratorClients /></AdminRoute>} />
                 <Route path="content/landing-generator/avocats" element={<AdminRoute><LandingGeneratorAvocats /></AdminRoute>} />
                 <Route path="content/landing-generator/helpers" element={<AdminRoute><LandingGeneratorHelpers /></AdminRoute>} />
-                <Route path="content/landing-generator/matching" element={<AdminRoute><LandingGeneratorMatching /></AdminRoute>} />
+                <Route path="content/landing-generator/matching"    element={<AdminRoute><LandingGeneratorMatching /></AdminRoute>} />
+                <Route path="content/landing-generator/piliers"     element={<AdminRoute><LandingGeneratorCategoryPillar /></AdminRoute>} />
+                <Route path="content/landing-generator/profils"     element={<AdminRoute><LandingGeneratorProfile /></AdminRoute>} />
+                <Route path="content/landing-generator/urgences"    element={<AdminRoute><LandingGeneratorEmergency /></AdminRoute>} />
+                <Route path="content/landing-generator/nationalites"element={<AdminRoute><LandingGeneratorNationality /></AdminRoute>} />
                 <Route path="content/landings" element={<AdminRoute><LandingsList /></AdminRoute>} />
                 <Route path="content/landings/new" element={<AdminRoute><LandingCreate /></AdminRoute>} />
                 <Route path="content/landings/:id" element={<AdminRoute><LandingDetail /></AdminRoute>} />

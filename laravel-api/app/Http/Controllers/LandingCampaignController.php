@@ -13,7 +13,10 @@ use Illuminate\Support\Facades\Log;
 
 class LandingCampaignController extends Controller
 {
-    private const VALID_TYPES = ['clients', 'lawyers', 'helpers', 'matching'];
+    private const VALID_TYPES = [
+        'clients', 'lawyers', 'helpers', 'matching',
+        'category_pillar', 'profile', 'emergency', 'nationality',
+    ];
 
     // ============================================================
     // GET /api/landing-campaigns/{type}
@@ -112,11 +115,14 @@ class LandingCampaignController extends Controller
 
         $dispatched = 0;
 
-        if ($type === 'clients') {
-            $dispatched = $this->launchClients($campaign, $currentCountry, $selectedTemplates, $language);
-        } else {
-            $dispatched = $this->launchSimple($type, $campaign, $currentCountry, $selectedTemplates, $language);
-        }
+        $dispatched = match ($type) {
+            'clients'         => $this->launchClients($campaign, $currentCountry, $selectedTemplates, $language),
+            'category_pillar' => $this->launchCategoryPillar($campaign, $currentCountry, $selectedTemplates, $language),
+            'profile'         => $this->launchProfile($campaign, $currentCountry, $selectedTemplates, $language),
+            'emergency'       => $this->launchEmergency($campaign, $currentCountry, $selectedTemplates, $language),
+            'nationality'     => $this->launchNationality($campaign, $currentCountry, $selectedTemplates, $language),
+            default           => $this->launchSimple($type, $campaign, $currentCountry, $selectedTemplates, $language),
+        };
 
         $campaign->update(['status' => 'running']);
 
@@ -323,6 +329,204 @@ class LandingCampaignController extends Controller
 
             $delay     += 5;
             $dispatched++;
+        }
+
+        return $dispatched;
+    }
+
+    /**
+     * Lance les jobs pour category_pillar :
+     * 22 catégories × selected_templates, limité à pages_per_country.
+     */
+    private function launchCategoryPillar(LandingCampaign $campaign, string $countryCode, array $templates, string $language): int
+    {
+        $categories = [
+            'sante', 'immigration', 'securite', 'documents', 'banque_argent',
+            'travail', 'logement', 'famille', 'voyage', 'police_justice',
+            'fiscalite', 'assurance', 'etudes', 'transport', 'geopolitique_crise',
+            'entreprise_investissement', 'langue_culture_orientation', 'consommation_litiges',
+            'ambassade_consulat', 'profils_vulnerables', 'douane_animaux_rarete', 'humain_orientation',
+        ];
+
+        // Appliquer les filtres de catégories si configurés
+        $filters = $campaign->problem_filters ?? [];
+        if (! empty($filters['categories'])) {
+            $categories = array_intersect($categories, $filters['categories']);
+        }
+
+        $dispatched = 0;
+        $delay      = 0;
+        $perCountry = $campaign->pages_per_country;
+
+        foreach ($templates as $templateId) {
+            foreach ($categories as $categorySlug) {
+                if ($dispatched >= $perCountry) {
+                    break 2;
+                }
+
+                $exists = LandingPage::where([
+                    'audience_type' => 'category_pillar',
+                    'template_id'   => $templateId,
+                    'category_slug' => $categorySlug,
+                    'country_code'  => $countryCode,
+                    'language'      => $language,
+                ])->exists();
+
+                if ($exists) {
+                    continue;
+                }
+
+                GenerateLandingPageJob::dispatch([
+                    'audience_type'  => 'category_pillar',
+                    'template_id'    => $templateId,
+                    'country_code'   => $countryCode,
+                    'language'       => $language,
+                    'category_slug'  => $categorySlug,
+                    'problem_slug'   => $categorySlug, // Réutilisé pour le Job
+                ])->delay(now()->addSeconds($delay));
+
+                $delay     += 5;
+                $dispatched++;
+            }
+        }
+
+        return $dispatched;
+    }
+
+    /**
+     * Lance les jobs pour profile :
+     * 7 profils × selected_templates, limité à pages_per_country.
+     */
+    private function launchProfile(LandingCampaign $campaign, string $countryCode, array $templates, string $language): int
+    {
+        $userProfiles = [
+            'digital_nomade', 'retraite', 'famille',
+            'entrepreneur', 'etudiant', 'investisseur', 'expatrie',
+        ];
+
+        $dispatched = 0;
+        $delay      = 0;
+        $perCountry = $campaign->pages_per_country;
+
+        foreach ($templates as $templateId) {
+            foreach ($userProfiles as $userProfile) {
+                if ($dispatched >= $perCountry) {
+                    break 2;
+                }
+
+                $exists = LandingPage::where([
+                    'audience_type' => 'profile',
+                    'template_id'   => $templateId,
+                    'user_profile'  => $userProfile,
+                    'country_code'  => $countryCode,
+                    'language'      => $language,
+                ])->exists();
+
+                if ($exists) {
+                    continue;
+                }
+
+                GenerateLandingPageJob::dispatch([
+                    'audience_type' => 'profile',
+                    'template_id'   => $templateId,
+                    'country_code'  => $countryCode,
+                    'language'      => $language,
+                    'user_profile'  => $userProfile,
+                    'problem_slug'  => $userProfile, // Réutilisé pour le Job
+                ])->delay(now()->addSeconds($delay));
+
+                $delay     += 5;
+                $dispatched++;
+            }
+        }
+
+        return $dispatched;
+    }
+
+    /**
+     * Lance 1 seul job par pays pour l'audience emergency (1 LP/pays suffit).
+     */
+    private function launchEmergency(LandingCampaign $campaign, string $countryCode, array $templates, string $language): int
+    {
+        $dispatched = 0;
+        $delay      = 0;
+
+        foreach ($templates as $templateId) {
+            $exists = LandingPage::where([
+                'audience_type' => 'emergency',
+                'template_id'   => $templateId,
+                'country_code'  => $countryCode,
+                'language'      => $language,
+            ])->exists();
+
+            if ($exists) {
+                continue;
+            }
+
+            GenerateLandingPageJob::dispatch([
+                'audience_type' => 'emergency',
+                'template_id'   => $templateId,
+                'country_code'  => $countryCode,
+                'language'      => $language,
+            ])->delay(now()->addSeconds($delay));
+
+            $delay     += 5;
+            $dispatched++;
+        }
+
+        return $dispatched;
+    }
+
+    /**
+     * Lance les jobs pour nationality :
+     * 20 nationalités prioritaires × selected_templates, limité à pages_per_country.
+     */
+    private function launchNationality(LandingCampaign $campaign, string $countryCode, array $templates, string $language): int
+    {
+        $nationalities = [
+            'FR', 'GB', 'US', 'DE', 'ES', 'IT', 'NL', 'BE', 'CH', 'CA',
+            'AU', 'CN', 'IN', 'BR', 'MA', 'TN', 'DZ', 'RU', 'JP', 'SN',
+        ];
+
+        $dispatched = 0;
+        $delay      = 0;
+        $perCountry = $campaign->pages_per_country;
+
+        foreach ($templates as $templateId) {
+            foreach ($nationalities as $originNationality) {
+                // Ne pas générer "Français en France" (même pays) sauf si pays différent
+                if ($originNationality === $countryCode) {
+                    continue;
+                }
+
+                if ($dispatched >= $perCountry) {
+                    break 2;
+                }
+
+                $exists = LandingPage::where([
+                    'audience_type'      => 'nationality',
+                    'template_id'        => $templateId,
+                    'origin_nationality' => $originNationality,
+                    'country_code'       => $countryCode,
+                    'language'           => $language,
+                ])->exists();
+
+                if ($exists) {
+                    continue;
+                }
+
+                GenerateLandingPageJob::dispatch([
+                    'audience_type'      => 'nationality',
+                    'template_id'        => $templateId,
+                    'country_code'       => $countryCode,
+                    'language'           => $language,
+                    'origin_nationality' => $originNationality,
+                    'problem_slug'       => strtolower($originNationality), // Réutilisé pour le Job
+                ])->delay(now()->addSeconds($delay));
+
+                $delay     += 5;
+                $dispatched++;
+            }
         }
 
         return $dispatched;

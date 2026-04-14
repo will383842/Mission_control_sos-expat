@@ -34,24 +34,42 @@ class LandingPage extends Model
         'country_code',
         'generation_source',
         'generation_params',
+        // Nouveaux types 2026
+        'category_slug',
+        'user_profile',
+        'origin_nationality',
         // Image Unsplash
         'featured_image_url',
         'featured_image_alt',
         'featured_image_attribution',
         'photographer_name',
         'photographer_url',
+        // Keywords
+        'keywords_primary',
+        'keywords_secondary',
         // SEO complet
         'canonical_url',
         'og_locale',
         'og_type',
         'og_url',
         'og_site_name',
+        'og_title',
+        'og_description',
+        'og_image',
         'twitter_card',
+        'twitter_title',
+        'twitter_description',
+        'twitter_image',
+        'robots',
         'content_language',
         'geo_region',
         'geo_placename',
         'geo_position',
         'icbm',
+        // Design & freshness
+        'design_template',
+        'date_published_at',
+        'date_modified_at',
         'last_reviewed_at',
     ];
 
@@ -60,9 +78,12 @@ class LandingPage extends Model
         'json_ld'               => 'array',
         'hreflang_map'          => 'array',
         'generation_params'     => 'array',
+        'keywords_secondary'    => 'array',
         'seo_score'             => 'integer',
         'generation_cost_cents' => 'integer',
         'published_at'          => 'datetime',
+        'date_published_at'     => 'datetime',
+        'date_modified_at'      => 'datetime',
         'last_reviewed_at'      => 'datetime',
     ];
 

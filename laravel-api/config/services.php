@@ -73,6 +73,14 @@ return [
         'access_key' => env('UNSPLASH_ACCESS_KEY', ''),
     ],
 
+    'linkedin' => [
+        'client_id'     => env('LINKEDIN_CLIENT_ID', ''),
+        'client_secret' => env('LINKEDIN_CLIENT_SECRET', ''),
+        'redirect_uri'  => env('LINKEDIN_REDIRECT_URI', ''),
+        // URL where user lands after OAuth (your Mission Control dashboard)
+        'dashboard_url' => env('LINKEDIN_DASHBOARD_URL', '/'),
+    ],
+
     'ai' => [
         'daily_budget' => (int) env('AI_DAILY_BUDGET', 5000),
         'monthly_budget' => (int) env('AI_MONTHLY_BUDGET', 100000),

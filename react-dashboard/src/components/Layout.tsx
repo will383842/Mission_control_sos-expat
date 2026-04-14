@@ -674,6 +674,18 @@ export default function Layout() {
                   <NavLink to="/content/landing-generator/matching" className={subNavClass} onClick={handleNavClick}>
                     🎯 Matching
                   </NavLink>
+                  <NavLink to="/content/landing-generator/piliers" className={subNavClass} onClick={handleNavClick}>
+                    🏛️ Piliers catégories
+                  </NavLink>
+                  <NavLink to="/content/landing-generator/profils" className={subNavClass} onClick={handleNavClick}>
+                    🧑‍💻 Profils expatriés
+                  </NavLink>
+                  <NavLink to="/content/landing-generator/urgences" className={subNavClass} onClick={handleNavClick}>
+                    🚨 Urgences
+                  </NavLink>
+                  <NavLink to="/content/landing-generator/nationalites" className={subNavClass} onClick={handleNavClick}>
+                    🌍 Nationalités
+                  </NavLink>
                   <NavLink to="/content/landings" className={subNavClass} onClick={handleNavClick}>
                     📄 Toutes les LPs
                   </NavLink>

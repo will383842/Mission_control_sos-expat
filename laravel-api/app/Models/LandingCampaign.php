@@ -7,13 +7,20 @@ use Illuminate\Database\Eloquent\Model;
 
 class LandingCampaign extends Model
 {
-    public const VALID_TYPES = ['clients', 'lawyers', 'helpers', 'matching'];
+    public const VALID_TYPES = [
+        'clients', 'lawyers', 'helpers', 'matching',
+        'category_pillar', 'profile', 'emergency', 'nationality',
+    ];
 
     public const DEFAULT_TEMPLATES = [
-        'clients'  => ['urgent', 'seo', 'trust'],
-        'lawyers'  => ['general', 'urgent', 'freedom', 'income', 'premium'],
-        'helpers'  => ['recruitment', 'opportunity', 'reassurance'],
-        'matching' => ['expert', 'lawyer', 'helper'],
+        'clients'         => ['urgent', 'seo', 'trust'],
+        'lawyers'         => ['general', 'urgent', 'freedom', 'income', 'premium'],
+        'helpers'         => ['recruitment', 'opportunity', 'reassurance'],
+        'matching'        => ['expert', 'lawyer', 'helper'],
+        'category_pillar' => ['overview', 'guide'],
+        'profile'         => ['profile_general', 'profile_guide'],
+        'emergency'       => ['emergency'],
+        'nationality'     => ['nationality_general'],
     ];
 
     protected $fillable = [

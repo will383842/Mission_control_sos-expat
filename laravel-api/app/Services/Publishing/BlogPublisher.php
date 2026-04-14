@@ -549,11 +549,15 @@ class BlogPublisher
 
         // ── Category slug selon audience ───────────────────────────
         $categorySlug = match ($landing->audience_type) {
-            'clients'  => 'fiches-pratiques',
-            'lawyers'  => 'programme',
-            'helpers'  => 'programme',
-            'matching' => 'fiches-pratiques',
-            default    => 'fiches-pratiques',
+            'clients'         => 'fiches-pratiques',
+            'lawyers'         => 'programme',
+            'helpers'         => 'programme',
+            'matching'        => 'fiches-pratiques',
+            'category_pillar' => 'fiches-pratiques',
+            'profile'         => 'fiches-pratiques',
+            'emergency'       => 'urgences',
+            'nationality'     => 'fiches-pratiques',
+            default           => 'fiches-pratiques',
         };
 
         // ── Hreflang complet avec URLs absolues + x-default ───────
@@ -598,12 +602,41 @@ class BlogPublisher
             ])),
             'countries'          => $landing->country_code ? [strtoupper($landing->country_code)] : [],
 
-            // OpenGraph complet
+            // Keywords SEO
+            'keywords_primary'   => $landing->keywords_primary ?? $landing->problem_id ?? $landing->template_id,
+            'keywords_secondary' => $landing->keywords_secondary ?? [],
+
+            // OpenGraph complet (titre, description, image pour rich preview social)
             'og_type'            => $landing->og_type ?? 'WebPage',
             'og_locale'          => $landing->og_locale,
             'og_url'             => $landing->og_url ?? $landing->canonical_url,
             'og_site_name'       => $landing->og_site_name ?? 'SOS-Expat & Travelers',
-            'twitter_card'       => $landing->twitter_card ?? 'summary_large_image',
+            'og_title'           => $landing->og_title ?? $landing->meta_title ?? $landing->title,
+            'og_description'     => $landing->og_description ?? $landing->meta_description,
+            'og_image'           => $landing->og_image ?? $landing->featured_image_url,
+
+            // Twitter card complet
+            'twitter_card'            => $landing->twitter_card ?? 'summary_large_image',
+            'twitter_title'           => $landing->twitter_title ?? $landing->meta_title ?? $landing->title,
+            'twitter_description'     => $landing->twitter_description ?? $landing->meta_description,
+            'twitter_image'           => $landing->twitter_image ?? $landing->featured_image_url,
+
+            // Robots
+            'robots'             => $landing->robots ?? 'index,follow',
+
+            // Design template (pilier visuel pour le rendu côté blog)
+            'design_template'    => $landing->design_template ?? 'informational',
+
+            // Freshness signals (datePublished / dateModified pour JSON-LD et SERP)
+            'date_published_at'       => $landing->date_published_at?->toIso8601String()
+                                         ?? $landing->created_at?->toIso8601String(),
+            'date_modified_at'        => $landing->date_modified_at?->toIso8601String()
+                                         ?? now()->toIso8601String(),
+            // Open Graph article times (interprétés même pour og:type=WebPage par crawlers)
+            'article_published_time'  => $landing->date_published_at?->toIso8601String()
+                                         ?? $landing->created_at?->toIso8601String(),
+            'article_modified_time'   => $landing->date_modified_at?->toIso8601String()
+                                         ?? now()->toIso8601String(),
 
             // Geo metadata (pour référencement local)
             'content_language'   => $landing->content_language ?? $landing->language,
@@ -615,7 +648,7 @@ class BlogPublisher
             // Hreflang avec x-default
             'hreflang_map'       => $hreflangMap,
 
-            // JSON-LD @graph complet
+            // JSON-LD @graph complet (Organisation + WebPage + FAQPage + HowTo + Service + AggregateRating)
             'json_ld'            => $landing->json_ld ?? [],
 
             'noindex'            => false,

@@ -913,7 +913,9 @@ export const launchCampaign = () =>
 // LANDING GENERATOR — CAMPAIGNS
 // ============================================================
 
-export type AudienceType = 'clients' | 'lawyers' | 'helpers' | 'matching';
+export type AudienceType =
+  | 'clients' | 'lawyers' | 'helpers' | 'matching'
+  | 'category_pillar' | 'profile' | 'emergency' | 'nationality';
 
 export const fetchLandingCampaign = (audienceType: AudienceType) =>
   api.get(`/content-gen/landing-campaigns/${audienceType}`);
