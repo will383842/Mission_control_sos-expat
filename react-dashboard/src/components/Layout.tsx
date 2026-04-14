@@ -118,6 +118,7 @@ const DEFAULT_SUBGROUPS: Record<string, boolean> = {
   content_contenu    : true,
   content_affiliation: true,
   content_landing    : true,
+  content_republication: true,
   content_publish    : true,
 };
 
@@ -637,6 +638,27 @@ export default function Layout() {
                     </NavLink>
                     <NavLink to="/content/landings" className={subNavClass} onClick={handleNavClick}>
                       📄 Toutes les LPs
+                    </NavLink>
+                  </NavSubGroup>
+
+                  <NavSubGroup label="Republication RS" isOpen={openSubGroups.content_republication} onToggle={() => toggleSubGroup('content_republication')}>
+                    <NavLink to="/content/republication-rs/linkedin" className={subNavClass} onClick={handleNavClick}>
+                      💼 LinkedIn
+                    </NavLink>
+                    <NavLink to="/content/republication-rs/pinterest" className={subNavClass} onClick={handleNavClick}>
+                      📌 Pinterest
+                    </NavLink>
+                    <NavLink to="/content/republication-rs/threads" className={subNavClass} onClick={handleNavClick}>
+                      🧵 Threads
+                    </NavLink>
+                    <NavLink to="/content/republication-rs/facebook" className={subNavClass} onClick={handleNavClick}>
+                      📘 Facebook
+                    </NavLink>
+                    <NavLink to="/content/republication-rs/instagram" className={subNavClass} onClick={handleNavClick}>
+                      📸 Instagram
+                    </NavLink>
+                    <NavLink to="/content/republication-rs/reddit" className={subNavClass} onClick={handleNavClick}>
+                      🤖 Reddit
                     </NavLink>
                   </NavSubGroup>
 
