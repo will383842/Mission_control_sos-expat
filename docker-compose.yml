@@ -211,6 +211,30 @@ services:
     deploy:
       replicas: 6
 
+  # LinkedIn worker — 1 worker (5 posts/week, GPT-4o + Unsplash, timeout=130s)
+  linkedin-worker:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.api
+    container_name: inf-linkedin-worker
+    restart: unless-stopped
+    command: ["php", "artisan", "queue:work", "redis", "--queue=linkedin", "--sleep=5", "--tries=2", "--timeout=130", "--memory=256"]
+    mem_limit: 256m
+    memswap_limit: 256m
+    env_file:
+      - .env.production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./.env.production:/var/www/html/.env:ro
+      - app_storage:/var/www/html/storage
+    networks:
+      - internal
+      - shared-network
+
   # Landing page workers — 3 parallel workers for LP generation (queue=landings)
   # Capacity: ~50 LPs/hour sustained (Claude API rate limit protected via 5s dispatch delay)
   # timeout=600 matches GenerateLandingPageJob::$timeout
