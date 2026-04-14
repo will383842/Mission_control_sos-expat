@@ -41,6 +41,13 @@ return [
         'chat_id' => env('TELEGRAM_ALERT_CHAT_ID'),
     ],
 
+    // Dedicated bot for LinkedIn interactions (confirm, comment replies)
+    // Falls back to telegram_alerts if not set
+    'telegram_linkedin' => [
+        'bot_token' => env('TELEGRAM_LINKEDIN_BOT_TOKEN', env('TELEGRAM_ALERT_BOT_TOKEN')),
+        'chat_id'   => env('TELEGRAM_LINKEDIN_CHAT_ID',   env('TELEGRAM_ALERT_CHAT_ID')),
+    ],
+
     'anthropic' => [
         'api_key' => env('ANTHROPIC_API_KEY', ''),
         'model'   => env('ANTHROPIC_MODEL', 'claude-sonnet-4-20250514'),

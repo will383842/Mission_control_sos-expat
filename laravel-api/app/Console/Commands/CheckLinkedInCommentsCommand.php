@@ -148,36 +148,51 @@ class CheckLinkedInCommentsCommand extends Command
 
     // ── Generate reply variants with GPT-4o-mini ───────────────────────
 
+    /**
+     * Generates 3 contextual reply variants in the SAME LANGUAGE as the comment.
+     * Language is auto-detected by GPT-4o-mini — no explicit language check needed.
+     * This handles FR, EN, ES, DE, AR, ZH, etc. automatically.
+     */
     private function generateVariants(LinkedInPost $post, string $commentText, string $authorName): array
     {
         try {
             $openai   = app(OpenAiService::class);
-            $lang     = $post->lang === 'both' ? 'fr' : $post->lang;
-            $langStr  = $lang === 'en' ? 'English' : 'français';
             $postHook = mb_substr($post->hook ?? '', 0, 120);
+            $firstName = explode(' ', trim($authorName))[0] ?? $authorName;
 
             $result = $openai->complete(
-                "Tu es un community manager expert pour SOS-Expat.com (mise en relation expatriés × avocats/experts dans 197 pays). Génère des réponses courtes et authentiques aux commentaires LinkedIn.",
+                "You are an expert community manager for SOS-Expat.com (connecting expats with lawyers and experts in 197 countries). You generate short, authentic replies to LinkedIn comments.",
                 <<<USER
-                Mon post LinkedIn (accroche) : "{$postHook}"
-                Commentaire de {$authorName} : "{$commentText}"
+                LinkedIn post (opening line): "{$postHook}"
+                Comment from {$firstName}: "{$commentText}"
 
-                Génère exactement 3 réponses en {$langStr} :
-                - Courtes (40-100 caractères chacune)
-                - Humaines, jamais robotiques
-                - Variées : 1 empathique/remerciement, 1 informatif/valeur, 1 question de retour
-                - Jamais de hashtags
-                - Si tu mentionnes l'auteur, utilise son prénom seulement
+                CRITICAL RULE: Detect the language of the comment and reply EXCLUSIVELY in that SAME language.
+                If the comment is in French → reply in French.
+                If in English → reply in English.
+                If in Spanish → reply in Spanish.
+                If in Arabic → reply in Arabic. Etc.
+                NEVER reply in a different language than the comment.
 
-                Retourne UNIQUEMENT un JSON valide : {"replies": ["réponse1", "réponse2", "réponse3"]}
+                Generate exactly 3 reply variants:
+                - Short (40-100 characters each)
+                - Human, never robotic or generic
+                - Varied tones: 1 warm/thankful, 1 informative/valuable, 1 question back to them
+                - No hashtags
+                - Use first name only if mentioning the author
+
+                Return ONLY valid JSON: {"detected_lang": "fr|en|es|...", "replies": ["reply1", "reply2", "reply3"]}
                 USER,
                 ['model' => 'gpt-4o-mini', 'max_tokens' => 300, 'json_mode' => true]
             );
 
             if ($result['success'] ?? false) {
-                $data = json_decode($result['content'] ?? '', true);
+                $data    = json_decode($result['content'] ?? '', true);
                 $replies = $data['replies'] ?? [];
                 if (count($replies) >= 3) {
+                    Log::info('CheckLinkedInCommentsCommand: variants generated', [
+                        'detected_lang' => $data['detected_lang'] ?? 'unknown',
+                        'author'        => $authorName,
+                    ]);
                     return array_slice($replies, 0, 3);
                 }
             }
@@ -185,11 +200,11 @@ class CheckLinkedInCommentsCommand extends Command
             Log::warning('CheckLinkedInCommentsCommand: variant generation failed', ['error' => $e->getMessage()]);
         }
 
-        // Fallback variants
+        // Language-agnostic fallbacks (short, work in any context)
         return [
-            'Merci pour ce commentaire ! 🙏',
-            'Excellente question ! N\'hésitez pas à consulter SOS-Expat.com pour plus d\'infos.',
-            'Et vous, quelle a été votre expérience à ce sujet ? 👇',
+            'Merci ! 🙏',
+            'Bonne question — visitez SOS-Expat.com pour plus de détails.',
+            'Et vous, quelle a été votre expérience ? 👇',
         ];
     }
 

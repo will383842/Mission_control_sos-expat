@@ -12,9 +12,9 @@ use Illuminate\Console\Command;
  *   php artisan linkedin:set-telegram-webhook
  *
  * Requires in .env:
- *   TELEGRAM_ALERT_BOT_TOKEN=...
- *   TELEGRAM_ALERT_CHAT_ID=...
- *   TELEGRAM_LINKEDIN_WEBHOOK_SECRET=<random string>
+ *   TELEGRAM_LINKEDIN_BOT_TOKEN=...   (dedicated LinkedIn bot — see @BotFather)
+ *   TELEGRAM_LINKEDIN_CHAT_ID=...     (your chat ID, e.g. 7560535072)
+ *   TELEGRAM_LINKEDIN_WEBHOOK_SECRET=<random string> (openssl rand -hex 32)
  *
  * The webhook URL is auto-built from APP_URL:
  *   {APP_URL}/api/telegram/linkedin

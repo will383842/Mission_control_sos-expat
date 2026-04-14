@@ -6,9 +6,15 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Telegram Bot API wrapper for the Mission Control alert bot.
+ * Telegram Bot API wrapper — multi-bot support.
  *
- * Uses TELEGRAM_ALERT_BOT_TOKEN + TELEGRAM_ALERT_CHAT_ID from config.
+ * Two configs available:
+ *   'alerts'  → TELEGRAM_ALERT_BOT_TOKEN / TELEGRAM_ALERT_CHAT_ID   (general alerts)
+ *   'linkedin'→ TELEGRAM_LINKEDIN_BOT_TOKEN / TELEGRAM_LINKEDIN_CHAT_ID (LinkedIn interactions)
+ *
+ * Usage:
+ *   app(TelegramAlertService::class)                  → alerts bot (default)
+ *   app(TelegramAlertService::class, ['bot' => 'linkedin']) → LinkedIn bot
  *
  * Features:
  *  - sendMessage()         → plain text message
@@ -16,6 +22,7 @@ use Illuminate\Support\Facades\Log;
  *  - answerCallback()      → acknowledge a callback_query (dismiss loading spinner)
  *  - editMessageText()     → update a previously sent message (after button tap)
  *  - setWebhook()          → register webhook URL with Telegram
+ *  - deleteWebhook()       → remove webhook
  */
 class TelegramAlertService
 {
@@ -23,10 +30,18 @@ class TelegramAlertService
     private string $chatId;
     private string $apiBase;
 
-    public function __construct()
+    public function __construct(string $bot = 'alerts')
     {
-        $this->token   = config('services.telegram_alerts.bot_token', '');
-        $this->chatId  = (string) config('services.telegram_alerts.chat_id', '');
+        if ($bot === 'linkedin') {
+            $this->token  = config('services.telegram_linkedin.bot_token',
+                            config('services.telegram_alerts.bot_token', ''));
+            $this->chatId = (string) config('services.telegram_linkedin.chat_id',
+                            config('services.telegram_alerts.chat_id', ''));
+        } else {
+            $this->token  = config('services.telegram_alerts.bot_token', '');
+            $this->chatId = (string) config('services.telegram_alerts.chat_id', '');
+        }
+
         $this->apiBase = 'https://api.telegram.org/bot' . $this->token;
     }
 
