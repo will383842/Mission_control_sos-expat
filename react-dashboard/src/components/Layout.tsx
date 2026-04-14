@@ -780,53 +780,6 @@ export default function Layout() {
           )}
         </nav>
 
-        {/* Footer raccourcis rapides */}
-        {isAdmin && (
-          <div className="px-3 py-2 border-t border-border">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-600 mb-2 px-1">Raccourcis</p>
-            <div className="flex gap-1">
-              <NavLink
-                to="/directories"
-                title="Annuaires"
-                className={({ isActive }) =>
-                  `flex-1 flex flex-col items-center gap-1 py-2 rounded-lg text-xs transition-colors ${
-                    isActive ? 'bg-violet/20 text-violet-light' : 'text-muted hover:bg-white/5 hover:text-white'
-                  }`
-                }
-                onClick={handleNavClick}
-              >
-                <span className="text-lg">📁</span>
-                <span className="text-[10px] leading-none">Annuaires</span>
-              </NavLink>
-              <NavLink
-                to="/content/sondages"
-                title="Sondages"
-                className={({ isActive }) =>
-                  `flex-1 flex flex-col items-center gap-1 py-2 rounded-lg text-xs transition-colors ${
-                    isActive ? 'bg-violet/20 text-violet-light' : 'text-muted hover:bg-white/5 hover:text-white'
-                  }`
-                }
-                onClick={handleNavClick}
-              >
-                <span className="text-lg">📊</span>
-                <span className="text-[10px] leading-none">Sondages</span>
-              </NavLink>
-              <NavLink
-                to="/content/outils-visiteurs"
-                title="Outils Visiteurs"
-                className={({ isActive }) =>
-                  `flex-1 flex flex-col items-center gap-1 py-2 rounded-lg text-xs transition-colors ${
-                    isActive ? 'bg-violet/20 text-violet-light' : 'text-muted hover:bg-white/5 hover:text-white'
-                  }`
-                }
-                onClick={handleNavClick}
-              >
-                <span className="text-lg">🌐</span>
-                <span className="text-[10px] leading-none">Outils Visiteurs</span>
-              </NavLink>
-            </div>
-          </div>
-        )}
 
         {/* Quick links — external */}
         <div className="px-4 pt-3 pb-1">
