@@ -37,10 +37,10 @@ jobs:
             cp .env.production.bak .env.production 2>/dev/null || true
 
             # Rebuild and restart containers (including new content + publication workers)
-            docker compose build --no-cache app queue scheduler scraper frontend content-worker publication-worker
+            docker compose build --no-cache app queue scheduler scraper frontend content-worker publication-worker landings-worker
 
             # Stop services first (avoid --force-recreate which creates random container names)
-            docker compose stop app queue scheduler scraper frontend nginx-api content-worker publication-worker
+            docker compose stop app queue scheduler scraper frontend nginx-api content-worker publication-worker landings-worker
 
             # Bring everything up cleanly (correct names, remove orphans)
             docker compose up -d --remove-orphans
@@ -81,6 +81,9 @@ jobs:
             docker exec inf-app php artisan db:seed --class=LongTailKeywordsSeeder --force
             docker exec inf-app php artisan db:seed --class=CityTemplatesSeeder --force
             docker exec inf-app php artisan db:seed --class=GenerationSourceCategoriesSeeder --force
+
+            # Seed Landing Problems (417 problèmes clients — updateOrCreate, idempotent)
+            docker exec inf-app php artisan db:seed --class=LandingProblemSeeder --force || true
 
             # Run keyword cleanup analysis (dry-run — writes report to logs)
             docker exec inf-app php artisan keywords:clean-duplicates || true
