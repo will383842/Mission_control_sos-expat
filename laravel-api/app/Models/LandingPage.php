@@ -25,12 +25,20 @@ class LandingPage extends Model
         'status',
         'published_at',
         'created_by',
+        // Landing Generator fields
+        'audience_type',
+        'template_id',
+        'problem_id',
+        'country_code',
+        'generation_source',
+        'generation_params',
     ];
 
     protected $casts = [
         'sections'              => 'array',
         'json_ld'               => 'array',
         'hreflang_map'          => 'array',
+        'generation_params'     => 'array',
         'seo_score'             => 'integer',
         'generation_cost_cents' => 'integer',
         'published_at'          => 'datetime',
@@ -132,5 +140,20 @@ class LandingPage extends Model
     public function scopeLanguage(Builder $query, string $lang): Builder
     {
         return $query->where('language', $lang);
+    }
+
+    public function scopeAudience(Builder $query, string $type): Builder
+    {
+        return $query->where('audience_type', $type);
+    }
+
+    public function scopeForCountry(Builder $query, string $code): Builder
+    {
+        return $query->where('country_code', $code);
+    }
+
+    public function scopeAiGenerated(Builder $query): Builder
+    {
+        return $query->where('generation_source', 'ai_generated');
     }
 }

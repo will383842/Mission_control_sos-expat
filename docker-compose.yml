@@ -211,6 +211,33 @@ services:
     deploy:
       replicas: 6
 
+  # Landing page workers — 3 parallel workers for LP generation (queue=landings)
+  # Capacity: ~50 LPs/hour sustained (Claude API rate limit protected via 5s dispatch delay)
+  # timeout=600 matches GenerateLandingPageJob::$timeout
+  landings-worker:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.api
+    restart: unless-stopped
+    command: ["php", "artisan", "queue:work", "redis", "--queue=landings", "--sleep=3", "--tries=3", "--timeout=660", "--memory=512"]
+    mem_limit: 512m
+    memswap_limit: 512m
+    env_file:
+      - .env.production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./.env.production:/var/www/html/.env:ro
+      - app_storage:/var/www/html/storage
+    networks:
+      - internal
+      - shared-network
+    deploy:
+      replicas: 3
+
   # Publication workers — 2 parallel workers for blog publishing
   publication-worker:
     build:

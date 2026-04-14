@@ -144,7 +144,7 @@ export default function Layout() {
     contacts: path.startsWith('/contacts') || path === '/a-relancer' || path.startsWith('/influenceurs'),
     acquisition: false,
     scraping: path === '/directories' || path === '/contacts/journalistes' || path === '/admin/scraper' || path.startsWith('/content/sites') || path.startsWith('/content/businesses') || path.startsWith('/content/lawyers') || path.startsWith('/content/country-directory') || path.startsWith('/scraping') || path.startsWith('/content/sources') || path.startsWith('/content/countries') || path.startsWith('/content/cities') || path.startsWith('/content/questions') || path.startsWith('/content/affiliates') || path.startsWith('/admin/campaigns') || path === '/ai-research' || path === '/admin/avancement' || path.startsWith('/content/contacts') || path.startsWith('/content/links'),
-    contentEngine: (path.startsWith('/content') && !path.startsWith('/content/sources') && !path.startsWith('/content/countries') && !path.startsWith('/content/cities') && !path.startsWith('/content/questions') && !path.startsWith('/content/affiliates') && !path.startsWith('/content/sites') && !path.startsWith('/content/lawyers') && !path.startsWith('/content/businesses') && !path.startsWith('/content/country-directory')) || path.startsWith('/seo') || path === '/publishing' || path === '/media' || path === '/costs' || path === '/translations',
+    contentEngine: (path.startsWith('/content') && !path.startsWith('/content/sources') && !path.startsWith('/content/countries') && !path.startsWith('/content/cities') && !path.startsWith('/content/questions') && !path.startsWith('/content/affiliates') && !path.startsWith('/content/sites') && !path.startsWith('/content/lawyers') && !path.startsWith('/content/businesses') && !path.startsWith('/content/country-directory')) || path.startsWith('/content/landing-generator') || path.startsWith('/seo') || path === '/publishing' || path === '/media' || path === '/costs' || path === '/translations',
     prospection: path.startsWith('/prospection') || path === '/outreach',
     monetiser: path.startsWith('/affiliates'),
     parametres: path.startsWith('/admin/types') || path.startsWith('/admin/prompts') || path.startsWith('/admin/prompt-templates') || path.startsWith('/admin/presets') || path === '/equipe' || path === '/journal',
@@ -620,8 +620,23 @@ export default function Layout() {
                   </NavSubGroup>
 
                   <NavSubGroup label="Landing Generator" isOpen={openSubGroups.content_landing} onToggle={() => toggleSubGroup('content_landing')}>
+                    <NavLink to="/content/landing-generator" end className={subNavClass} onClick={handleNavClick}>
+                      🏠 Vue d'ensemble
+                    </NavLink>
+                    <NavLink to="/content/landing-generator/clients" className={subNavClass} onClick={handleNavClick}>
+                      👤 Clients
+                    </NavLink>
+                    <NavLink to="/content/landing-generator/avocats" className={subNavClass} onClick={handleNavClick}>
+                      ⚖️ Avocats
+                    </NavLink>
+                    <NavLink to="/content/landing-generator/helpers" className={subNavClass} onClick={handleNavClick}>
+                      🧳 Helpers
+                    </NavLink>
+                    <NavLink to="/content/landing-generator/matching" className={subNavClass} onClick={handleNavClick}>
+                      🎯 Matching
+                    </NavLink>
                     <NavLink to="/content/landings" className={subNavClass} onClick={handleNavClick}>
-                      🛬 Landing Pages
+                      📄 Toutes les LPs
                     </NavLink>
                   </NavSubGroup>
 

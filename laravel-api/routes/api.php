@@ -18,6 +18,8 @@ use App\Http\Controllers\GeneratedArticleController;
 use App\Http\Controllers\GenerationController;
 use App\Http\Controllers\KeywordTrackingController;
 use App\Http\Controllers\LandingPageController;
+use App\Http\Controllers\LandingCampaignController;
+use App\Http\Controllers\LandingProblemsController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\ContactsBaseController;
 use App\Http\Controllers\ImportPipelineController;
@@ -682,7 +684,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/comparatives/{comparative}', [ComparativeController::class, 'destroy']);
         Route::post('/comparatives/{comparative}/publish', [ComparativeController::class, 'publish']);
 
-        // Landing Pages
+        // Landing Pages (CRUD manuel existant)
         Route::get('/landings', [LandingPageController::class, 'index']);
         Route::post('/landings', [LandingPageController::class, 'store']);
         Route::get('/landings/{landing}', [LandingPageController::class, 'show']);
@@ -690,6 +692,22 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/landings/{landing}', [LandingPageController::class, 'destroy']);
         Route::post('/landings/{landing}/publish', [LandingPageController::class, 'publish']);
         Route::post('/landings/{landing}/ctas', [LandingPageController::class, 'manageCtas']);
+
+        // Landing Generator — Campagnes par pays (1 record par audience_type)
+        Route::prefix('landing-campaigns')->group(function () {
+            Route::get('/{type}',                           [LandingCampaignController::class, 'show']);
+            Route::put('/{type}',                           [LandingCampaignController::class, 'update']);
+            Route::post('/{type}/launch',                   [LandingCampaignController::class, 'launch']);
+            Route::post('/{type}/add/{country_code}',       [LandingCampaignController::class, 'addCountry']);
+            Route::delete('/{type}/remove/{country_code}',  [LandingCampaignController::class, 'removeCountry']);
+            Route::put('/{type}/reorder',                   [LandingCampaignController::class, 'reorder']);
+        })->where('type', 'clients|lawyers|helpers|matching');
+
+        // Landing Problems — Lecture pour filtres de config
+        Route::prefix('landing-problems')->group(function () {
+            Route::get('/',            [LandingProblemsController::class, 'index']);
+            Route::get('/categories',  [LandingProblemsController::class, 'categories']);
+        });
 
         // Press
         Route::prefix('press')->group(function () {

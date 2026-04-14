@@ -908,3 +908,54 @@ export const reorderCampaign = (country_queue: string[]) =>
 
 export const launchCampaign = () =>
   api.post('/content/orchestrator/campaign/launch');
+
+// ============================================================
+// LANDING GENERATOR — CAMPAIGNS
+// ============================================================
+
+export type AudienceType = 'clients' | 'lawyers' | 'helpers' | 'matching';
+
+export const fetchLandingCampaign = (audienceType: AudienceType) =>
+  api.get(`/landing-campaigns/${audienceType}`);
+
+export const updateLandingCampaign = (
+  audienceType: AudienceType,
+  data: {
+    pages_per_country?: number;
+    daily_limit?: number;
+    selected_templates?: string[];
+    problem_filters?: {
+      categories?: string[];
+      min_urgency?: number;
+      business_values?: string[];
+    } | null;
+  },
+) => api.put(`/landing-campaigns/${audienceType}`, data);
+
+export const launchLandingCampaign = (audienceType: AudienceType, language = 'fr') =>
+  api.post(`/landing-campaigns/${audienceType}/launch`, { language });
+
+export const addLandingCampaignCountry = (audienceType: AudienceType, code: string) =>
+  api.post(`/landing-campaigns/${audienceType}/add/${code}`);
+
+export const removeLandingCampaignCountry = (audienceType: AudienceType, code: string) =>
+  api.delete(`/landing-campaigns/${audienceType}/remove/${code}`);
+
+export const reorderLandingCampaign = (audienceType: AudienceType, country_queue: string[]) =>
+  api.put(`/landing-campaigns/${audienceType}/reorder`, { country_queue });
+
+// ============================================================
+// LANDING GENERATOR — PROBLEMS
+// ============================================================
+
+export const fetchLandingProblems = (params?: {
+  category?: string;
+  business_value?: string;
+  min_urgency?: number;
+  product_route?: string;
+  search?: string;
+  per_page?: number;
+}) => api.get('/landing-problems', { params });
+
+export const fetchLandingProblemCategories = () =>
+  api.get('/landing-problems/categories');

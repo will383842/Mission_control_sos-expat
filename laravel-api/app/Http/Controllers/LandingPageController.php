@@ -15,14 +15,18 @@ class LandingPageController extends Controller
     public function index(Request $request): JsonResponse
     {
         $request->validate([
-            'status'    => 'nullable|string|in:draft,review,published,generating,failed',
-            'language'  => 'nullable|string|max:5',
-            'country'   => 'nullable|string|max:100',
-            'page_type' => 'nullable|string|max:50',
-            'search'    => 'nullable|string|max:200',
-            'sort_by'   => 'nullable|string|in:created_at,updated_at,published_at,seo_score,title',
-            'sort_dir'  => 'nullable|string|in:asc,desc',
-            'per_page'  => 'nullable|integer|min:1|max:100',
+            'status'            => 'nullable|string|in:draft,review,scheduled,published,generating,failed,archived',
+            'language'          => 'nullable|string|max:5',
+            'country'           => 'nullable|string|max:100',
+            'country_code'      => 'nullable|string|max:5',
+            'page_type'         => 'nullable|string|max:50',
+            'audience_type'     => 'nullable|string|in:clients,lawyers,helpers,matching',
+            'generation_source' => 'nullable|string|in:manual,ai_generated',
+            'template_id'       => 'nullable|string|max:100',
+            'search'            => 'nullable|string|max:200',
+            'sort_by'           => 'nullable|string|in:created_at,updated_at,published_at,seo_score,title',
+            'sort_dir'          => 'nullable|string|in:asc,desc',
+            'per_page'          => 'nullable|integer|min:1|max:100',
         ]);
 
         $query = LandingPage::query();
@@ -36,18 +40,32 @@ class LandingPageController extends Controller
         if ($request->filled('country')) {
             $query->where('country', $request->input('country'));
         }
+        if ($request->filled('country_code')) {
+            $query->where('country_code', strtoupper($request->input('country_code')));
+        }
         if ($request->filled('page_type')) {
             $query->where('page_type', $request->input('page_type'));
+        }
+        // Landing Generator filters
+        if ($request->filled('audience_type')) {
+            $query->where('audience_type', $request->input('audience_type'));
+        }
+        if ($request->filled('generation_source')) {
+            $query->where('generation_source', $request->input('generation_source'));
+        }
+        if ($request->filled('template_id')) {
+            $query->where('template_id', $request->input('template_id'));
         }
         if ($request->filled('search')) {
             $search = str_replace(['%', '_'], ['\\%', '\\_'], $request->input('search'));
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'ilike', "%{$search}%")
-                  ->orWhere('keyword_primary', 'ilike', "%{$search}%");
+                  ->orWhere('keyword_primary', 'ilike', "%{$search}%")
+                  ->orWhere('slug', 'ilike', "%{$search}%");
             });
         }
 
-        $sortBy = $request->input('sort_by', 'created_at');
+        $sortBy  = $request->input('sort_by', 'created_at');
         $sortDir = $request->input('sort_dir', 'desc');
         $query->orderBy($sortBy, $sortDir);
 
@@ -187,12 +205,11 @@ class LandingPageController extends Controller
 
                 if ($cta) {
                     $cta->update([
-                        'label'      => $ctaData['label'],
+                        'text'       => $ctaData['label'],
                         'url'        => $ctaData['url'],
                         'style'      => $ctaData['style'] ?? 'primary',
                         'position'   => $ctaData['position'] ?? 'hero',
                         'sort_order' => $ctaData['sort_order'] ?? $index,
-                        'is_active'  => $ctaData['is_active'] ?? true,
                     ]);
                     $existingIds[] = $cta->id;
                 }
@@ -200,12 +217,11 @@ class LandingPageController extends Controller
                 // Create new
                 $cta = LandingCtaLink::create([
                     'landing_page_id' => $landing->id,
-                    'label'           => $ctaData['label'],
+                    'text'            => $ctaData['label'],
                     'url'             => $ctaData['url'],
                     'style'           => $ctaData['style'] ?? 'primary',
                     'position'        => $ctaData['position'] ?? 'hero',
                     'sort_order'      => $ctaData['sort_order'] ?? $index,
-                    'is_active'       => $ctaData['is_active'] ?? true,
                 ]);
                 $existingIds[] = $cta->id;
             }
