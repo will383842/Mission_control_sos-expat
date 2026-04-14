@@ -1,5 +1,5 @@
 import { useState, useEffect, createContext, useContext } from 'react';
-import api from '../api/client';
+import api, { saveToken, clearToken, getStoredToken } from '../api/client';
 import type { TeamMember } from '../types/influenceur';
 
 interface AuthContextValue {
@@ -24,20 +24,27 @@ export function useAuthProvider(): AuthContextValue {
   const [user, setUser] = useState<AuthContextValue['user']>(null);
   const [loading, setLoading] = useState(true);
 
+  // On mount: restore session from stored token
   useEffect(() => {
+    if (!getStoredToken()) {
+      setLoading(false);
+      return;
+    }
     api.get('/me')
       .then(({ data }) => setUser(data))
-      .catch(() => setUser(null))
+      .catch(() => { clearToken(); setUser(null); })
       .finally(() => setLoading(false));
   }, []);
 
   const login = async (email: string, password: string) => {
     const { data } = await api.post('/login', { email, password });
+    saveToken(data.token);
     setUser(data.user);
   };
 
   const logout = async () => {
-    await api.post('/logout');
+    try { await api.post('/logout'); } catch {}
+    clearToken();
     setUser(null);
   };
 
