@@ -171,7 +171,7 @@ export default function RepublicationLinkedIn() {
     source_id: null,
     day_type: getCurrentWeekday(),
     lang: 'fr',
-    account: 'page',
+    account: 'personal',
   });
 
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -333,7 +333,7 @@ export default function RepublicationLinkedIn() {
         <div>
           <h1 className="text-2xl font-bold text-text font-title">💼 LinkedIn Republication</h1>
           <p className="text-text-muted text-sm mt-1">
-            Publication automatique — page SOS-Expat + profil personnel
+            Publication automatique — profil personnel LinkedIn
           </p>
         </div>
         <div className="flex gap-2">
@@ -365,7 +365,7 @@ export default function RepublicationLinkedIn() {
           <p className="text-green-300 font-semibold text-sm">Share on LinkedIn API approuvée ! (14 avr. 2026)</p>
           <p className="text-text-muted text-xs mt-0.5">
             App ID 244000247 · REST API v202401 active · Profil personnel opérationnel ·{' '}
-            <span className="text-amber-300">Community Management API (page entreprise) : demande en cours</span>
+            <span className="text-amber-300">Page entreprise : en attente approbation Community Management API LinkedIn</span>
           </p>
         </div>
       </div>
@@ -377,7 +377,7 @@ export default function RepublicationLinkedIn() {
           <p className="text-blue-300 font-semibold text-sm">Phase 1 — Clients francophones (Now → Août 2026)</p>
           <p className="text-text-muted text-xs mt-0.5">
             Posts dominants en FR · Expatriés francophones worldwide ·{' '}
-            <span className="text-text-muted">Phase 2 (Sept 2026+) : expansion EN+FR, avocats et helpers partenaires, page entreprise automatique</span>
+            <span className="text-text-muted">Phase 2 (Sept 2026+) : expansion EN+FR, avocats et helpers partenaires · Page entreprise dès approbation LinkedIn</span>
           </p>
         </div>
       </div>
@@ -464,7 +464,7 @@ export default function RepublicationLinkedIn() {
                     <div className="flex items-center gap-1.5 shrink-0">
                       <span className="text-text-muted text-[10px] uppercase font-mono">{p.lang}</span>
                       <span className="text-text-muted text-[10px]">
-                        {p.account === 'page' ? '🏢' : p.account === 'personal' ? '👤' : '🔀'}
+                        {'👤'}
                       </span>
                     </div>
                     <p className="text-text text-sm truncate flex-1">{p.hook_preview || SOURCE_LABEL[p.source_type]?.split('—')[0]?.trim()}</p>
@@ -666,16 +666,13 @@ export default function RepublicationLinkedIn() {
               value={genParams.lang}
               onChange={e => setGenParams(p => ({ ...p, lang: e.target.value }))}
             />
-            <Select
-              label="Compte de publication"
-              options={[
-                { value: 'page',     label: '🏢 Page SOS-Expat' },
-                { value: 'personal', label: '👤 Profil personnel' },
-                { value: 'both',     label: '🔀 Les deux' },
-              ]}
-              value={genParams.account}
-              onChange={e => setGenParams(p => ({ ...p, account: e.target.value }))}
-            />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-text">Compte de publication</label>
+              <div className="h-11 px-3.5 rounded-lg border border-border bg-surface2 text-sm text-text flex items-center gap-2">
+                👤 Profil personnel
+                <span className="text-xs text-text-muted ml-auto">(page: en attente LinkedIn)</span>
+              </div>
+            </div>
           </div>
 
           {genParams.lang === 'both' && (

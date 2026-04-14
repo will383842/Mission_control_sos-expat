@@ -15,9 +15,7 @@ use Illuminate\Support\Facades\Log;
  * ─ Mode auto-publish (default, LINKEDIN_TELEGRAM_CONFIRM=false) ─────────
  *   Publishes directly on LinkedIn when scheduled_at <= now().
  *   account=personal → publish personal, status=published
- *   account=page     → publish page,     status=published
- *   account=both     → Step 1: publish personal, set page_publish_after=now+4h30
- *                    → Step 2: at page_publish_after, publish page, status=published
+ *   (page/both disabled — Community Management API not yet approved by LinkedIn)
  *
  * ─ Mode Telegram 1-tap confirm (LINKEDIN_TELEGRAM_CONFIRM=true) ─────────
  *   ToS-compliant interim mode while Community Management API approval pending.
@@ -44,11 +42,10 @@ class AutoPublishLinkedInCommand extends Command
     {
         $confirmMode = (bool) config('services.linkedin.telegram_confirm', false);
 
-        // ── Step 1: posts ready for FIRST publish ────────────────────
+        // ── Posts ready for publish (personal profile only) ──────────
         $ready = LinkedInPost::where('status', 'scheduled')
             ->where('scheduled_at', '<=', now())
             ->whereNull('li_post_id_personal')
-            ->whereNull('li_post_id_page')
             ->get();
 
         foreach ($ready as $post) {
@@ -59,19 +56,7 @@ class AutoPublishLinkedInCommand extends Command
             }
         }
 
-        // ── Step 2: account=both, ready for PAGE publish (4h30 later) ─
-        $pageReady = LinkedInPost::where('status', 'scheduled')
-            ->whereNotNull('li_post_id_personal')
-            ->whereNull('li_post_id_page')
-            ->whereNotNull('page_publish_after')
-            ->where('page_publish_after', '<=', now())
-            ->get();
-
-        foreach ($pageReady as $post) {
-            $this->publishPage($post);
-        }
-
-        $total = $ready->count() + $pageReady->count();
+        $total = $ready->count();
         if ($total > 0) {
             $this->info("linkedin:auto-publish: processed {$total} posts (confirm_mode=" . ($confirmMode ? 'on' : 'off') . ')');
         }
@@ -135,56 +120,14 @@ class AutoPublishLinkedInCommand extends Command
     private function publishFirst(LinkedInPost $post): void
     {
         try {
-            if ($post->account === 'page') {
-                $urn = $this->api->publish($post, 'page');
-                if (!$urn) { $this->failPost($post, 'LinkedIn page API returned no URN'); return; }
-                $post->update(['li_post_id_page' => $urn, 'status' => 'published', 'published_at' => now()]);
-                $this->scheduleFirstComment($post, $urn, 'page');
-
-            } elseif ($post->account === 'personal') {
-                $urn = $this->api->publish($post, 'personal');
-                if (!$urn) { $this->failPost($post, 'LinkedIn personal API returned no URN'); return; }
-                $post->update(['li_post_id_personal' => $urn, 'status' => 'published', 'published_at' => now()]);
-                $this->scheduleFirstComment($post, $urn, 'personal');
-
-            } elseif ($post->account === 'both') {
-                $urn = $this->api->publish($post, 'personal');
-                if (!$urn) { $this->failPost($post, 'LinkedIn personal API returned no URN (both)'); return; }
-                $post->update([
-                    'li_post_id_personal' => $urn,
-                    'page_publish_after'  => now()->addHours(4)->addMinutes(30),
-                ]);
-                $this->scheduleFirstComment($post, $urn, 'personal');
-                Log::info('linkedin:auto-publish: personal done, page in 4h30', ['post_id' => $post->id]);
-            }
+            // Always publish on personal profile (Community Management API not yet approved)
+            $urn = $this->api->publish($post, 'personal');
+            if (!$urn) { $this->failPost($post, 'LinkedIn personal API returned no URN'); return; }
+            $post->update(['li_post_id_personal' => $urn, 'status' => 'published', 'published_at' => now()]);
+            $this->scheduleFirstComment($post, $urn, 'personal');
 
         } catch (\Throwable $e) {
             $this->failPost($post, $e->getMessage());
-        }
-    }
-
-    // ── Page publish (account=both, step 2) ────────────────────────────
-
-    private function publishPage(LinkedInPost $post): void
-    {
-        try {
-            $urn = $this->api->publish($post, 'page');
-            if (!$urn) {
-                $post->update(['publish_error_page' => 'LinkedIn page API returned no URN']);
-                return;
-            }
-            $post->update([
-                'li_post_id_page'   => $urn,
-                'page_published_at' => now(),
-                'status'            => 'published',
-                'published_at'      => $post->published_at ?? now(),
-            ]);
-            $this->scheduleFirstComment($post, $urn, 'page');
-            Log::info('linkedin:auto-publish: page published', ['post_id' => $post->id, 'urn' => $urn]);
-
-        } catch (\Throwable $e) {
-            $post->update(['publish_error_page' => $e->getMessage()]);
-            Log::error('linkedin:auto-publish: page failed', ['post_id' => $post->id, 'error' => $e->getMessage()]);
         }
     }
 
