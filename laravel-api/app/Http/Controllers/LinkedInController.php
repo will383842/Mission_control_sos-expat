@@ -59,7 +59,7 @@ class LinkedInController extends Controller
             })
             ->orderByRaw("CASE WHEN scheduled_at IS NULL THEN 1 ELSE 0 END")
             ->orderBy('scheduled_at')
-            ->get(['id', 'day_type', 'lang', 'account', 'hook', 'scheduled_at', 'source_type', 'status', 'image_url'])
+            ->get(['id', 'day_type', 'lang', 'account', 'hook', 'scheduled_at', 'source_type', 'status', 'featured_image_url'])
             ->map(fn($p) => [
                 'id'           => $p->id,
                 'day_type'     => $p->day_type,
@@ -69,7 +69,7 @@ class LinkedInController extends Controller
                 'scheduled_at' => $p->scheduled_at?->toISOString(),
                 'source_type'  => $p->source_type,
                 'status'       => $p->status,
-                'has_image'    => !empty($p->image_url),
+                'has_image'    => !empty($p->featured_image_url),
             ]);
 
         return response()->json([
