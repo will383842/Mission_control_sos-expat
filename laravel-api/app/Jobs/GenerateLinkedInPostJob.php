@@ -147,11 +147,15 @@ USER;
                 $firstComment .= "\n\n📸 " . $imageAttribution;
             }
 
-            // ── 7. Auto-schedule to next free optimal slot ──────────
-            $controller   = new \App\Http\Controllers\LinkedInController();
-            $nextSlot     = $controller->nextFreeSlot($lang);
+            // ── 7. Use pre-assigned slot (set at creation) ──────────
+            // scheduled_at is already set by LinkedInController::createAndDispatch()
+            // Only recalculate if somehow null (shouldn't happen)
+            if (!$post->scheduled_at) {
+                $controller = new \App\Http\Controllers\LinkedInController();
+                $post->scheduled_at = $controller->nextFreeSlot($lang);
+            }
 
-            // ── 8. Update post record (scheduled, not just draft) ────
+            // ── 8. Update post record → directly scheduled ───────────
             $post->update([
                 'hook'                  => $data['hook']  ?? $this->defaultHook($dayType, $lang),
                 'body'                  => $data['body']  ?? $this->defaultBody($lang),
@@ -160,7 +164,7 @@ USER;
                 'featured_image_url'    => $featuredImage,
                 'first_comment_status'  => $firstComment ? 'pending' : null,
                 'status'                => 'scheduled',
-                'scheduled_at'          => $nextSlot,
+                'scheduled_at'          => $post->scheduled_at,
                 'auto_scheduled'        => true,
                 'error_message'         => null,
             ]);

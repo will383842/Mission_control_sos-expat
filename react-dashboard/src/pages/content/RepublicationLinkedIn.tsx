@@ -39,8 +39,10 @@ interface UpcomingPost {
   lang: string;
   account: string;
   hook_preview: string;
-  scheduled_at: string;
+  scheduled_at: string | null;
   source_type: string;
+  status: string;
+  has_image: boolean;
 }
 
 interface LiPost {
@@ -148,6 +150,111 @@ const STATUS_META: Record<string, { label: string; variant: 'neutral' | 'info' |
 const DAY_SHORT: Record<string, string> = {
   monday: 'Lun', tuesday: 'Mar', wednesday: 'Mer', thursday: 'Jeu', friday: 'Ven',
 };
+
+// ── UpcomingCalendar (30-day view) ────────────────────────────────────────────
+
+function UpcomingCalendar({
+  posts,
+  onGenerate,
+}: {
+  posts: UpcomingPost[];
+  onGenerate: (dayType: string) => void;
+}) {
+  // Build list of next 30 weekdays
+  const today = new Date();
+  const weekdays: Date[] = [];
+  let d = new Date(today);
+  while (weekdays.length < 30) {
+    if (d.getDay() !== 0 && d.getDay() !== 6) weekdays.push(new Date(d));
+    d.setDate(d.getDate() + 1);
+  }
+
+  // Group into weeks (Mon-Fri)
+  const weeks: Date[][] = [];
+  let week: Date[] = [];
+  weekdays.forEach((day, i) => {
+    week.push(day);
+    if (week.length === 5 || i === weekdays.length - 1) {
+      weeks.push(week);
+      week = [];
+    }
+  });
+
+  const postsByDate: Record<string, UpcomingPost> = {};
+  posts.forEach(p => {
+    if (p.scheduled_at) {
+      const key = p.scheduled_at.slice(0, 10);
+      postsByDate[key] = p;
+    }
+  });
+
+  const DAY_MAP: Record<number, string> = { 1: 'monday', 2: 'tuesday', 3: 'wednesday', 4: 'thursday', 5: 'friday' };
+  const DAY_FR = ['', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven'];
+
+  return (
+    <div className="bg-surface2 rounded-xl border border-border p-5">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-semibold text-text">📅 Calendrier éditorial — 30 prochains jours</h3>
+        <span className="text-xs text-text-muted">{posts.length} post{posts.length !== 1 ? 's' : ''} planifié{posts.length !== 1 ? 's' : ''}</span>
+      </div>
+      <div className="space-y-3">
+        {weeks.map((week, wi) => {
+          const weekLabel = week[0].toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }) +
+            ' → ' + week[week.length - 1].toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+          return (
+            <div key={wi}>
+              <p className="text-[10px] uppercase tracking-wider text-text-muted mb-1.5 font-semibold">Semaine du {weekLabel}</p>
+              <div className="grid grid-cols-5 gap-1.5">
+                {week.map(day => {
+                  const key = day.toISOString().slice(0, 10);
+                  const post = postsByDate[key];
+                  const dayIdx = day.getDay();
+                  const isToday = key === today.toISOString().slice(0, 10);
+                  const dayType = DAY_MAP[dayIdx] ?? 'monday';
+                  return (
+                    <div
+                      key={key}
+                      className={`rounded-lg border p-2 text-center text-xs transition-all ${
+                        post
+                          ? 'border-amber-500/40 bg-amber-500/10'
+                          : 'border-border/50 bg-surface/50 hover:border-violet/40 cursor-pointer'
+                      } ${isToday ? 'ring-1 ring-violet/50' : ''}`}
+                      title={post ? (post.hook_preview || post.source_type) : 'Cliquer pour générer'}
+                      onClick={() => !post && onGenerate(dayType)}
+                    >
+                      <p className={`font-semibold text-[10px] ${isToday ? 'text-violet-300' : 'text-text-muted'}`}>
+                        {DAY_FR[dayIdx]} {day.getDate()}
+                      </p>
+                      {post ? (
+                        <>
+                          <p className="text-amber-300 text-[9px] mt-0.5 truncate leading-tight">
+                            {post.hook_preview ? post.hook_preview.slice(0, 28) + '…' : SOURCE_LABEL[post.source_type]?.split(' ')[0]}
+                          </p>
+                          <div className="flex items-center justify-center gap-1 mt-1">
+                            <span className="text-[8px] text-text-muted uppercase font-mono">{post.lang}</span>
+                            {post.has_image && <span className="text-[8px]">🖼</span>}
+                            <span className={`text-[8px] ${post.status === 'scheduled' ? 'text-green-400' : 'text-amber-400'}`}>●</span>
+                          </div>
+                        </>
+                      ) : (
+                        <p className="text-text-muted text-[9px] mt-1">+ générer</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {posts.length === 0 && (
+        <p className="text-text-muted text-sm text-center py-4">
+          Aucun post planifié — clique sur un jour pour générer
+        </p>
+      )}
+    </div>
+  );
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -446,34 +553,14 @@ export default function RepublicationLinkedIn() {
             </div>
           </div>
 
-          {/* Upcoming posts calendar */}
-          {stats?.upcoming_posts && stats.upcoming_posts.length > 0 && (
-            <div className="bg-surface2 rounded-xl border border-border p-5">
-              <h3 className="font-semibold text-text mb-4">📅 Prochaines publications (7 jours)</h3>
-              <div className="space-y-2">
-                {stats.upcoming_posts.map(p => (
-                  <div key={p.id} className="flex items-center gap-3 py-2 border-b border-border/50 last:border-0">
-                    <div className="w-24 shrink-0 text-center">
-                      <p className="text-amber-300 font-mono text-xs">
-                        {new Date(p.scheduled_at).toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: '2-digit' })}
-                      </p>
-                      <p className="text-text-muted text-[10px]">
-                        {new Date(p.scheduled_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <span className="text-text-muted text-[10px] uppercase font-mono">{p.lang}</span>
-                      <span className="text-text-muted text-[10px]">
-                        {'👤'}
-                      </span>
-                    </div>
-                    <p className="text-text text-sm truncate flex-1">{p.hook_preview || SOURCE_LABEL[p.source_type]?.split('—')[0]?.trim()}</p>
-                    <span className="text-text-muted text-[10px] shrink-0">{DAY_SHORT[p.day_type] ?? p.day_type}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Upcoming posts calendar — 30 days */}
+          <UpcomingCalendar
+            posts={stats?.upcoming_posts ?? []}
+            onGenerate={(dayType) => {
+              setGenParams(p => ({ ...p, day_type: dayType as typeof p.day_type, source_id: null }));
+              setShowGenModal(true);
+            }}
+          />
 
           {/* Weekly rhythm */}
           <div>

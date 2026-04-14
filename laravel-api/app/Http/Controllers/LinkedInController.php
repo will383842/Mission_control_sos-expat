@@ -48,11 +48,18 @@ class LinkedInController extends Controller
         $availableFaqs     = QaEntry::published()->whereNotIn('id', $usedFaqIds)->count();
         $availableSondages = Sondage::whereIn('status', ['active', 'closed'])->whereNotIn('id', $usedSondageIds)->count();
 
-        // Upcoming scheduled posts (next 7 days)
-        $upcoming = LinkedInPost::where('status', 'scheduled')
-            ->whereBetween('scheduled_at', [now(), now()->addDays(7)])
+        // Upcoming posts calendar — next 30 days (scheduled + drafts with a date)
+        $upcoming = LinkedInPost::whereIn('status', ['scheduled', 'draft'])
+            ->where(function ($q) {
+                $q->whereBetween('scheduled_at', [now(), now()->addDays(30)])
+                  ->orWhere(function ($q2) {
+                      // Drafts without a date: show them too, sorted last
+                      $q2->where('status', 'draft')->whereNull('scheduled_at');
+                  });
+            })
+            ->orderByRaw("CASE WHEN scheduled_at IS NULL THEN 1 ELSE 0 END")
             ->orderBy('scheduled_at')
-            ->get(['id', 'day_type', 'lang', 'account', 'hook', 'scheduled_at', 'source_type'])
+            ->get(['id', 'day_type', 'lang', 'account', 'hook', 'scheduled_at', 'source_type', 'status', 'image_url'])
             ->map(fn($p) => [
                 'id'           => $p->id,
                 'day_type'     => $p->day_type,
@@ -61,6 +68,8 @@ class LinkedInController extends Controller
                 'hook_preview' => mb_substr($p->hook, 0, 80),
                 'scheduled_at' => $p->scheduled_at?->toISOString(),
                 'source_type'  => $p->source_type,
+                'status'       => $p->status,
+                'has_image'    => !empty($p->image_url),
             ]);
 
         return response()->json([
@@ -328,20 +337,24 @@ USER;
 
     private function createAndDispatch(array $params, string $langCode): LinkedInPost
     {
-        $sourceTitle = $this->resolveSourceTitle($params['source_type'], $params['source_id'] ?? null);
+        $sourceTitle  = $this->resolveSourceTitle($params['source_type'], $params['source_id'] ?? null);
+        // Pre-assign next free slot so the post goes straight to scheduled after generation
+        $scheduledAt  = $this->nextFreeSlot($langCode);
 
         $post = LinkedInPost::create([
-            'source_type'  => $params['source_type'],
-            'source_id'    => $params['source_id'] ?? null,
-            'source_title' => $sourceTitle,
-            'day_type'     => $params['day_type'],
-            'lang'         => $langCode,
-            'account'      => $params['account'],
-            'hook'         => '',
-            'body'         => '',
-            'hashtags'     => [],
-            'status'       => 'generating',
-            'phase'        => (int) ($params['phase'] ?? 1),
+            'source_type'    => $params['source_type'],
+            'source_id'      => $params['source_id'] ?? null,
+            'source_title'   => $sourceTitle,
+            'day_type'       => $params['day_type'],
+            'lang'           => $langCode,
+            'account'        => $params['account'],
+            'hook'           => '',
+            'body'           => '',
+            'hashtags'       => [],
+            'status'         => 'generating',
+            'phase'          => (int) ($params['phase'] ?? 1),
+            'scheduled_at'   => $scheduledAt,
+            'auto_scheduled' => true,
         ]);
 
         GenerateLinkedInPostJob::dispatch($post->id);
