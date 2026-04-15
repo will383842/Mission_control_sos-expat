@@ -98,6 +98,21 @@ return [
             'sslmode' => env('DB_SSLMODE', 'prefer'),
         ],
 
+        // Read-only connection to Blog SOS-Expat DB (blog-postgres on shared-network)
+        // Used by GenerateLinkedInPostJob to fetch real sondage stats + slugs
+        'blog_pgsql' => [
+            'driver'      => 'pgsql',
+            'host'        => env('BLOG_DB_HOST', 'blog-postgres'),
+            'port'        => env('BLOG_DB_PORT', '5432'),
+            'database'    => env('BLOG_DB_DATABASE', 'blog_sos_expat'),
+            'username'    => env('BLOG_DB_USERNAME', 'blog_user'),
+            'password'    => env('BLOG_DB_PASSWORD', 'blog_secret'),
+            'charset'     => 'utf8',
+            'prefix'      => '',
+            'search_path' => 'public',
+            'sslmode'     => 'prefer',
+        ],
+
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DB_URL'),
