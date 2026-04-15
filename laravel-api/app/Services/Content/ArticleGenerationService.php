@@ -3156,6 +3156,16 @@ class ArticleGenerationService
             $chatId = config('services.telegram_alerts.chat_id');
             if (!$botToken || !$chatId) return;
 
+            // Deduplicate: only send the same (phase + error signature) once per 24h.
+            // Avoids spamming when a persistent cause (e.g. API credits exhausted, network down)
+            // breaks every article in the queue and generates hundreds of identical alerts.
+            $errorSignature = md5($phase . '|' . mb_substr($error, 0, 120));
+            $cacheKey = "telegram_alert_dedup:{$errorSignature}";
+            if (\Illuminate\Support\Facades\Cache::has($cacheKey)) {
+                return;
+            }
+            \Illuminate\Support\Facades\Cache::put($cacheKey, 1, now()->addDay());
+
             $articleInfo = $article
                 ? "Article #{$article->id}: {$article->title}\nLangue: {$article->language} | Pays: {$article->country}"
                 : 'N/A';
