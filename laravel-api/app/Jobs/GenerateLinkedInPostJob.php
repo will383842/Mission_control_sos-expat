@@ -206,10 +206,20 @@ SYSTEM;
                 ? "Pays de contexte (à mentionner naturellement dans l'acte 1, jamais comme sujet principal) : " . $source['country']
                 : '';
 
-            // URL line for first comment
-            $urlLine = !empty($source['url'])
-                ? "URL de l'article source (OBLIGATOIRE dans first_comment) : {$source['url']}"
-                : "Pas d'URL source — mets uniquement → SOS-Expat.com dans first_comment";
+            // URL line for first comment — differs by source type
+            $isSondage = $post->source_type === 'sondage';
+            $isFreeType = in_array($post->source_type, self::FREE_TYPES, true);
+            if (!empty($source['url'])) {
+                if ($isSondage) {
+                    $urlLine = "URL des résultats complets du sondage (OBLIGATOIRE dans first_comment) : {$source['url']}";
+                } elseif ($isFreeType) {
+                    $urlLine = "URL d'un article lié en ressource complémentaire (mettre dans first_comment, PAS dans le corps) : {$source['url']}";
+                } else {
+                    $urlLine = "URL de l'article source (OBLIGATOIRE dans first_comment) : {$source['url']}";
+                }
+            } else {
+                $urlLine = "Pas d'URL source — mets uniquement → SOS-Expat.com dans first_comment";
+            }
 
             $userPrompt = <<<USER
 Génère un post LinkedIn en {$langLabel} — voix de fondateur expert, ZÉRO commercial.
@@ -230,14 +240,15 @@ RAPPEL CRITIQUE :
 - Corps 1000-1500 chars, 4 actes, paragraphes courts
 - CTA = question précise sur une situation réelle vécue
 - Max 2 émojis dans tout le post
-- first_comment DOIT contenir l'URL source si fournie (jamais dans le corps du post)
+- first_comment DOIT contenir l'URL fournie (jamais dans le corps du post)
+- Pour le sondage : utilise les pourcentages RÉELS fournis dans le contenu source — pas de chiffres inventés
 
 Retourne UNIQUEMENT un JSON valide :
 {
   "hook": "accroche ≤140 chars, sans saut de ligne, en {$langLabel}",
   "body": "corps 1000-1500 chars, \\n entre paragraphes, en {$langLabel}",
   "hashtags": ["mot1", "mot2", "mot3"],
-  "first_comment": "question rebond + URL source obligatoire + lien SOS-Expat.com, 150-300 chars, en {$langLabel}"
+  "first_comment": "question rebond + URL fournie obligatoire + lien SOS-Expat.com, 150-300 chars, en {$langLabel}"
 }
 USER;
 
@@ -270,7 +281,13 @@ USER;
                 && filter_var($source['url'], FILTER_VALIDATE_URL)
                 && !str_contains($firstComment, $source['url'])
             ) {
-                $arrow = ($lang === 'en') ? '→ Full article: ' : '→ Article complet : ';
+                if ($post->source_type === 'sondage') {
+                    $arrow = ($lang === 'en') ? '→ Full survey results: ' : '→ Résultats complets : ';
+                } elseif (in_array($post->source_type, self::FREE_TYPES, true)) {
+                    $arrow = ($lang === 'en') ? '→ Related article: ' : '→ Article lié : ';
+                } else {
+                    $arrow = ($lang === 'en') ? '→ Full article: ' : '→ Article complet : ';
+                }
                 $firstComment = rtrim($firstComment) . "\n\n" . $arrow . $source['url'];
             }
 
@@ -721,9 +738,15 @@ USER;
             'country'       => '',
         ];
 
-        // Free types — no DB source
+        // Free types — no DB source, but always attach a related article URL as supporting link
         if (in_array($type, self::FREE_TYPES, true)) {
-            return $empty;
+            $related = $this->relatedArticleForFreeType($type, $lang);
+            return array_merge($empty, $related ? [
+                'url'           => $related['url'],
+                'keywords'      => $related['keywords'] ?: $empty['keywords'],
+                'hashtag_seeds' => $related['hashtag_seeds'] ?: $empty['hashtag_seeds'],
+                'image_url'     => $related['image_url'],
+            ] : []);
         }
 
         // Auto-select if no explicit ID
@@ -874,22 +897,177 @@ USER;
 
     private function sondageToSource(Sondage $s): array
     {
-        $questions = $s->questions ?? collect();
-        $qText = $questions->map(function ($q) {
-            $opts = is_array($q->options) ? ' → Options: ' . implode(' / ', array_slice($q->options, 0, 4)) : '';
-            return $q->text . $opts;
-        })->take(5)->implode("\n");
+        // ── Try to pull real stats + slug from blog DB ────────────────────
+        $blogStats = $this->fetchBlogSondageStats($s->external_id, 'fr');
 
-        $content = "Sondage : {$s->title}\nStatut : {$s->status}\n\nQuestions :\n{$qText}";
+        // Build question+stats text from blog data (if available), else fall back to MC options
+        if (!empty($blogStats['questions'])) {
+            $statsLines = [];
+            foreach ($blogStats['questions'] as $qText => $results) {
+                $statsLines[] = "Q : {$qText}";
+                foreach (array_slice($results, 0, 3) as $opt => $pct) {
+                    $statsLines[] = "  → {$opt} : {$pct}%";
+                }
+            }
+            $statsBlock = implode("\n", $statsLines);
+            $totalLabel = number_format($blogStats['total_responses'], 0, ',', ' ');
+            $content    = "Sondage : {$blogStats['title']}\n"
+                        . "Répondants réels : {$totalLabel}\n\n"
+                        . "Résultats (données réelles SOS-Expat) :\n{$statsBlock}";
+            $url        = $blogStats['url'];
+        } else {
+            // Fallback: MC questions without real stats
+            $questions = $s->questions ?? collect();
+            $qText     = $questions->map(function ($q) {
+                $opts = is_array($q->options) ? ' → Options: ' . implode(' / ', array_slice($q->options, 0, 4)) : '';
+                return $q->text . $opts;
+            })->take(5)->implode("\n");
+            $content = "Sondage : {$s->title}\n\nQuestions :\n{$qText}";
+            $url     = '';
+        }
 
         return [
-            'title'         => $s->title ?? 'Sondage SOS-Expat',
-            'content'       => substr($content, 0, 800),
+            'title'         => $blogStats['title'] ?? $s->title ?? 'Sondage SOS-Expat',
+            'content'       => substr($content, 0, 1200),
             'keywords'      => 'sondage, statistiques, expatriés, données, expat',
             'hashtag_seeds' => ['expatriation', 'sondage', 'expat', 'statistiques', 'vieinternational'],
-            'url'           => '',
+            'url'           => $url,
             'image_url'     => null,
         ];
+    }
+
+    /**
+     * Fetch real sondage stats from the blog PostgreSQL database.
+     * Uses the 'blog_pgsql' secondary connection (blog-postgres on shared-network).
+     * Cached 6 hours — stats don't change by the minute.
+     *
+     * Returns: ['title', 'slug', 'url', 'total_responses', 'questions' => [q_text => [opt => pct]]]
+     */
+    private function fetchBlogSondageStats(string $externalId, string $lang): array
+    {
+        $cacheKey = "sondage_blog_stats_{$externalId}_{$lang}";
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 21_600, function () use ($externalId, $lang) {
+            try {
+                $db = \Illuminate\Support\Facades\DB::connection('blog_pgsql');
+
+                // Get sondage ID + slug + responses_count via external_id
+                $row = $db->table('sondages as s')
+                    ->join('sondage_translations as st', 'st.sondage_id', '=', 's.id')
+                    ->where('s.external_id', $externalId)
+                    ->where('st.language_code', $lang)
+                    ->whereNull('s.deleted_at')
+                    ->select(['s.id', 'st.title', 'st.slug', 's.responses_count'])
+                    ->first();
+
+                if (!$row) return [];
+
+                $sondageId      = $row->id;
+                $slug           = $row->slug;
+                $totalResponses = (int) $row->responses_count;
+
+                // Build blog URL: /fr/sondages/{slug}/resultats
+                $blogUrl = "https://sos-expat.com/{$lang}/sondages/{$slug}/resultats";
+
+                // Fetch questions (skip open/scale types — no useful percentages)
+                $questions = $db->table('sondage_questions')
+                    ->where('sondage_id', $sondageId)
+                    ->where('language_code', $lang)
+                    ->whereIn('type', ['single', 'multiple'])
+                    ->orderBy('sort_order')
+                    ->take(6)
+                    ->get(['id', 'text', 'type']);
+
+                $questionStats = [];
+                foreach ($questions as $q) {
+                    // Skip country/language questions (too many values, no insight)
+                    if (str_contains(strtolower($q->text), 'nationalit') ||
+                        str_contains(strtolower($q->text), 'pays vivez') ||
+                        str_contains(strtolower($q->text), 'langue maternelle')) {
+                        continue;
+                    }
+
+                    // Aggregate top answers
+                    $rows = $db->select("
+                        SELECT elem->>'value' AS v, COUNT(*) AS cnt
+                        FROM sondage_responses sr,
+                             jsonb_array_elements(sr.answers::jsonb) AS elem
+                        WHERE sr.sondage_id = ? AND sr.completed = true
+                          AND (elem->>'question_id')::int = ?
+                        GROUP BY v
+                        ORDER BY cnt DESC
+                        LIMIT 6
+                    ", [$sondageId, $q->id]);
+
+                    if (empty($rows)) continue;
+
+                    // For multiple-choice, the value is often a JSON array like ["opt1","opt2"]
+                    // Flatten: count individual option mentions
+                    $optCounts = [];
+                    $totalVotes = 0;
+                    foreach ($rows as $r) {
+                        $val = $r->v;
+                        // Decode JSON array values (multiple-choice combinations)
+                        $decoded = json_decode($val, true);
+                        $opts = is_array($decoded) ? $decoded : [$val];
+                        foreach ($opts as $opt) {
+                            $opt = preg_replace('/^[^\w\s]+\s*/', '', trim($opt)); // strip leading emoji
+                            if (!$opt) continue;
+                            $optCounts[$opt] = ($optCounts[$opt] ?? 0) + (int) $r->cnt;
+                            $totalVotes += (int) $r->cnt;
+                        }
+                    }
+
+                    if ($totalVotes === 0) continue;
+
+                    // Sort by count DESC, take top 4, compute percentages
+                    arsort($optCounts);
+                    $top = array_slice($optCounts, 0, 4, true);
+                    $percents = [];
+                    foreach ($top as $opt => $cnt) {
+                        $percents[$opt] = round($cnt * 100 / $totalVotes, 1);
+                    }
+
+                    $questionStats[$q->text] = $percents;
+                }
+
+                return [
+                    'title'            => $row->title,
+                    'slug'             => $slug,
+                    'url'              => $blogUrl,
+                    'total_responses'  => $totalResponses,
+                    'questions'        => $questionStats,
+                ];
+
+            } catch (\Throwable $e) {
+                Log::warning('GenerateLinkedInPostJob: fetchBlogSondageStats failed', [
+                    'external_id' => $externalId,
+                    'error'       => $e->getMessage(),
+                ]);
+                return [];
+            }
+        });
+    }
+
+    /**
+     * For free-type posts, find the best-scored published article to use as a supporting link.
+     * This ensures every post — even opinion/tip/myth ones — links to real blog content.
+     * Uses a rotating selection (not the most recent, to vary links across posts).
+     */
+    private function relatedArticleForFreeType(string $type, string $lang): ?array
+    {
+        // Pick from top-10 articles by editorial_score, rotating by type hash for variety
+        $top = GeneratedArticle::published()
+            ->where('language', $lang)
+            ->orderByDesc('editorial_score')
+            ->take(10)
+            ->get();
+
+        if ($top->isEmpty()) return null;
+
+        // Deterministic but varied: rotate by source type name hash
+        $pick = $top->values()[(abs(crc32($type)) % $top->count())];
+
+        return $this->articleToSource($pick);
     }
 
     // ── Unsplash query builder ─────────────────────────────────────────
@@ -1034,7 +1212,7 @@ USER;
             'fr' => [
                 'article'           => "Vous avez déjà vécu une situation similaire en tant qu'expatrié ? Partagez votre expérience en commentaire 👇\n\n" . ($url ? "→ Guide complet : {$url}" : '→ Plus d\'infos sur SOS-Expat.com'),
                 'faq'               => "Et vous ? Comment avez-vous géré cette situation à l'étranger ? 👇\n\n" . ($url ? "→ Réponse complète : {$url}" : '→ Toutes nos FAQs sur SOS-Expat.com'),
-                'sondage'           => "Ces chiffres vous surprennent ? Qu'est-ce qui vous a le plus étonné dans ces données ? 👇\n\n→ Participez à notre sondage complet sur SOS-Expat.com",
+                'sondage'           => "Ces chiffres vous surprennent ? Qu'est-ce qui vous a le plus étonné dans ces données ? 👇\n\n" . ($url ? "→ Résultats complets : {$url}" : "→ Sondage complet sur SOS-Expat.com"),
                 'hot_take'          => "Vous êtes d'accord ? En désaccord ? Je veux votre avis honnête 👇",
                 'poll'              => "Votez ci-dessus et dites-moi en commentaire ce qui vous a le plus surpris dans votre expérience expat 👇",
                 'milestone'         => "Merci à tous ceux qui font confiance à SOS-Expat.com ! Quelle a été votre expérience avec nous ? 🙏",
@@ -1044,7 +1222,7 @@ USER;
             'en' => [
                 'article'           => "Have you faced a similar situation as an expat? Share your experience in the comments 👇\n\n" . ($url ? "→ Full guide: {$url}" : '→ More resources at SOS-Expat.com'),
                 'faq'               => "How did you handle this situation abroad? I'd love to hear your experience 👇\n\n" . ($url ? "→ Full answer: {$url}" : '→ All our FAQs at SOS-Expat.com'),
-                'sondage'           => "Surprised by these numbers? What surprised you the most? 👇\n\n→ Take our full survey at SOS-Expat.com",
+                'sondage'           => "Surprised by these numbers? What surprised you the most? 👇\n\n" . ($url ? "→ Full survey results: {$url}" : "→ Full survey at SOS-Expat.com"),
                 'hot_take'          => "Agree or disagree? I want your honest take 👇",
                 'poll'              => "Vote above and tell me in the comments what surprised you most about your expat experience 👇",
                 'milestone'         => "Thank you to everyone who trusts SOS-Expat.com! What has your experience been? 🙏",
