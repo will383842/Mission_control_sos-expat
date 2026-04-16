@@ -5,6 +5,7 @@ import { Modal } from '../../ui/Modal';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
 import { Select } from '../../ui/Select';
+import { toast } from '../../components/Toast';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -391,6 +392,31 @@ export default function RepublicationLinkedIn() {
     enabled: showGenModal && genParams.source_type !== 'tip' && genParams.source_type !== 'news',
     staleTime: 60_000,
   });
+
+  // Handle OAuth redirect-back: ?li_connected=personal → toast + refresh
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const connected = params.get('li_connected');
+    const error     = params.get('li_error');
+    if (connected) {
+      toast.success(`✅ LinkedIn ${connected === 'personal' ? 'personnel' : connected} connecté avec succès !`);
+      refetchOauth();
+      qc.invalidateQueries({ queryKey: ['li-stats'] });
+      // Clean URL without reload
+      const clean = window.location.pathname;
+      window.history.replaceState({}, '', clean);
+    } else if (error) {
+      const msgs: Record<string, string> = {
+        state_mismatch:        'Erreur CSRF — réessaie la connexion',
+        token_exchange_failed: 'Échange de token échoué — vérifie les credentials LinkedIn',
+        profile_fetch_failed:  'Impossible de récupérer le profil LinkedIn',
+        exception:             'Erreur inattendue lors de la connexion LinkedIn',
+      };
+      toast.error(`❌ LinkedIn : ${msgs[error] ?? error}`);
+      const clean = window.location.pathname;
+      window.history.replaceState({}, '', clean);
+    }
+  }, []);
 
   // Sync auto-selected source_id into params (only if user didn't pick manually)
   useEffect(() => {
