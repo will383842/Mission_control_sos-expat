@@ -28,7 +28,7 @@ class LinkedInApiService
     private const BASE    = 'https://api.linkedin.com';
     private const REST    = 'https://api.linkedin.com/rest';
     private const V2      = 'https://api.linkedin.com/v2';
-    private const VERSION = '202401';
+    private const VERSION = '202601';
 
     // ── Public interface ───────────────────────────────────────────────
 
