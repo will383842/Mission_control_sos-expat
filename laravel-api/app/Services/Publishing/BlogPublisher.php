@@ -561,10 +561,16 @@ class BlogPublisher
         };
 
         // ── Hreflang complet avec URLs absolues + x-default ───────
-        $hreflangMap = $landing->hreflang_map ?? [];
-        // S'assurer que x-default est présent
+        // Rebuild from actual sibling canonical_urls (fixes stale/partial maps)
+        $landingGenService = app(\App\Services\Content\LandingGenerationService::class);
+        $hreflangMap = $landingGenService->syncHreflangMap($landing);
+        // Fallback if sync returned empty
+        if (empty($hreflangMap)) {
+            $hreflangMap = $landing->hreflang_map ?? [];
+        }
+        // Ensure x-default is present
         if (!isset($hreflangMap['x-default'])) {
-            $hreflangMap['x-default'] = $hreflangMap['en'] ?? reset($hreflangMap) ?: '';
+            $hreflangMap['x-default'] = $hreflangMap['fr'] ?? $hreflangMap['en'] ?? reset($hreflangMap) ?: '';
         }
 
         // ── Payload complet ────────────────────────────────────────

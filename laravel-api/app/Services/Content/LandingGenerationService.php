@@ -1978,29 +1978,76 @@ RULES;
     }
 
     /**
-     * Génère la hreflang_map pour les 9 langues supportées.
-     * Structure: ["fr" => "https://sos-expat.com/fr/aide/...", "en" => "...", "x-default" => "..."]
+     * Génère la hreflang_map pour une landing page.
+     *
+     * At generation time, we only know the current language's canonical_url.
+     * The full 9-language map is built AFTER all translations are generated,
+     * by syncHreflangMap() which reads actual canonical_urls from DB.
+     *
+     * This method now returns a partial map (current lang only) as a placeholder.
+     * The BlogPublisher calls syncHreflangMap() before publishing.
      */
     private function buildHreflangMap(array $baseData, array $parsedResponse = []): array
     {
-        $supportedLanguages = ['fr', 'en', 'es', 'de', 'pt', 'ar', 'hi', 'zh', 'ru'];
+        $lang        = $baseData['language'] ?? 'fr';
+        $countryCode = $baseData['country_code'] ?? '';
+        $siteUrl     = rtrim(config('services.blog.site_url', 'https://sos-expat.com'), '/');
+
+        // Build only the current language's URL (the only one we know for certain)
+        $countrySlug      = $countryCode ? $this->getCountrySlug($countryCode, $lang) : '';
         $audienceType     = $baseData['audience_type'];
-        $countryCode      = $baseData['country_code'] ?? '';
         $problemSlug      = $baseData['generation_params']['problem_slug'] ?? null;
         $templateId       = $baseData['template_id'] ?? null;
         $localizedUrlSlug = $parsedResponse['url_slug'] ?? null;
 
-        $siteUrl = rtrim(config('services.blog.site_url', 'https://sos-expat.com'), '/');
+        $slug = $this->buildSlug($audienceType, $lang, $countrySlug, $problemSlug, $templateId, $localizedUrlSlug);
+        $currentUrl = "{$siteUrl}/{$slug}";
 
-        $map = [];
-        foreach ($supportedLanguages as $lang) {
-            $countrySlug = $countryCode ? $this->getCountrySlug($countryCode, $lang) : '';
-            $slug = $this->buildSlug($audienceType, $lang, $countrySlug, $problemSlug, $templateId, $localizedUrlSlug);
-            $map[$lang] = "{$siteUrl}/{$slug}";
+        // Placeholder map — will be completed by syncHreflangMap() before publish
+        return [$lang => $currentUrl];
+    }
+
+    /**
+     * Rebuild the hreflang_map from actual canonical_urls of all sibling translations.
+     * Called after all language variants are generated, and before publishing.
+     *
+     * Uses parent_id to find siblings: parent (FR) + all children (EN, DE, ES, etc.)
+     */
+    public function syncHreflangMap(LandingPage $landing): array
+    {
+        // Find the root (parent) landing page
+        $root = $landing->parent_id
+            ? LandingPage::find($landing->parent_id)
+            : $landing;
+
+        if (! $root) {
+            return $landing->hreflang_map ?? [];
         }
 
-        // x-default → version EN (standard international)
-        $map['x-default'] = $map['en'] ?? reset($map);
+        // Collect all siblings: root + all children with parent_id = root.id
+        $siblings = LandingPage::where('parent_id', $root->id)
+            ->whereNotNull('canonical_url')
+            ->get()
+            ->keyBy('language');
+
+        // Include root itself
+        if ($root->canonical_url) {
+            $siblings[$root->language] = $root;
+        }
+
+        // Build the definitive map from actual canonical_urls
+        $map = [];
+        foreach ($siblings as $lang => $sibling) {
+            $map[$lang] = $sibling->canonical_url;
+        }
+
+        // x-default → French first, then English, then first available
+        $map['x-default'] = $map['fr'] ?? $map['en'] ?? reset($map) ?: '';
+
+        // Update all siblings with the same complete map
+        foreach ($siblings as $sibling) {
+            $sibling->update(['hreflang_map' => $map]);
+        }
 
         return $map;
     }
@@ -2326,15 +2373,6 @@ RULES;
             // ex: fr/aide/francais/japon (problemSlug = nationalité slug)
             default    => "{$language}/landing/{$audienceType}/{$countrySlug}",
         };
-    }
-
-    /**
-     * Retourne les templates disponibles pour une audience donnée.
-     * Utilisé par LandingCampaignController::buildStatus().
-     */
-    public static function getTemplatesForAudience(string $audienceType): array
-    {
-        return self::TEMPLATES[$audienceType] ?? [];
     }
 
     /**
