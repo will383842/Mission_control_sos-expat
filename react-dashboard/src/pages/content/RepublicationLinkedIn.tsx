@@ -951,17 +951,26 @@ export default function RepublicationLinkedIn() {
                     : 'Publie sur ton profil LinkedIn (portée ×3-5 vs page)'}
                 </p>
               </div>
-              {oauthStatus?.personal.connected ? (
-                <Button variant="danger" size="sm" onClick={() => mutateDisconnect.mutate('personal')}>
-                  Déconnecter
-                </Button>
-              ) : (
-                <Button size="sm" onClick={() => {
-                  window.location.href = '/api/linkedin/oauth/authorize?account_type=personal';
-                }}>
-                  Connecter
-                </Button>
-              )}
+              <div className="flex gap-2">
+                {oauthStatus?.personal.connected && (
+                  <Button size="sm" onClick={() => {
+                    window.location.href = '/api/linkedin/oauth/authorize?account_type=personal';
+                  }}>
+                    🔄 Reconnecter
+                  </Button>
+                )}
+                {oauthStatus?.personal.connected ? (
+                  <Button variant="danger" size="sm" onClick={() => mutateDisconnect.mutate('personal')}>
+                    Déconnecter
+                  </Button>
+                ) : (
+                  <Button size="sm" onClick={() => {
+                    window.location.href = '/api/linkedin/oauth/authorize?account_type=personal';
+                  }}>
+                    Connecter
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
 
