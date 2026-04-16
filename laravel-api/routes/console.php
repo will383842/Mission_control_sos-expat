@@ -282,6 +282,12 @@ Schedule::job(new \App\Jobs\RunLandingCampaignJob)->dailyAt('05:00')->withoutOve
 Schedule::command('linkedin:fill-calendar')->dailyAt('06:00')->withoutOverlapping(3600);
 
 // ══════════════════════════════════════════════════════════════════════
+// LINKEDIN TOKEN HEALTH CHECK — quotidien à 08:00 UTC
+// Alerte Telegram si token expire dans < 14j (sans refresh) ou < 3j (avec refresh).
+// ══════════════════════════════════════════════════════════════════════
+Schedule::command('linkedin:check-token')->dailyAt('08:00');
+
+// ══════════════════════════════════════════════════════════════════════
 // LINKEDIN STALE GENERATING RECOVERY — toutes les 30 minutes
 // Remet en "failed" les posts bloqués en "generating" depuis >45 min
 // (worker crashé ou job perdu dans Redis lors d'un redémarrage).

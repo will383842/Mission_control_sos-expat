@@ -305,6 +305,33 @@ class LinkedInApiService
 
     // ── Private helpers ────────────────────────────────────────────────
 
+    /**
+     * Send a Telegram alert when the LinkedIn token can no longer be refreshed
+     * and manual re-authorization is required.
+     */
+    public function notifyTokenExpired(string $accountType, int $httpStatus = 0): void
+    {
+        try {
+            $telegram = app(\App\Services\Social\TelegramAlertService::class);
+            if (!$telegram->isConfigured()) return;
+
+            $label   = $accountType === 'personal' ? 'Profil personnel' : 'Page SOS-Expat';
+            $errInfo = $httpStatus ? " (HTTP {$httpStatus})" : '';
+            $reconnectUrl = config('services.linkedin.redirect_uri')
+                ? rtrim(str_replace('/api/linkedin/oauth/callback', '', config('services.linkedin.redirect_uri')), '/')
+                    . '/api/linkedin/oauth/authorize?account_type=' . $accountType
+                : 'Mission Control → LinkedIn → 🔄 Reconnecter';
+
+            $telegram->sendMessage(
+                "🔴 <b>LinkedIn déconnecté — action requise</b>\n\n"
+                . "Le token <b>{$label}</b> a expiré ou été révoqué{$errInfo}.\n\n"
+                . "Les publications LinkedIn sont <b>suspendues</b> jusqu'à reconnexion.\n\n"
+                . "→ Reconnecte-toi depuis Mission Control :\n"
+                . "<b>LinkedIn → ⚙️ Gérer la connexion → 🔄 Reconnecter</b>"
+            );
+        } catch (\Throwable) {}
+    }
+
     private function resolveToken(string $accountType): ?LinkedInToken
     {
         $token = LinkedInToken::where('account_type', $accountType)->first();
@@ -341,6 +368,7 @@ class LinkedInApiService
                     'status'       => $response->status(),
                     'body'         => mb_substr($response->body(), 0, 300),
                 ]);
+                $this->notifyTokenExpired($token->account_type, $response->status());
                 return null;
             }
 
