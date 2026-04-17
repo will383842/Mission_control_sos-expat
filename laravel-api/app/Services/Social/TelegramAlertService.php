@@ -32,15 +32,24 @@ class TelegramAlertService
 
     public function __construct(string $bot = 'alerts')
     {
-        if ($bot === 'linkedin') {
-            $this->token  = config('services.telegram_linkedin.bot_token',
-                            config('services.telegram_alerts.bot_token', ''));
-            $this->chatId = (string) config('services.telegram_linkedin.chat_id',
-                            config('services.telegram_alerts.chat_id', ''));
-        } else {
-            $this->token  = config('services.telegram_alerts.bot_token', '');
-            $this->chatId = (string) config('services.telegram_alerts.chat_id', '');
-        }
+        // Per-platform bot mapping — each config key falls back to telegram_alerts
+        // if the dedicated token/chat is not set in env.
+        $configKey = match ($bot) {
+            'linkedin'  => 'services.telegram_linkedin',
+            'facebook'  => 'services.telegram_facebook',
+            'threads'   => 'services.telegram_threads',
+            'instagram' => 'services.telegram_instagram',
+            default     => 'services.telegram_alerts',
+        };
+
+        // Elvis-chained fallback: if the platform-specific config is null/empty
+        // (e.g. env var not set), fall back to the general alerts bot config.
+        // (string) cast is required because config() can return null for missing
+        // env vars and the $token / $chatId properties are typed `string`.
+        $this->token  = (string) (config($configKey . '.bot_token')
+                              ?: config('services.telegram_alerts.bot_token', ''));
+        $this->chatId = (string) (config($configKey . '.chat_id')
+                              ?: config('services.telegram_alerts.chat_id', ''));
 
         $this->apiBase = 'https://api.telegram.org/bot' . $this->token;
     }

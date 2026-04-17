@@ -12,6 +12,7 @@ use App\Models\PressContact;
 use App\Observers\ContactObserver;
 use App\Observers\InfluenceurObserver;
 use App\Observers\PressContactObserver;
+use App\Services\Social\SocialDriverManager;
 use App\Services\Social\TelegramAlertService;
 use Illuminate\Support\ServiceProvider;
 
@@ -19,6 +20,11 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // Keep SocialDriverManager as a singleton so its internal $instances
+        // cache is shared across the request (avoids re-instantiating drivers
+        // for every controller/job that resolves one).
+        $this->app->singleton(SocialDriverManager::class);
+
         // LinkedIn-specific classes use the dedicated LinkedIn Telegram bot
         // (TELEGRAM_LINKEDIN_BOT_TOKEN / TELEGRAM_LINKEDIN_CHAT_ID)
         // All other code that injects TelegramAlertService gets the general alerts bot
