@@ -18,6 +18,8 @@ use App\Http\Controllers\GeneratedArticleController;
 use App\Http\Controllers\GenerationController;
 use App\Http\Controllers\KeywordTrackingController;
 use App\Http\Controllers\LinkedInController;
+use App\Http\Controllers\SocialOAuthController;
+use App\Http\Controllers\SocialPublishingController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\LandingCampaignController;
 use App\Http\Controllers\LandingProblemsController;
@@ -104,6 +106,13 @@ Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,
 // ============================================================
 Route::get('/linkedin/oauth/authorize', [\App\Http\Controllers\LinkedInOAuthController::class, 'authorize']);
 Route::get('/linkedin/oauth/callback',  [\App\Http\Controllers\LinkedInOAuthController::class, 'callback']);
+
+// Multi-platform social OAuth (LinkedIn/Facebook/Threads/Instagram)
+// These are PUBLIC (no auth middleware) because the platforms redirect here after authorization.
+Route::get('/social/{platform}/oauth/authorize', [SocialOAuthController::class, 'authorize'])
+    ->middleware('social.platform');
+Route::get('/social/{platform}/oauth/callback',  [SocialOAuthController::class, 'callback'])
+    ->middleware('social.platform');
 
 // ============================================================
 // TELEGRAM WEBHOOK — PUBLIC (Telegram sends callback_query events here)
@@ -716,6 +725,27 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/oauth/orgs',                           [\App\Http\Controllers\LinkedInOAuthController::class, 'orgs']);
             Route::post('/oauth/set-page',                      [\App\Http\Controllers\LinkedInOAuthController::class, 'setPage']);
             Route::delete('/oauth/disconnect',                  [\App\Http\Controllers\LinkedInOAuthController::class, 'disconnect']);
+        });
+
+        // Multi-platform social publishing (coexists with /linkedin/* during Phase 7 rollout)
+        Route::prefix('social/{platform}')->middleware('social.platform')->group(function () {
+            Route::get('/stats',                                [SocialPublishingController::class, 'stats']);
+            Route::get('/queue',                                [SocialPublishingController::class, 'queue']);
+            Route::get('/auto-select',                          [SocialPublishingController::class, 'autoSelect']);
+            Route::get('/next-slot',                            [SocialPublishingController::class, 'nextSlot']);
+            Route::get('/posts/{post}',                         [SocialPublishingController::class, 'show']);
+            Route::post('/generate',                            [SocialPublishingController::class, 'generate']);
+            Route::put('/posts/{post}',                         [SocialPublishingController::class, 'update']);
+            Route::post('/posts/{post}/schedule',               [SocialPublishingController::class, 'schedule']);
+            Route::post('/posts/{post}/publish',                [SocialPublishingController::class, 'publish']);
+            Route::post('/posts/{post}/generate-replies',       [SocialPublishingController::class, 'generateReplies']);
+            Route::delete('/posts/{post}',                      [SocialPublishingController::class, 'destroy']);
+
+            // OAuth management (admin only — public callback is outside the auth group)
+            Route::get('/oauth/status',                         [SocialOAuthController::class, 'status']);
+            Route::delete('/oauth/disconnect',                  [SocialOAuthController::class, 'disconnect']);
+            Route::get('/oauth/orgs',                           [SocialOAuthController::class, 'orgs']);
+            Route::post('/oauth/set-page',                      [SocialOAuthController::class, 'setPage']);
         });
 
         // Landing Pages (CRUD manuel existant)

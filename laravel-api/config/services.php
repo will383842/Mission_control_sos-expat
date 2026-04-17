@@ -92,6 +92,53 @@ return [
         'telegram_webhook_secret'   => env('TELEGRAM_LINKEDIN_WEBHOOK_SECRET', ''),
     ],
 
+    // Facebook (Meta Graph API). Shares the same Meta app as Instagram.
+    'facebook' => [
+        'client_id'               => env('FACEBOOK_CLIENT_ID', ''),
+        'client_secret'           => env('FACEBOOK_CLIENT_SECRET', ''),
+        'redirect_uri'            => env('FACEBOOK_REDIRECT_URI', ''),
+        'page_id'                 => env('FACEBOOK_PAGE_ID', ''),
+        'graph_version'           => env('FACEBOOK_GRAPH_VERSION', 'v19.0'),
+        'telegram_confirm'        => (bool) env('FACEBOOK_TELEGRAM_CONFIRM', false),
+        'telegram_webhook_secret' => env('TELEGRAM_FACEBOOK_WEBHOOK_SECRET', ''),
+    ],
+
+    // Instagram Business (Meta Graph API). Uses the same Meta app as Facebook;
+    // the Business account must be linked to the Facebook Page.
+    'instagram' => [
+        'client_id'               => env('INSTAGRAM_CLIENT_ID',     env('FACEBOOK_CLIENT_ID', '')),
+        'client_secret'           => env('INSTAGRAM_CLIENT_SECRET', env('FACEBOOK_CLIENT_SECRET', '')),
+        'redirect_uri'            => env('INSTAGRAM_REDIRECT_URI',  env('FACEBOOK_REDIRECT_URI', '')),
+        'business_account_id'     => env('INSTAGRAM_BUSINESS_ACCOUNT_ID', ''),
+        'graph_version'           => env('INSTAGRAM_GRAPH_VERSION', 'v19.0'),
+        'telegram_confirm'        => (bool) env('INSTAGRAM_TELEGRAM_CONFIRM', false),
+        'telegram_webhook_secret' => env('TELEGRAM_INSTAGRAM_WEBHOOK_SECRET', ''),
+    ],
+
+    // Threads (separate Meta app / OAuth from Facebook-Instagram).
+    'threads' => [
+        'client_id'               => env('THREADS_CLIENT_ID', ''),
+        'client_secret'           => env('THREADS_CLIENT_SECRET', ''),
+        'redirect_uri'            => env('THREADS_REDIRECT_URI', ''),
+        'api_version'             => env('THREADS_API_VERSION', 'v1.0'),
+        'telegram_confirm'        => (bool) env('THREADS_TELEGRAM_CONFIRM', false),
+        'telegram_webhook_secret' => env('TELEGRAM_THREADS_WEBHOOK_SECRET', ''),
+    ],
+
+    // Dedicated Telegram bots per platform (fall back to telegram_alerts)
+    'telegram_facebook' => [
+        'bot_token' => env('TELEGRAM_FACEBOOK_BOT_TOKEN', env('TELEGRAM_ALERT_BOT_TOKEN')),
+        'chat_id'   => env('TELEGRAM_FACEBOOK_CHAT_ID',   env('TELEGRAM_ALERT_CHAT_ID')),
+    ],
+    'telegram_threads' => [
+        'bot_token' => env('TELEGRAM_THREADS_BOT_TOKEN', env('TELEGRAM_ALERT_BOT_TOKEN')),
+        'chat_id'   => env('TELEGRAM_THREADS_CHAT_ID',   env('TELEGRAM_ALERT_CHAT_ID')),
+    ],
+    'telegram_instagram' => [
+        'bot_token' => env('TELEGRAM_INSTAGRAM_BOT_TOKEN', env('TELEGRAM_ALERT_BOT_TOKEN')),
+        'chat_id'   => env('TELEGRAM_INSTAGRAM_CHAT_ID',   env('TELEGRAM_ALERT_CHAT_ID')),
+    ],
+
     'ai' => [
         'daily_budget' => (int) env('AI_DAILY_BUDGET', 5000),
         'monthly_budget' => (int) env('AI_MONTHLY_BUDGET', 100000),
