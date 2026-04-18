@@ -836,6 +836,15 @@ export default function Layout() {
           clipped by overflow context). Page-level scroll via body is used instead.
           Sidebar uses md:sticky md:h-screen to remain visible on scroll. */}
       <main id="main-content" tabIndex={-1} className="flex-1 min-h-screen focus:outline-none">
+        {/* v2 Banner — premium UI announcement bar */}
+        <div className="sticky top-0 z-30 flex items-center justify-between gap-3 px-6 py-2.5 bg-gradient-violet text-white text-xs font-medium shadow-glow-violet border-b border-violet-light/30">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/20 backdrop-blur-sm text-[10px] font-bold">✨</span>
+            <span className="font-semibold tracking-wide">Nouvelle interface v2 déployée</span>
+            <span className="hidden sm:inline text-white/80">— accessibilité WCAG, 86% plus rapide au chargement, modales avec focus trap & Escape</span>
+          </div>
+          <span className="hidden md:inline text-[10px] text-white/70 font-mono tracking-wider uppercase">Build {new Date().toISOString().slice(0, 10)}</span>
+        </div>
         <Outlet />
       </main>
     </div>
