@@ -28,7 +28,15 @@ class EnsureValidPlatform
             ], 404);
         }
 
-        if (!$this->manager->isEnabled($platform)) {
+        // OAuth routes (authorize + callback) must remain accessible even when
+        // the platform is disabled — otherwise users can never connect for the
+        // first time and Meta App Review reviewers can't test the OAuth flow.
+        // Only the publish / queue / stats routes are gated by `enabled`.
+        $uri = $request->getRequestUri();
+        $isOAuthRoute = str_contains($uri, '/oauth/authorize')
+                     || str_contains($uri, '/oauth/callback');
+
+        if (!$isOAuthRoute && !$this->manager->isEnabled($platform)) {
             return response()->json([
                 'error'    => "Platform '{$platform}' is disabled",
                 'hint'     => "Set SOCIAL_" . strtoupper($platform) . "_ENABLED=true in .env",
