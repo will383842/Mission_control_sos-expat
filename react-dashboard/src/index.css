@@ -12,7 +12,7 @@
 /* Dark theme (default) — refined: deeper bg, slightly warmer surfaces */
 :root,
 .dark {
-  --bg:          255 255 255;      /* white main background (sidebar & cards keep dark --surface) */
+  --bg:          7 10 15;          /* #070a0f — deeper almost-black */
   --surface:     14 18 26;         /* #0e121a — card bg */
   --surface2:    22 27 37;         /* #161b25 — hover / subtle contrast */
   --border:      33 41 54;         /* #212936 — slightly more visible */
