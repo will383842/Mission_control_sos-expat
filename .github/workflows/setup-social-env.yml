@@ -32,6 +32,16 @@ on:
         description: "Domaine de Mission Control (sans https://, ex: mc.sos-expat.com)"
         required: true
         type: string
+      threads_client_id:
+        description: "App ID Threads (laisser VIDE si Threads partage les memes credentials que Facebook)"
+        required: false
+        type: string
+        default: ""
+      threads_client_secret:
+        description: "App Secret Threads (laisser VIDE si Threads partage les memes credentials que Facebook)"
+        required: false
+        type: string
+        default: ""
       pinterest_client_id:
         description: "App ID Pinterest (laisser VIDE si Pinterest pas encore cree)"
         required: false
@@ -80,7 +90,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: FACEBOOK_CLIENT_ID,FACEBOOK_CLIENT_SECRET,FACEBOOK_PAGE_ID,MC_DOMAIN,PINTEREST_CLIENT_ID,PINTEREST_CLIENT_SECRET,ENABLE_FACEBOOK,ENABLE_THREADS,ENABLE_INSTAGRAM,ENABLE_PINTEREST
+          envs: FACEBOOK_CLIENT_ID,FACEBOOK_CLIENT_SECRET,FACEBOOK_PAGE_ID,MC_DOMAIN,THREADS_CLIENT_ID,THREADS_CLIENT_SECRET,PINTEREST_CLIENT_ID,PINTEREST_CLIENT_SECRET,ENABLE_FACEBOOK,ENABLE_THREADS,ENABLE_INSTAGRAM,ENABLE_PINTEREST
           script: |
             set -e
             cd /opt/influenceurs-tracker
@@ -104,8 +114,10 @@ jobs:
             INSTAGRAM_REDIRECT_URI=https://__MC_DOMAIN__/api/social/instagram/oauth/callback
             INSTAGRAM_BUSINESS_ACCOUNT_ID=
 
+            THREADS_CLIENT_ID=__TH_ID__
+            THREADS_CLIENT_SECRET=__TH_SECRET__
             THREADS_REDIRECT_URI=https://__MC_DOMAIN__/api/social/threads/oauth/callback
-            # THREADS_CLIENT_ID/SECRET fallback automatically to FACEBOOK_CLIENT_ID/SECRET
+            # If THREADS_CLIENT_ID/SECRET are empty, fallback to FACEBOOK_CLIENT_ID/SECRET (config/services.php)
 
             # Pinterest (separate app)
             PINTEREST_CLIENT_ID=__PIN_ID__
@@ -126,6 +138,8 @@ jobs:
             sed -i "s|__FB_SECRET__|${FACEBOOK_CLIENT_SECRET}|g" .env.production
             sed -i "s|__FB_PAGE_ID__|${FACEBOOK_PAGE_ID}|g" .env.production
             sed -i "s|__MC_DOMAIN__|${MC_DOMAIN}|g" .env.production
+            sed -i "s|__TH_ID__|${THREADS_CLIENT_ID}|g" .env.production
+            sed -i "s|__TH_SECRET__|${THREADS_CLIENT_SECRET}|g" .env.production
             sed -i "s|__PIN_ID__|${PINTEREST_CLIENT_ID}|g" .env.production
             sed -i "s|__PIN_SECRET__|${PINTEREST_CLIENT_SECRET}|g" .env.production
             sed -i "s|__EN_FB__|${ENABLE_FACEBOOK}|g" .env.production
@@ -147,6 +161,8 @@ jobs:
           FACEBOOK_CLIENT_SECRET: ${{ inputs.facebook_client_secret }}
           FACEBOOK_PAGE_ID: ${{ inputs.facebook_page_id }}
           MC_DOMAIN: ${{ inputs.mission_control_domain }}
+          THREADS_CLIENT_ID: ${{ inputs.threads_client_id }}
+          THREADS_CLIENT_SECRET: ${{ inputs.threads_client_secret }}
           PINTEREST_CLIENT_ID: ${{ inputs.pinterest_client_id }}
           PINTEREST_CLIENT_SECRET: ${{ inputs.pinterest_client_secret }}
           ENABLE_FACEBOOK: ${{ inputs.enable_facebook }}
