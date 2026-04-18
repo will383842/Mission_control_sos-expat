@@ -33,7 +33,9 @@ class SocialOAuthController extends Controller
 
     public function authorize(Request $request, string $platform): RedirectResponse
     {
-        $driver      = $this->manager->driver($platform);
+        // skipEnabledCheck=true so users can connect a platform for the first
+        // time even before SOCIAL_*_ENABLED=true (Meta App Review prerequisite)
+        $driver      = $this->manager->driver($platform, true);
         $accountType = $request->get('account_type', $driver->supportedAccountTypes()[0]);
 
         if (!in_array($accountType, $driver->supportedAccountTypes(), true)) {
@@ -51,7 +53,8 @@ class SocialOAuthController extends Controller
 
     public function callback(Request $request, string $platform): RedirectResponse
     {
-        $driver       = $this->manager->driver($platform);
+        // skipEnabledCheck=true so OAuth callbacks work even before activation
+        $driver       = $this->manager->driver($platform, true);
         $dashboardUrl = config("services.{$platform}.dashboard_url",
                         config('services.linkedin.dashboard_url', '/'));
 

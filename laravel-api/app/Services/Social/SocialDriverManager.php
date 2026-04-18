@@ -19,8 +19,17 @@ class SocialDriverManager
 
     public function __construct(private Container $container) {}
 
-    /** Return the driver for a given platform slug. */
-    public function driver(string $platform): SocialPublishingServiceInterface
+    /**
+     * Return the driver for a given platform slug.
+     *
+     * @param bool $skipEnabledCheck   When true, returns the driver even if
+     *                                 the platform is disabled in config.
+     *                                 Used for OAuth flows : a user must be
+     *                                 able to connect a platform for the
+     *                                 first time even before it is officially
+     *                                 enabled in production.
+     */
+    public function driver(string $platform, bool $skipEnabledCheck = false): SocialPublishingServiceInterface
     {
         if (isset($this->instances[$platform])) {
             return $this->instances[$platform];
@@ -31,7 +40,7 @@ class SocialDriverManager
             throw new \InvalidArgumentException("Unknown social platform: {$platform}");
         }
 
-        if (!($map[$platform]['enabled'] ?? true)) {
+        if (!$skipEnabledCheck && !($map[$platform]['enabled'] ?? true)) {
             throw new \RuntimeException("Social platform '{$platform}' is disabled in config/social.php");
         }
 
