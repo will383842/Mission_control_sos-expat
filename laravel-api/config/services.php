@@ -115,10 +115,12 @@ return [
         'telegram_webhook_secret' => env('TELEGRAM_INSTAGRAM_WEBHOOK_SECRET', ''),
     ],
 
-    // Threads (separate Meta app / OAuth from Facebook-Instagram).
+    // Threads (Meta — separate OAuth flow from Facebook-Instagram, but you can
+    // use the SAME Meta Developer App for the 3 products).
+    // THREADS_CLIENT_ID falls back to FACEBOOK_CLIENT_ID if you use a single Meta App.
     'threads' => [
-        'client_id'               => env('THREADS_CLIENT_ID', ''),
-        'client_secret'           => env('THREADS_CLIENT_SECRET', ''),
+        'client_id'               => env('THREADS_CLIENT_ID',     env('FACEBOOK_CLIENT_ID', '')),
+        'client_secret'           => env('THREADS_CLIENT_SECRET', env('FACEBOOK_CLIENT_SECRET', '')),
         'redirect_uri'            => env('THREADS_REDIRECT_URI', ''),
         'api_version'             => env('THREADS_API_VERSION', 'v1.0'),
         'telegram_confirm'        => (bool) env('THREADS_TELEGRAM_CONFIRM', false),
