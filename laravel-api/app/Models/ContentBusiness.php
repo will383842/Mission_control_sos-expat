@@ -17,22 +17,23 @@ class ContentBusiness extends Model
         'subcategory', 'subcategory_slug', 'subcategory_id',
         'description', 'logo_url', 'images', 'opening_hours',
         'recommendations', 'views', 'is_premium', 'schema_type',
-        'language', 'detail_scraped', 'scraped_at',
+        'language', 'detail_scraped', 'scraped_at', 'backlink_synced_at',
     ];
 
     protected $casts = [
-        'external_id'     => 'integer',
-        'latitude'        => 'decimal:7',
-        'longitude'       => 'decimal:7',
-        'category_id'     => 'integer',
-        'subcategory_id'  => 'integer',
-        'images'          => 'array',
-        'opening_hours'   => 'array',
-        'recommendations' => 'integer',
-        'views'           => 'integer',
-        'is_premium'      => 'boolean',
-        'detail_scraped'  => 'boolean',
-        'scraped_at'      => 'datetime',
+        'external_id'        => 'integer',
+        'latitude'           => 'decimal:7',
+        'longitude'          => 'decimal:7',
+        'category_id'        => 'integer',
+        'subcategory_id'     => 'integer',
+        'images'             => 'array',
+        'opening_hours'      => 'array',
+        'recommendations'    => 'integer',
+        'views'              => 'integer',
+        'is_premium'         => 'boolean',
+        'detail_scraped'     => 'boolean',
+        'scraped_at'         => 'datetime',
+        'backlink_synced_at' => 'datetime',
     ];
 
     public function source()

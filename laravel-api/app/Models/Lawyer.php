@@ -16,7 +16,7 @@ class Lawyer extends Model
         'directory_category', 'is_immigration_lawyer', 'is_francophone',
         'email_verified', 'detail_scraped', 'enrichment_status',
         'description', 'photo_url', 'social_links',
-        'scraped_at',
+        'scraped_at', 'backlink_synced_at',
     ];
 
     protected $casts = [
@@ -29,6 +29,7 @@ class Lawyer extends Model
         'email_verified'        => 'boolean',
         'detail_scraped'        => 'boolean',
         'scraped_at'            => 'datetime',
+        'backlink_synced_at'    => 'datetime',
         'latitude'              => 'decimal:7',
         'longitude'             => 'decimal:7',
     ];
