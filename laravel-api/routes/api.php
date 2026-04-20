@@ -455,6 +455,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('rss-blog-feeds')->middleware('role:admin')->group(function () {
         Route::get('/', [\App\Http\Controllers\RssBlogFeedController::class, 'index']);
         Route::post('/', [\App\Http\Controllers\RssBlogFeedController::class, 'store']);
+        // Option D2 : endpoints de découverte (avant {feed} pour éviter collision)
+        Route::post('/detect-rss', [\App\Http\Controllers\RssBlogFeedController::class, 'detectRss'])
+            ->middleware('throttle:30,5');
+        Route::post('/import-opml', [\App\Http\Controllers\RssBlogFeedController::class, 'importOpml'])
+            ->middleware('throttle:5,5');
+        Route::post('/discover/blogrolls', [\App\Http\Controllers\RssBlogFeedController::class, 'discoverBlogrolls'])
+            ->middleware('throttle:3,60');
+        // CRUD par ID
         Route::get('/{feed}', [\App\Http\Controllers\RssBlogFeedController::class, 'show']);
         Route::put('/{feed}', [\App\Http\Controllers\RssBlogFeedController::class, 'update']);
         Route::delete('/{feed}', [\App\Http\Controllers\RssBlogFeedController::class, 'destroy']);

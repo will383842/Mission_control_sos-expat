@@ -68,6 +68,14 @@ export default function AdminRssBlogFeeds() {
   const [error, setError] = useState('');
   const [toast, setToast] = useState<{ type: 'ok' | 'err'; message: string } | null>(null);
 
+  // Découverte de nouveaux feeds
+  const [showDiscoverModal, setShowDiscoverModal] = useState<null | 'detect-url' | 'import-opml'>(null);
+  const [discoverUrl, setDiscoverUrl] = useState('');
+  const [discoverFile, setDiscoverFile] = useState<File | null>(null);
+  const [discovering, setDiscovering] = useState(false);
+  const [discoverError, setDiscoverError] = useState('');
+  const [discoverResult, setDiscoverResult] = useState<string | null>(null);
+
   useEffect(() => {
     loadFeeds();
   }, [filter, search]);
@@ -185,6 +193,78 @@ export default function AdminRssBlogFeeds() {
 
   const fmtDate = (d: string | null) => d ? new Date(d).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : '—';
 
+  // ─── Découverte ───
+  const closeDiscover = () => {
+    setShowDiscoverModal(null);
+    setDiscoverUrl('');
+    setDiscoverFile(null);
+    setDiscoverError('');
+    setDiscoverResult(null);
+  };
+
+  const handleDetectUrl = async () => {
+    setDiscovering(true);
+    setDiscoverError('');
+    setDiscoverResult(null);
+    try {
+      const { data } = await api.post('/rss-blog-feeds/detect-rss', {
+        url: discoverUrl.trim(),
+        auto_add: true,
+      });
+      if (data.created) {
+        setDiscoverResult(`✅ Feed détecté et ajouté : ${data.feed.name} (${data.feed_url})`);
+        loadFeeds();
+      } else if (data.already_exists) {
+        setDiscoverResult(`⚠️ Feed déjà présent : ${data.existing_feed.name}`);
+      } else if (data.detected) {
+        setDiscoverResult(`✅ Feed détecté : ${data.feed_url}`);
+      }
+    } catch (e: unknown) {
+      const err = e as { response?: { status?: number; data?: { message?: string } } };
+      if (err.response?.status === 404) {
+        setDiscoverError('Aucun feed RSS détecté sur cette URL.');
+      } else {
+        setDiscoverError(err.response?.data?.message ?? 'Erreur détection');
+      }
+    } finally {
+      setDiscovering(false);
+    }
+  };
+
+  const handleImportOpml = async () => {
+    if (!discoverFile) return;
+    setDiscovering(true);
+    setDiscoverError('');
+    setDiscoverResult(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', discoverFile);
+      const { data } = await api.post('/rss-blog-feeds/import-opml', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setDiscoverResult(`✅ ${data.message}`);
+      loadFeeds();
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { error?: string; message?: string } } };
+      setDiscoverError(err.response?.data?.error ?? err.response?.data?.message ?? 'Erreur import OPML');
+    } finally {
+      setDiscovering(false);
+    }
+  };
+
+  const handleDiscoverBlogrolls = async () => {
+    if (!confirm('Lancer le crawl des blogrolls ?\nCela peut prendre ~1h pour les 78+ feeds existants et ajouter 300-800 nouveaux feeds découverts.')) return;
+    setDiscovering(true);
+    try {
+      await api.post('/rss-blog-feeds/discover/blogrolls');
+      showToast('ok', 'Crawl des blogrolls dispatché. Résultats dans ~30-60 min via refresh de la liste.');
+    } catch {
+      showToast('err', 'Erreur dispatch crawl blogrolls');
+    } finally {
+      setDiscovering(false);
+    }
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex items-start justify-between mb-6">
@@ -194,12 +274,36 @@ export default function AdminRssBlogFeeds() {
             Flux RSS de blogs à scraper pour extraire les auteurs (zéro risque ban : XML public, UA déclaré).
           </p>
         </div>
-        <button
-          onClick={openCreate}
-          className="px-4 py-2 bg-violet-600 hover:bg-violet-500 rounded text-white font-medium"
-        >
-          + Ajouter un feed
-        </button>
+        <div className="flex gap-2 flex-wrap justify-end">
+          <button
+            onClick={() => setShowDiscoverModal('detect-url')}
+            className="px-3 py-2 bg-blue-900/40 hover:bg-blue-800/60 rounded text-blue-200 text-sm"
+            title="Détecter le feed RSS d'un site web depuis son URL"
+          >
+            🌐 Importer depuis URL
+          </button>
+          <button
+            onClick={() => setShowDiscoverModal('import-opml')}
+            className="px-3 py-2 bg-emerald-900/40 hover:bg-emerald-800/60 rounded text-emerald-200 text-sm"
+            title="Importer plusieurs feeds depuis un fichier OPML"
+          >
+            📁 Import OPML
+          </button>
+          <button
+            onClick={handleDiscoverBlogrolls}
+            className="px-3 py-2 bg-amber-900/40 hover:bg-amber-800/60 rounded text-amber-200 text-sm"
+            title="Crawler les homepages des feeds existants pour découvrir de nouveaux feeds via leurs liens externes"
+            disabled={discovering}
+          >
+            {discovering ? '⏳ Crawl en cours...' : '🔍 Crawler blogrolls'}
+          </button>
+          <button
+            onClick={openCreate}
+            className="px-4 py-2 bg-violet-600 hover:bg-violet-500 rounded text-white font-medium"
+          >
+            + Ajouter un feed
+          </button>
+        </div>
       </div>
 
       {toast && (
@@ -289,6 +393,66 @@ export default function AdminRssBlogFeeds() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {showDiscoverModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={closeDiscover}>
+          <div className="bg-card rounded-lg border border-border max-w-xl w-full p-6" onClick={e => e.stopPropagation()}>
+            <h2 className="text-xl font-bold mb-4">
+              {showDiscoverModal === 'detect-url' ? '🌐 Détecter feed RSS depuis URL' : '📁 Importer OPML'}
+            </h2>
+
+            {discoverError && <div className="mb-4 p-3 bg-rose-900/40 text-rose-200 rounded text-sm">{discoverError}</div>}
+            {discoverResult && <div className="mb-4 p-3 bg-emerald-900/40 text-emerald-200 rounded text-sm whitespace-pre-wrap">{discoverResult}</div>}
+
+            {showDiscoverModal === 'detect-url' ? (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm text-muted mb-1">URL du site web</label>
+                  <input
+                    type="url"
+                    value={discoverUrl}
+                    onChange={e => setDiscoverUrl(e.target.value)}
+                    placeholder="https://monblog.com"
+                    className="w-full bg-bg-secondary border border-border rounded px-3 py-2 text-sm"
+                    disabled={discovering}
+                  />
+                  <p className="text-xs text-muted mt-1">
+                    Le système cherche automatiquement le feed RSS dans les balises <code>&lt;link rel=alternate&gt;</code> puis essaie les paths typiques (/feed, /rss, /atom.xml...).
+                  </p>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button onClick={closeDiscover} className="px-4 py-2 bg-bg-secondary border border-border rounded text-sm">Annuler</button>
+                  <button onClick={handleDetectUrl} disabled={discovering || !discoverUrl.trim()} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white text-sm font-medium disabled:opacity-50">
+                    {discovering ? 'Détection...' : 'Détecter + Ajouter'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm text-muted mb-1">Fichier OPML</label>
+                  <input
+                    type="file"
+                    accept=".opml,.xml"
+                    onChange={e => setDiscoverFile(e.target.files?.[0] ?? null)}
+                    className="w-full bg-bg-secondary border border-border rounded px-3 py-2 text-sm"
+                    disabled={discovering}
+                  />
+                  <p className="text-xs text-muted mt-1">
+                    Max 5MB. Les fichiers OPML peuvent être exportés depuis Feedly, Inoreader, NetNewsWire, etc. ou trouvés sur GitHub (repos publics de curateurs).
+                  </p>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button onClick={closeDiscover} className="px-4 py-2 bg-bg-secondary border border-border rounded text-sm">Annuler</button>
+                  <button onClick={handleImportOpml} disabled={discovering || !discoverFile} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded text-white text-sm font-medium disabled:opacity-50">
+                    {discovering ? 'Import...' : 'Importer'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
