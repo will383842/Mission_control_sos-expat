@@ -48,6 +48,60 @@ class KnowledgeBaseService
     }
 
     /**
+     * Return the KB as a public-safe array, suitable for the cross-service
+     * `/api/public/knowledge-base.json` endpoint and `kb:export-json` command.
+     *
+     * Includes: pricing, programs, brand voice, content rules, SEO/AEO rules,
+     * audience, coverage, tools — everything content-generators need.
+     *
+     * Excludes: anti_fraud (rate limits, email blocker — security info),
+     * backlink_engine (internal netlinking strategy), infrastructure
+     * (region/function internals), notifications.telegram (bot handles),
+     * cloudflare_edge_cache internals.
+     *
+     * Full export (same as config('knowledge-base')) is available via the
+     * `kb:export-json --full` artisan command for internal use only.
+     */
+    public function toPublicArray(): array
+    {
+        $blacklist = [
+            'anti_fraud',
+            'backlink_engine',
+            'infrastructure',
+            'cloudflare_edge_cache',
+        ];
+
+        $publicKb = $this->kb;
+        foreach ($blacklist as $key) {
+            unset($publicKb[$key]);
+        }
+
+        // Strip telegram bot handles but keep public-facing notifications info
+        if (isset($publicKb['notifications']['telegram'])) {
+            unset($publicKb['notifications']['telegram']['bot_names']);
+            unset($publicKb['notifications']['telegram']['bots']);
+        }
+
+        // Ensure meta stamp is present
+        $publicKb['_served_at'] = now()->toIso8601String();
+        $publicKb['_scope'] = 'public';
+
+        return $publicKb;
+    }
+
+    /**
+     * Full internal KB export (includes sensitive sections). Use for
+     * internal backups / admin exports only — NEVER send to untrusted callers.
+     */
+    public function toFullArray(): array
+    {
+        $full = $this->kb;
+        $full['_served_at'] = now()->toIso8601String();
+        $full['_scope'] = 'full';
+        return $full;
+    }
+
+    /**
      * Get the complete system prompt with Knowledge Base for a content type.
      */
     public function getSystemPrompt(string $contentType, ?string $country = null, ?string $language = null, ?string $searchIntent = null): string

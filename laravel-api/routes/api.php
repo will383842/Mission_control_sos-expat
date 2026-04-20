@@ -129,6 +129,19 @@ Route::prefix('public/country-directory')->group(function () {
 });
 
 // ============================================================
+// KNOWLEDGE BASE — PUBLIC (lecture seule, source of truth cross-services)
+// Consumers: Blog_sos-expat_frontend, Social Multi-Platform, Backlink Engine.
+// Excludes sensitive sections (anti_fraud, infrastructure, bot handles).
+// ============================================================
+// Canonical route: GET /api/public/knowledge-base returns JSON.
+// The .json extension alias is intentionally omitted — it collides with a
+// web catch-all route that serves the SPA index.html.
+Route::prefix('public/knowledge-base')->group(function () {
+    Route::get('/', [\App\Http\Controllers\KnowledgeBaseController::class, 'show']);
+    Route::get('/meta', [\App\Http\Controllers\KnowledgeBaseController::class, 'meta']);
+});
+
+// ============================================================
 // MACHINE API — Scripts automatisés (générateur Q/R, etc.)
 // Token statique Bearer → MACHINE_API_TOKEN dans .env
 // ============================================================
