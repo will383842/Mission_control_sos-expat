@@ -265,6 +265,25 @@ export default function AdminRssBlogFeeds() {
     }
   };
 
+  const handleDiscoverDirectory = async (source: 'feedspot' | 'alltop') => {
+    const label = source === 'feedspot' ? 'FeedSpot' : 'AllTop';
+    if (!confirm(`Lancer le scrape ${label} ?\n\nUltra prudent :\n- Max 50 requêtes par run\n- Délais 15-30s aléatoires\n- 1 run max par 24h\n- Circuit breaker si HTTP 403/429\n\nDurée : ~20-30 min. Ajoute ~50-200 nouveaux feeds.`)) return;
+    setDiscovering(true);
+    try {
+      await api.post(`/rss-blog-feeds/discover/${source}`);
+      showToast('ok', `Scrape ${label} dispatché. Résultats dans ~30 min.`);
+    } catch (e: unknown) {
+      const err = e as { response?: { status?: number } };
+      if (err.response?.status === 429) {
+        showToast('err', `Déjà dispatché dans les 24h. Réessaie demain.`);
+      } else {
+        showToast('err', `Erreur dispatch ${label}`);
+      }
+    } finally {
+      setDiscovering(false);
+    }
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex items-start justify-between mb-6">
@@ -296,6 +315,22 @@ export default function AdminRssBlogFeeds() {
             disabled={discovering}
           >
             {discovering ? '⏳ Crawl en cours...' : '🔍 Crawler blogrolls'}
+          </button>
+          <button
+            onClick={() => handleDiscoverDirectory('feedspot')}
+            className="px-3 py-2 bg-orange-900/40 hover:bg-orange-800/60 rounded text-orange-200 text-sm"
+            title="Découvrir des blogs via FeedSpot (ultra prudent, max 1/jour)"
+            disabled={discovering}
+          >
+            🔍 FeedSpot
+          </button>
+          <button
+            onClick={() => handleDiscoverDirectory('alltop')}
+            className="px-3 py-2 bg-orange-900/40 hover:bg-orange-800/60 rounded text-orange-200 text-sm"
+            title="Découvrir des blogs via AllTop (ultra prudent, max 1/jour)"
+            disabled={discovering}
+          >
+            🔍 AllTop
           </button>
           <button
             onClick={openCreate}

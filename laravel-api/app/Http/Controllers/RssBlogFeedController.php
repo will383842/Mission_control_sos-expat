@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\CrawlFeedsBlogrollJob;
+use App\Jobs\ScrapeAllTopJob;
 use App\Jobs\ScrapeBloggerRssFeedsJob;
+use App\Jobs\ScrapeFeedSpotJob;
 use App\Models\RssBlogFeed;
 use App\Services\Scraping\RssAutoDetectService;
 use Illuminate\Http\JsonResponse;
@@ -234,6 +236,33 @@ class RssBlogFeedController extends Controller
         return response()->json([
             'dispatched' => true,
             'message'    => 'Crawl des blogrolls dispatché. Résultats dans les prochaines minutes (~1h max pour 78 feeds).',
+        ], 202);
+    }
+
+    /**
+     * Lance le scrape de FeedSpot pour découvrir de nouveaux feeds.
+     * POST /api/rss-blog-feeds/discover/feedspot
+     * Ultra prudent : max 50 req/run, 1 run/jour, delays 15-30s.
+     */
+    public function discoverFeedSpot(): JsonResponse
+    {
+        ScrapeFeedSpotJob::dispatch();
+        return response()->json([
+            'dispatched' => true,
+            'message'    => 'Scrape FeedSpot dispatché (ultra prudent, ~20-30 min). Résultats dans la liste après completion.',
+        ], 202);
+    }
+
+    /**
+     * Lance le scrape de AllTop pour découvrir de nouveaux feeds.
+     * POST /api/rss-blog-feeds/discover/alltop
+     */
+    public function discoverAllTop(): JsonResponse
+    {
+        ScrapeAllTopJob::dispatch();
+        return response()->json([
+            'dispatched' => true,
+            'message'    => 'Scrape AllTop dispatché (ultra prudent, ~20-30 min). Résultats dans la liste après completion.',
         ], 202);
     }
 

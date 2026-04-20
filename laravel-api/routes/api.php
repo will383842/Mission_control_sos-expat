@@ -462,6 +462,10 @@ Route::middleware('auth:sanctum')->group(function () {
             ->middleware('throttle:5,5');
         Route::post('/discover/blogrolls', [\App\Http\Controllers\RssBlogFeedController::class, 'discoverBlogrolls'])
             ->middleware('throttle:3,60');
+        Route::post('/discover/feedspot', [\App\Http\Controllers\RssBlogFeedController::class, 'discoverFeedSpot'])
+            ->middleware('throttle:1,1440'); // 1 dispatch max par 24h
+        Route::post('/discover/alltop', [\App\Http\Controllers\RssBlogFeedController::class, 'discoverAllTop'])
+            ->middleware('throttle:1,1440');
         // CRUD par ID
         Route::get('/{feed}', [\App\Http\Controllers\RssBlogFeedController::class, 'show']);
         Route::put('/{feed}', [\App\Http\Controllers\RssBlogFeedController::class, 'update']);
