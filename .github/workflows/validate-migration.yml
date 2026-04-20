@@ -40,7 +40,7 @@ jobs:
             echo ""
 
             echo "=== 3. Counts influenceurs par source_origin ==="
-            docker exec inf-app php artisan tinker --execute="\App\Models\Influenceur::selectRaw('COALESCE(source_origin, \"manual\") as origin, COUNT(*) as c')->groupBy('origin')->get()->each(function(\$r){ echo \$r->origin . ' : ' . \$r->c . PHP_EOL; });" 2>&1 | tail -20
+            docker exec inf-app php artisan tinker --execute="\App\Models\Influenceur::selectRaw(\"COALESCE(source_origin, 'manual') as origin, COUNT(*) as c\")->groupBy('origin')->get()->each(function(\$r){ echo \$r->origin . ' : ' . \$r->c . PHP_EOL; });" 2>&1 | tail -20
             echo ""
 
             echo "=== 4. Counts tables legacy (baseline) ==="

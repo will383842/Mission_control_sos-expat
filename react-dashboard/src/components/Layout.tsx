@@ -367,16 +367,15 @@ export default function Layout() {
                     )}
                   </NavSubGroup>
 
-                  <NavSubGroup label="Contacts" isOpen={openSubGroups.sourcing_contacts} onToggle={() => toggleSubGroup('sourcing_contacts')}>
+                  <NavSubGroup label="Annuaires" isOpen={openSubGroups.sourcing_contacts} onToggle={() => toggleSubGroup('sourcing_contacts')}>
                     <NavLink to="/directories" className={subNavClass} onClick={handleNavClick}>
                       📚 Annuaires web
                     </NavLink>
-                    <NavLink to="/content/businesses" className={subNavClass} onClick={handleNavClick}>
-                      🏢 Entreprises
-                    </NavLink>
-                    <NavLink to="/content/contacts" className={subNavClass} onClick={handleNavClick}>
-                      🌐 Contacts web
-                    </NavLink>
+                    {/* P4 Option 1 (2026-04-21) : Entreprises (/content/businesses) et
+                        Contacts web (/content/contacts) sont retires de la sidebar.
+                        Les routes sont conservees (accessibles via URL directe). Leurs
+                        contacts sont visibles dans "Tous les contacts" via chips par
+                        source_origin (content_businesses, content_contacts). */}
                   </NavSubGroup>
 
                   <NavSubGroup label="Données contenu" isOpen={openSubGroups.sourcing_content} onToggle={() => toggleSubGroup('sourcing_content')}>
@@ -430,15 +429,13 @@ export default function Layout() {
                     sidebar. Elles restent accessibles via les chips/cards sur la page
                     /contacts et via les URLs /contacts/<category> (routes conservées). */}
 
-                {/* Outils de sourcing spécialisés (accès direct) */}
-                {isAdmin && (
-                  <NavLink to="/contacts/journalistes" className={subNavClass} onClick={handleNavClick}>
-                    🗞️ Journalistes & Presse
-                  </NavLink>
-                )}
-                <NavLink to="/content/lawyers" className={subNavClass} onClick={handleNavClick}>
-                  ⚖️ Avocats
-                </NavLink>
+                {/* P4 Option 1 (2026-04-21) : Journalistes & Presse et Avocats
+                    sont retires de la sidebar utilisateur. Leurs contacts sont
+                    visibles dans "Tous les contacts" via chips de filtre par
+                    contact_type (presse, avocat). Les outils de scraping specialises
+                    restent accessibles aux admins via URL directe :
+                    - /contacts/journalistes (scrape publications, infer emails)
+                    - /content/lawyers (LawyerDirectory + scrape all/sources) */}
                 <NavLink to="/content/country-directory" className={subNavClass} onClick={handleNavClick}>
                   🗺️ Annuaire Pays
                 </NavLink>
