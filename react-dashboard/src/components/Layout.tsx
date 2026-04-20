@@ -420,32 +420,22 @@ export default function Layout() {
                 onToggle={() => toggleGroup('contacts')}
                 badge={reminders.length}
               >
-                {/* Tous les contacts */}
+                {/* Tous les contacts (avec chips de catégories/sous-types dans la page) */}
                 <NavLink to="/contacts" end className={subNavClass} onClick={handleNavClick}>
                   👥 Tous les contacts
                 </NavLink>
 
-                {/* ── Catégories — routes dédiées, remount garanti ── */}
-                <NavLink to="/contacts/institutionnel" className={subNavClass} onClick={handleNavClick}>
-                  🏛️ Institutionnel
-                </NavLink>
-                <NavLink to="/contacts/medias-influence" className={subNavClass} onClick={handleNavClick}>
-                  📺 Médias & Influence
-                </NavLink>
+                {/* P4 refactor (2026-04-21) : les 5 sous-catégories (Institutionnel,
+                    Médias, Services B2B, Communautés, Digital) sont retirées de la
+                    sidebar. Elles restent accessibles via les chips/cards sur la page
+                    /contacts et via les URLs /contacts/<category> (routes conservées). */}
+
+                {/* Outils de sourcing spécialisés (accès direct) */}
                 {isAdmin && (
                   <NavLink to="/contacts/journalistes" className={subNavClass} onClick={handleNavClick}>
                     🗞️ Journalistes & Presse
                   </NavLink>
                 )}
-                <NavLink to="/contacts/services-b2b" className={subNavClass} onClick={handleNavClick}>
-                  💼 Services B2B
-                </NavLink>
-                <NavLink to="/contacts/communautes" className={subNavClass} onClick={handleNavClick}>
-                  🌍 Communautés
-                </NavLink>
-                <NavLink to="/contacts/digital" className={subNavClass} onClick={handleNavClick}>
-                  🔗 Digital & SEO
-                </NavLink>
                 <NavLink to="/content/lawyers" className={subNavClass} onClick={handleNavClick}>
                   ⚖️ Avocats
                 </NavLink>
