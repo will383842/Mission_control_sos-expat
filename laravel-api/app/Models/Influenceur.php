@@ -96,6 +96,11 @@ class Influenceur extends Model
         'email_verified_status', 'email_verified_at', 'quality_score',
         // Backlink Engine sync
         'backlink_synced_at',
+        // Fusion tables legacy (P1 refactor 2026-04-21)
+        'source_origin', 'source_id_legacy',
+        'firm_name', 'bar_number', 'bar_association', 'specialty',
+        'publication', 'role', 'beat', 'media_type',
+        'url_hash',
     ];
 
     protected $casts = [
