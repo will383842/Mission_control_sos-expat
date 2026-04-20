@@ -1,0 +1,43 @@
+{
+  "params": {
+    "audience_type": "nationality",
+    "template_id": "informational",
+    "country_code": "TH",
+    "language": "fr",
+    "origin_nationality": "DE"
+  },
+  "parsed": {
+    "title": "Allemands en Thaïlande — guide et démarches 2026 · SOS-Expat",
+    "url_slug": "allemands-en-thailande-guide-demarches",
+    "keywords_primary": "allemands en Thaïlande",
+    "keywords_secondary": ["expatrié allemand Thaïlande", "deutsche in Thailand", "Deutsche Botschaft Bangkok", "Rente Thailand", "Krankenversicherung Thailand"],
+    "sections": [
+      {"type": "hero", "content": {"badge": "★ Guide nationalité · 9 langues · Mise à jour 2026", "h1": "Allemands en Thaïlande — démarches, contacts, ressources", "subtitle": "Vous êtes citoyen allemand vivant, travaillant, retraité, étudiant ou voyageur en Thaïlande ? Guide récapitulatif des démarches côté Allemagne (Botschaft Bangkok, Deutsche Rentenversicherung, Krankenversicherung, Finanzamt) et côté thaïlandais, avec possibilité de parler à un avocat germanophone en moins de 5 minutes (49 € / 20 min).", "cta_text": "Parler à un avocat germanophone", "cta_subtext": "49 € / 20 min · Rappel en moins de 5 min · Avocat partenaire SOS-Expat"}},
+      {"type": "intro", "content": {"headline": "Les Allemands en Thaïlande : vue d'ensemble", "text": "Une communauté allemande importante réside en Thaïlande : retraités, digital nomads, entrepreneurs, cadres expatriés, familles germano-thaïlandaises. Les démarches administratives croisent deux systèmes : administration allemande (Deutsche Botschaft Bangkok, Deutsche Rentenversicherung pour la retraite, Bundeszentralamt für Steuern, Krankenversicherungen) et administration thaïlandaise. Ce guide récapitule les contacts officiels et la différence entre information publique et conseil juridique personnalisé."}},
+      {"type": "topics", "content": {"headline": "Principaux sujets pour les Allemands en Thaïlande", "items": [
+        {"name": "Inscription consulaire Deutsche Botschaft", "overview": "Inscription via la Krisenvorsorgeliste (ELEFAND) auprès de l'ambassade allemande à Bangkok. Recommandée pour votre sécurité, vos démarches administratives, et les alertes consulaires en cas de crise."},
+        {"name": "Visa et immigration thaïlandaise", "overview": "Catégories principales : Tourist TR, Non-Immigrant O-A / O-X (retraite 50+), DTV Digital Nomad, Non-Immigrant B avec Arbeitserlaubnis, Long-Term Resident LTR, Thailand Elite. Conditions spécifiques par catégorie, renouvellement annuel ou 5-10 ans."},
+        {"name": "Deutsche Rente versée en Thaïlande", "overview": "La Rente allemande peut être versée sur un compte bancaire thaïlandais ou allemand via la Deutsche Rentenversicherung. Lebensbescheinigung annuelle obligatoire. Attention : imposition de la Rente selon la convention fiscale Allemagne-Thaïlande (1968)."},
+        {"name": "Krankenversicherung et santé", "overview": "La Gesetzliche Krankenversicherung (GKV) ne couvre pas à l'étranger au-delà de séjours courts. Souscription à une Auslandskrankenversicherung privée internationale (ADAC, HanseMerkur, DKV Global) ou assurance locale thaïlandaise. Système de santé thaïlandais privé largement utilisé par les expatriés."},
+        {"name": "Fiscalité Allemagne-Thaïlande", "overview": "Convention fiscale Doppelbesteuerungsabkommen (DBA) Allemagne-Thaïlande de 1968 pour éviter la double imposition. Ansässigkeit fiscale allemande selon § 8/9 AO. Déclaration Steuererklärung si revenus Allemagne continus ou obligation illimitée. Erweiterte beschränkte Steuerpflicht possible selon § 2 AStG."},
+        {"name": "Famille et état civil", "overview": "Geburtsbeurkundung (déclaration de naissance) auprès de la Botschaft pour enfants nés en Thaïlande, Eheschliessung (mariage) germano-thaïlandais avec transcription consulaire, Scheidung internationale. Documents légalisés et souvent Apostille nécessaire."},
+        {"name": "Passeport et documents", "overview": "Renouvellement du Reisepass allemand possible auprès de la Deutsche Botschaft Bangkok avec rendez-vous en ligne. Beglaubigungen et Notarsleistungen limités. Délais variables selon demande."},
+        {"name": "Scolarisation", "overview": "Goethe-Institut Bangkok (cours d'allemand, examens). Deutsche Schule Alexander von Humboldt Bangkok (école privée allemande certifiée, Abitur accessible). Écoles internationales anglophones comme alternative."}
+      ]}},
+      {"type": "faq", "content": {"headline": "Questions fréquentes des Allemands en Thaïlande", "items": [
+        {"q": "Quand est-il utile de consulter un avocat germanophone en Thaïlande ?", "a": "Pour toute situation à enjeu juridique ou fiscal : refus ou changement de visa, demande LTR, acquisition immobilière ou création d'entreprise, divorce ou garde binationale, succession internationale, imposition DBA Allemagne-Thaïlande complexe, Erweiterte beschränkte Steuerpflicht. SOS-Expat met en relation avec un avocat germanophone en moins de 5 minutes (49 € / $55 pour 20 minutes)."},
+        {"q": "Ma Rente allemande est-elle imposée en Thaïlande ?", "a": "Selon la convention fiscale Allemagne-Thaïlande de 1968, les pensions sont généralement imposées dans l'État de résidence — soit la Thaïlande si vous y êtes résident fiscal. Cependant les règles diffèrent pour les Beamtenpensionen et selon la source. Un avocat fiscaliste peut clarifier selon votre profil (49 € / 20 min)."},
+        {"q": "Suis-je soumis à la Erweiterte beschränkte Steuerpflicht ?", "a": "Si vous étiez contribuable illimité en Allemagne pendant ≥5 des 10 dernières années avant départ, et que vous déménagez vers un Niedrigsteuerland (la Thaïlande en fait partie), vous pouvez être soumis pendant 10 ans à une obligation fiscale étendue sur certains revenus de source allemande. Règle complexe — consultation avocat recommandée."},
+        {"q": "Comment fonctionne la déclaration Lebensbescheinigung pour la Rente ?", "a": "Le Rentenservice de la Deutsche Rentenversicherung envoie annuellement un formulaire Lebensbescheinigung à signer et certifier (par la Botschaft, un notaire, ou parfois directement par la Rentenversicherung via Apostille). Retour obligatoire pour continuer à percevoir la Rente. Délais variables."},
+        {"q": "Combien coûte un appel avec un avocat germanophone SOS-Expat ?", "a": "Prix fixe : 49 € ($55) pour 20 minutes avec un avocat, ou 19 € ($25) pour 30 minutes avec un deutsch-sprachiger expat helper déjà installé en Thaïlande pour les questions pratiques non juridiques. Paiement prépayé avant l'appel. L'avocat vous rappelle en moins de 5 minutes après le paiement."},
+        {"q": "Où se trouve la Deutsche Botschaft en Thaïlande ?", "a": "La Deutsche Botschaft Bangkok est située à 9 South Sathorn Road, Bangkok. Elle gère les démarches administratives (Reisepass, Personalausweis, Beurkundungen, ELEFAND), les Notarsleistungen limitées et l'assistance d'urgence. Un Konsulat honoraire existe à Chiang Mai pour démarches basiques. Vérifier les horaires actuels sur bangkok.diplo.de."}
+      ]}},
+      {"type": "cta", "content": {"headline": "Besoin d'un conseil juridique germanophone personnalisé ?", "button": "Parler à un avocat germanophone", "subtext": "49 € / 20 min · Rappel en moins de 5 min · Paiement prépayé · Avocat germanophone"}}
+    ],
+    "meta_title": "Allemands en Thaïlande — guide, Rente, DBA, Anwalt · SOS-Expat",
+    "meta_description": "Guide 2026 pour les Allemands en Thaïlande : Deutsche Botschaft Bangkok, Rente, Krankenversicherung, DBA, visa, Schule. Avocat germanophone en 5 min (49€/20 min).",
+    "cta_links": [{"label": "Parler à un avocat germanophone", "url": "#rappel-avocat?utm_source=landing&utm_medium=nationality&utm_campaign=de-in-th", "style": "primary", "position": "hero"}],
+    "lsi_keywords": ["Deutsche Botschaft Bangkok", "Deutsche Rentenversicherung Thailand", "ELEFAND Krisenvorsorge", "DBA Deutschland Thailand 1968", "Erweiterte beschränkte Steuerpflicht", "Lebensbescheinigung Rente", "Deutsche Schule Bangkok", "Auslandskrankenversicherung Thailand"],
+    "internal_links": [{"anchor": "Immigration en Thaïlande — guide complet", "topic": "pillar immigration TH"}]
+  }
+}

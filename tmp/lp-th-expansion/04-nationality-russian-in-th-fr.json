@@ -1,0 +1,43 @@
+{
+  "params": {
+    "audience_type": "nationality",
+    "template_id": "informational",
+    "country_code": "TH",
+    "language": "fr",
+    "origin_nationality": "RU"
+  },
+  "parsed": {
+    "title": "Russes en Thaïlande — guide et démarches 2026 · SOS-Expat",
+    "url_slug": "russes-en-thailande-guide-demarches",
+    "keywords_primary": "russes en Thaïlande",
+    "keywords_secondary": ["expatrié russe Thaïlande", "ambassade Russie Bangkok", "pension Russie Thaïlande", "russian in Thailand", "visa Thaïlande ressortissant russe"],
+    "sections": [
+      {"type": "hero", "content": {"badge": "★ Guide nationalité · 9 langues · Mise à jour 2026", "h1": "Russes en Thaïlande — démarches, contacts, ressources", "subtitle": "Vous êtes citoyen russe vivant, travaillant, retraité, étudiant ou voyageur en Thaïlande ? Guide récapitulatif des démarches côté russe (ambassade de Russie Bangkok, Пенсионный фонд, ФНС) et côté thaïlandais (visa, immigration). Possibilité de parler à un avocat russophone en moins de 5 minutes (49 € / 20 min).", "cta_text": "Parler à un avocat russophone", "cta_subtext": "49 € / 20 min · Rappel en moins de 5 min · Avocat partenaire SOS-Expat"}},
+      {"type": "intro", "content": {"headline": "Les Russes en Thaïlande : vue d'ensemble", "text": "Une communauté russe très importante réside en Thaïlande, particulièrement à Phuket, Pattaya et Koh Samui : retraités, digital nomads, entrepreneurs, familles, professionnels de l'hôtellerie-tourisme. Les démarches croisent deux systèmes : administration russe (Посольство России в Бангкоке, Пенсионный фонд России, ФНС pour la fiscalité) et administration thaïlandaise. Les Russes bénéficient d'une exemption de visa court séjour jusqu'à 60 jours. Ce guide récapitule les contacts officiels et la différence entre information publique et conseil juridique personnalisé."}},
+      {"type": "topics", "content": {"headline": "Principaux sujets pour les Russes en Thaïlande", "items": [
+        {"name": "Inscription consulaire Посольство", "overview": "Inscription auprès du Посольство Российской Федерации à Bangkok (учёт в консульском учреждении). Recommandée pour votre sécurité, démarches administratives, communication en cas de crise."},
+        {"name": "Visa et immigration thaïlandaise", "overview": "Les Russes bénéficient de l'exemption de visa jusqu'à 60 jours en 2026 (accord bilatéral). Pour séjour long : Tourist TR, Retirement O-A/O-X (50+), DTV Digital Nomad, Non-Immigrant B + work permit, LTR, Thailand Elite. Renouvellement annuel."},
+        {"name": "Пенсия russe versée en Thaïlande", "overview": "La pension russe (Пенсионный фонд России) peut être versée sur un compte bancaire russe ou international via virement. Certificat de vie annuel requis. Attention aux sanctions bancaires internationales qui peuvent compliquer les transferts depuis la Russie via SWIFT."},
+        {"name": "Fiscalité Russie-Thaïlande", "overview": "Convention fiscale Russie-Thaïlande (1999) pour éviter la double imposition. Résidence fiscale russe si ≥183 jours présents en Russie dans une année civile. Si non-résident russe, taxe sur revenus de source russe à 30% (au lieu de 13% résident). ФНС Федеральная налоговая служба gère les obligations déclaratives."},
+        {"name": "Impact des sanctions internationales", "overview": "Depuis 2022, sanctions occidentales ont impacté les banques russes et le SWIFT. Conséquences pratiques pour les expats russes en Thaïlande : difficultés avec cartes Visa/Mastercard russes, transferts SWIFT limités, nécessité d'ouvrir des comptes thaïlandais ou d'utiliser Mir/UnionPay. Un avocat peut conseiller sur les solutions légales."},
+        {"name": "Famille et état civil", "overview": "Регистрация рождения (déclaration de naissance) auprès du Посольство, mariage russo-thaïlandais avec transcription consulaire, Развод international, Апостиль sur documents russes pour usage en Thaïlande (et vice versa)."},
+        {"name": "Passeport et documents", "overview": "Renouvellement du passeport russe possible auprès du Посольство Бангкок. Загранпаспорт biométrique délivré avec délais variables. Consulat honoraire possible à Phuket pour démarches limitées."},
+        {"name": "Communauté russe en Thaïlande", "overview": "Forte concentration russe à Phuket (Patong, Kata), Pattaya (Jomtien), Koh Samui. Écoles russes internationales limitées — accès aux écoles internationales anglophones ou enseignement à distance russe (дистанционное обучение). Églises orthodoxes russes à Phuket et Pattaya."}
+      ]}},
+      {"type": "faq", "content": {"headline": "Questions fréquentes des Russes en Thaïlande", "items": [
+        {"q": "Quand est-il utile de consulter un avocat russophone en Thaïlande ?", "a": "Pour toute situation à enjeu juridique ou fiscal : refus ou changement de visa, demande LTR, acquisition immobilière (règles spéciales pour Russes post-sanctions), création d'entreprise thaïlandaise, transferts bancaires depuis la Russie (sanctions, SWIFT alternatives), divorce binational, succession internationale. SOS-Expat met en relation avec un avocat russophone en moins de 5 minutes (49 € / $55 pour 20 minutes, prépayé)."},
+        {"q": "Puis-je transférer de l'argent depuis la Russie vers la Thaïlande ?", "a": "Les transferts SWIFT depuis certaines banques russes sont restreints depuis 2022. Alternatives : cartes UnionPay chinoises (acceptées en Thaïlande), cartes Mir (peu acceptées hors Russie et CEI), crypto (légal en Russie avec déclaration, réglementé en Thaïlande). Un avocat peut conseiller sur les solutions légales adaptées à votre situation."},
+        {"q": "Ma pension russe est-elle imposée en Thaïlande ?", "a": "Selon la convention fiscale Russie-Thaïlande, les pensions sont généralement imposées dans l'État de résidence — soit la Thaïlande si vous êtes résident fiscal thaïlandais (>180 jours de présence). Mais le Fisc russe peut continuer à retenir à la source si vous êtes classé non-résident. Un avocat fiscaliste peut clarifier selon votre cas."},
+        {"q": "Puis-je acheter un bien immobilier en Thaïlande ?", "a": "Les Russes, comme tous les étrangers, peuvent acheter des copropriétés (condo) jusqu'à 49% d'un immeuble. L'achat de terrain est interdit aux étrangers. Structures via société thaïlandaise (Thai Limited) réglementées. Depuis 2022, les transferts de fonds depuis la Russie nécessitent souvent des alternatives au SWIFT — avocat essentiel pour sécuriser la transaction (49 € / 20 min)."},
+        {"q": "Combien coûte un appel avec un avocat russophone SOS-Expat ?", "a": "Prix fixe : 49 € ($55) pour 20 minutes avec un avocat, ou 19 € ($25) pour 30 minutes avec un expat aidant russophone déjà installé en Thaïlande pour questions pratiques non juridiques. Paiement prépayé avant l'appel. L'avocat vous rappelle en moins de 5 minutes après le paiement."},
+        {"q": "Où se trouve l'ambassade de Russie en Thaïlande ?", "a": "Посольство Российской Федерации в Таиланде est situé à 78 Sap Road (rue Sap), Surawongse, Bangkok. Il gère les démarches administratives (Загранпаспорт, Notarial Services, Апостиль, регистрация consulaire) et l'assistance d'urgence. Consulat honoraire à Phuket. Vérifier les horaires et services actuels sur thailand.mid.ru."}
+      ]}},
+      {"type": "cta", "content": {"headline": "Besoin d'un conseil juridique russophone personnalisé ?", "button": "Parler à un avocat russophone", "subtext": "49 € / 20 min · Rappel en moins de 5 min · Paiement prépayé · Avocat russophone"}}
+    ],
+    "meta_title": "Russes en Thaïlande — ambassade, pension, sanctions, avocat · SOS-Expat",
+    "meta_description": "Guide 2026 pour les Russes en Thaïlande : ambassade Bangkok, pension, fiscalité, visa 60 jours, sanctions bancaires, école. Avocat russophone en 5 min (49€/20 min).",
+    "cta_links": [{"label": "Parler à un avocat russophone", "url": "#rappel-avocat?utm_source=landing&utm_medium=nationality&utm_campaign=ru-in-th", "style": "primary", "position": "hero"}],
+    "lsi_keywords": ["Посольство России Бангкок", "Пенсия Россия Таиланд", "визовый безвиз 60 дней", "Russian expat Phuket Pattaya", "sanctions SWIFT Russie 2026", "UnionPay Thailand", "Апостиль Россия Таиланд"],
+    "internal_links": [{"anchor": "Immigration en Thaïlande — guide complet", "topic": "pillar immigration TH"}]
+  }
+}

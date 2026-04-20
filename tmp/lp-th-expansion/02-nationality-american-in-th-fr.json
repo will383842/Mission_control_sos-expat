@@ -1,0 +1,48 @@
+{
+  "params": {
+    "audience_type": "nationality",
+    "template_id": "informational",
+    "country_code": "TH",
+    "language": "fr",
+    "origin_nationality": "US"
+  },
+  "parsed": {
+    "title": "Américains en Thaïlande — guide et démarches 2026 · SOS-Expat",
+    "url_slug": "americains-en-thailande-guide-demarches",
+    "keywords_primary": "américains en Thaïlande",
+    "keywords_secondary": ["expatrié américain Thaïlande", "US citizen Thailand", "US Embassy Bangkok", "FBAR FATCA Thaïlande", "Social Security Thaïlande"],
+    "sections": [
+      {"type": "hero", "content": {"badge": "★ Guide nationalité · 9 langues · Mise à jour 2026", "h1": "Américains en Thaïlande — démarches, contacts, ressources", "subtitle": "Vous êtes citoyen américain vivant, travaillant, retraité, étudiant ou voyageur en Thaïlande ? Guide récapitulatif des démarches côté États-Unis (US Embassy Bangkok, IRS, Social Security, FBAR/FATCA) et côté thaïlandais (visa, immigration), avec possibilité de parler à un avocat anglophone en moins de 5 minutes (49 € / 20 min).", "cta_text": "Parler à un avocat anglophone", "cta_subtext": "49 € / 20 min · Rappel en moins de 5 min · Avocat partenaire SOS-Expat"}},
+      {"type": "intro", "content": {"headline": "Les Américains en Thaïlande : vue d'ensemble", "text": "Une communauté américaine importante réside en Thaïlande : retraités, digital nomads, entrepreneurs, cadres expatriés, familles binationales, vétérans, étudiants. Les démarches croisent deux systèmes : l'administration américaine (US Embassy Bangkok, IRS pour la fiscalité citizenship-based, Social Security Administration, Department of State) et l'administration thaïlandaise. Point clé : les US taxent leurs citoyens WORLDWIDE même en expat (citizenship-based taxation), avec obligations FBAR (FinCEN 114) et FATCA. Guide complet + option avocat en 5 min."}},
+      {"type": "topics", "content": {"headline": "Principaux sujets pour les Américains en Thaïlande", "items": [
+        {"name": "US Embassy Bangkok et inscription consulaire", "overview": "Inscription via le Smart Traveler Enrollment Program (STEP) sur travel.state.gov. Recommandée pour alertes consulaires, assistance en cas d'urgence, contact familial. American Citizen Services (ACS) pour démarches consulaires."},
+        {"name": "Visa et immigration thaïlandaise", "overview": "Choix de visa selon profil : Tourist TR, Retirement O-A ou O-X (50+ avec conditions de revenus), DTV Digital Nomad, Non-Immigrant B + work permit, LTR (Long-Term Resident), Thailand Elite Visa. Les US n'ont pas de bilateral agreement spécifique avec la Thaïlande pour faciliter l'immigration (contrairement au Japon ou à la Corée)."},
+        {"name": "Fiscalité US citizenship-based + convention US-Thaïlande", "overview": "Les US imposent leurs citoyens worldwide, même résidents permanents à l'étranger (sauf si renonciation à la citoyenneté). Foreign Earned Income Exclusion (FEIE) jusqu'à ~120 000 $ en 2026 si test physical presence ou bona fide residence. Foreign Tax Credit pour les impôts thaïlandais payés. Convention fiscale US-Thaïlande (1996)."},
+        {"name": "FBAR et FATCA", "overview": "FBAR (FinCEN Form 114) obligatoire si total des comptes étrangers > 10 000 $ à tout moment de l'année. FATCA (Form 8938) si seuils atteints selon statut. Pénalités civiles et pénales sévères en cas de non-déclaration — un avocat fiscaliste US est souvent nécessaire."},
+        {"name": "Social Security pour les expatriés", "overview": "Les benefits Social Security peuvent être versés à l'étranger si éligible (pas certains pays sanctionnés, dont la Thaïlande reste éligible). Pas d'accord de totalisation US-Thaïlande : cotisations thaïlandaises ne comptent pas pour Social Security US, et vice versa."},
+        {"name": "Passeport et documents", "overview": "Renouvellement de passeport US possible depuis la Thaïlande via l'US Embassy (pas par courrier vers les US comme pour l'Europe). Notarial Services, Consular Reports of Birth Abroad (CRBA) pour enfants nés en Thaïlande. Social Security number ajouté via application au Embassy."},
+        {"name": "Assurance santé pour expats US", "overview": "Medicare ne couvre PAS à l'étranger (sauf très rares exceptions). Medicare Advantage et Medigap également inutiles en Thaïlande. Assurance internationale privée nécessaire (Cigna Global, GeoBlue, IMG, Allianz Care). Coût annuel ~3 000-10 000 $ selon âge et couverture."},
+        {"name": "Scolarisation", "overview": "Écoles américaines internationales à Bangkok : International School Bangkok (ISB), NIST International School, Ruamrudee International School. Curriculums US, AP, IB. Accès aux universités US depuis ces écoles accrédité."}
+      ]}},
+      {"type": "faq", "content": {"headline": "Questions fréquentes des Américains en Thaïlande", "items": [
+        {"q": "Quand est-il utile de consulter un avocat anglophone en Thaïlande ?", "a": "Pour toute situation à enjeu juridique ou fiscal US : FBAR ou FATCA non-déclaré, Streamlined Filing Compliance Procedures, renonciation de citoyenneté (expatriation tax), divorce international, acquisition immobilière en Thaïlande, succession internationale, LLC ou C-Corp US pour activité en Thaïlande. SOS-Expat met en relation avec un avocat anglophone en moins de 5 minutes (49 € / $55 pour 20 minutes)."},
+        {"q": "Dois-je déclarer mes revenus aux US si je vis en Thaïlande ?", "a": "Oui, obligatoirement. Les États-Unis utilisent la citizenship-based taxation : vous devez déposer une déclaration IRS annuelle (Form 1040) même résident permanent en Thaïlande, quelle que soit votre source de revenus. Le Foreign Earned Income Exclusion (FEIE ~120k$) et le Foreign Tax Credit atténuent souvent l'impôt, mais la déclaration reste obligatoire."},
+        {"q": "Ma Social Security est-elle payée en Thaïlande ?", "a": "Oui, la Thaïlande est éligible pour recevoir les benefits Social Security (contrairement à certains pays sous sanctions). Le versement peut se faire sur votre compte US ou international. Prévoir un IRS Tax Withholding selon votre statut (résident fiscal thaïlandais ou US). Pas de totalisation agreement US-Thaïlande."},
+        {"q": "Puis-je acheter une maison en Thaïlande en tant qu'Américain ?", "a": "Les étrangers ne peuvent pas posséder de terrain en Thaïlande (sauf quelques cas d'exception via BOI). Les étrangers peuvent posséder des copropriétés (condominiums) jusqu'à 49% du total d'un immeuble. Achat via société thaïlandaise (Thai Limited) réglementé et complexe juridiquement. Un avocat spécialisé en real estate est essentiel — SOS-Expat met en relation en 5 min."},
+        {"q": "Combien coûte un appel avec un avocat anglophone SOS-Expat ?", "a": "Prix fixe : 49 € ($55) pour 20 minutes avec un avocat, ou 19 € ($25) pour 30 minutes avec un American expat helper déjà installé en Thaïlande pour les questions pratiques non juridiques. Paiement prépayé avant l'appel, sans surprise. L'avocat vous rappelle en moins de 5 minutes après le paiement."},
+        {"q": "Où se trouve l'US Embassy en Thaïlande ?", "a": "L'US Embassy Bangkok est situé à 95 Wireless Road, Bangkok. Un Consulate General existe également à Chiang Mai. Services American Citizen Services (ACS) pour passeports, CRBA, Notarial Services, assistance d'urgence. Vérifier les horaires et services actuels sur th.usembassy.gov."}
+      ]}},
+      {"type": "cta", "content": {"headline": "Besoin d'un conseil juridique anglophone personnalisé ?", "button": "Parler à un avocat anglophone", "subtext": "49 € / 20 min · Rappel en moins de 5 min · Paiement prépayé · Avocat anglophone"}}
+    ],
+    "meta_title": "Américains en Thaïlande — guide, FBAR, IRS, avocat US · SOS-Expat",
+    "meta_description": "Guide 2026 pour les Américains en Thaïlande : US Embassy Bangkok, IRS, Social Security, FBAR/FATCA, visa, école. Avocat anglophone en 5 min (49€/20 min).",
+    "cta_links": [
+      {"label": "Parler à un avocat anglophone", "url": "#rappel-avocat?utm_source=landing&utm_medium=nationality&utm_campaign=us-in-th", "style": "primary", "position": "hero"}
+    ],
+    "lsi_keywords": ["US Embassy Bangkok", "IRS expatriate US citizen", "FBAR Thailand FinCEN", "FATCA Form 8938", "Foreign Earned Income Exclusion", "Streamlined Filing Compliance", "Medicare abroad", "International School Bangkok ISB", "Thailand Elite Visa US", "condo ownership foreigner Thailand"],
+    "internal_links": [
+      {"anchor": "Immigration en Thaïlande — guide complet", "topic": "pillar immigration TH"},
+      {"anchor": "Devenir avocat partenaire aux USA pour la Thaïlande", "topic": "landing lawyers TH"}
+    ]
+  }
+}

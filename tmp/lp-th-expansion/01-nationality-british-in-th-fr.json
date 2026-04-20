@@ -1,0 +1,50 @@
+{
+  "params": {
+    "audience_type": "nationality",
+    "template_id": "informational",
+    "country_code": "TH",
+    "language": "fr",
+    "origin_nationality": "GB"
+  },
+  "parsed": {
+    "title": "Britanniques en Thaïlande — guide et démarches 2026 · SOS-Expat",
+    "url_slug": "britanniques-en-thailande-guide-demarches",
+    "keywords_primary": "britanniques en Thaïlande",
+    "keywords_secondary": ["expatrié britannique Thaïlande", "visa Thaïlande ressortissant UK", "communauté britannique Bangkok", "British nationals Thailand", "consulat Royaume-Uni Bangkok"],
+    "sections": [
+      {"type": "hero", "content": {"badge": "★ Guide nationalité · 9 langues · Mise à jour 2026", "h1": "Britanniques en Thaïlande — démarches, contacts, ressources", "subtitle": "Vous êtes citoyen britannique vivant, travaillant, retraité, étudiant ou voyageur en Thaïlande ? Guide récapitulatif des démarches côté Royaume-Uni (British Embassy Bangkok, pension, HMRC, NHS) et côté thaïlandais (visa, immigration), avec possibilité de parler à un avocat anglophone en moins de 5 minutes (49 € / 20 min).", "cta_text": "Parler à un avocat anglophone", "cta_subtext": "49 € / 20 min · Rappel en moins de 5 min · Avocat partenaire SOS-Expat"}},
+      {"type": "intro", "content": {"headline": "Les Britanniques en Thaïlande : vue d'ensemble", "text": "Une communauté britannique significative réside en Thaïlande depuis des décennies : retraités, entrepreneurs, digital nomads, cadres expatriés, familles binationales, étudiants. Les démarches administratives croisent deux systèmes : l'administration britannique (Foreign, Commonwealth & Development Office via le British Embassy à Bangkok, HMRC pour la fiscalité, DWP pour la retraite) et l'administration thaïlandaise (Immigration Bureau, Ministry of Labour, Board of Investment). Ce guide récapitule les points de contact officiels, les sujets courants côté UK et la différence entre information publique et conseil juridique personnalisé."}},
+      {"type": "topics", "content": {"headline": "Principaux sujets pour les Britanniques en Thaïlande", "items": [
+        {"name": "Consular registration", "overview": "Inscription auprès du British Embassy Bangkok via le portail gov.uk. Recommandée pour votre sécurité (contact en cas de crise), vos démarches administratives (Notarial Services), et les alertes consulaires."},
+        {"name": "Visa et immigration", "overview": "Choix de la catégorie de visa adaptée (Tourist TR, Retirement O-A ou O-X, Destination Thailand Visa DTV, Non-Immigrant B avec work permit, Long-Term Resident LTR, Thailand Elite). Renouvellement annuel ou 5-10 ans selon la catégorie."},
+        {"name": "State Pension payée en Thaïlande", "overview": "La State Pension UK peut être versée sur un compte bancaire thaïlandais ou britannique. Le taux ne bénéficie PAS de l'indexation annuelle (frozen pension) en Thaïlande, contrairement à d'autres pays. Point d'attention majeur pour les retraités."},
+        {"name": "Couverture santé", "overview": "Le NHS cesse de couvrir les résidents permanents à l'étranger après 3 mois. Assurance santé privée internationale (Bupa Global, Cigna Global, Allianz Care) ou assurance locale thaïlandaise. Le système de santé thaïlandais privé est largement utilisé."},
+        {"name": "Fiscalité UK-Thaïlande", "overview": "Convention fiscale Royaume-Uni / Thaïlande pour éviter la double imposition. Critères de résidence fiscale britannique (Statutory Residence Test SRT) et thaïlandaise (présence >180 jours). HMRC Self Assessment si revenus UK continus."},
+        {"name": "Famille et état civil", "overview": "Birth registration au British Embassy (Registered Overseas Birth), mariage UK-thaï (transcription consulaire), civil partnership, divorce international. Tous les documents nécessitent légalisation et souvent Apostille."},
+        {"name": "Passeport et documents", "overview": "Renouvellement de passeport britannique possible depuis la Thaïlande via le processus en ligne gov.uk. Notarial Services limités au consulat (pas de services notariaux complets). Délais variables."},
+        {"name": "Scolarisation", "overview": "Écoles britanniques internationales accréditées à Bangkok (Bromsgrove International School, Harrow, Shrewsbury, Regents). Accès au système britannique (IGCSE, A-Levels, IB)."}
+      ]}},
+      {"type": "faq", "content": {"headline": "Questions fréquentes des Britanniques en Thaïlande", "items": [
+        {"q": "Quand est-il utile de consulter un avocat anglophone en Thaïlande ?", "a": "Pour toute situation à enjeu juridique ou fiscal : refus ou changement de visa, demande LTR, acquisition immobilière ou création de société, divorce ou garde d'enfant binationale, succession internationale, frozen pension, fiscalité UK-Thaïlande complexe. SOS-Expat met en relation avec un avocat anglophone en moins de 5 minutes (49 € / $55 pour 20 minutes, prépayé)."},
+        {"q": "Ma retraite britannique est-elle indexée en Thaïlande ?", "a": "Non. La State Pension UK est 'frozen' (gelée) pour les résidents de Thaïlande — elle ne bénéficie pas de l'augmentation annuelle accordée aux bénéficiaires résidant au Royaume-Uni, en Europe, aux USA ou dans certains pays ayant un accord bilatéral. Point d'attention budgétaire majeur pour les retraités."},
+        {"q": "Dois-je payer la NHS surcharge (IHS) si je rentre temporairement au UK ?", "a": "Pas si vous êtes toujours 'ordinarily resident' au UK au sens du NHS (visites courtes, pas de changement de résidence principale déclaré). Consultez un avocat en cas de doute : la définition d'ordinarily resident est complexe et les contrôles augmentent depuis 2023."},
+        {"q": "Suis-je imposable au UK ou en Thaïlande ?", "a": "La convention fiscale UK-Thaïlande détermine où chaque type de revenu est imposé. Votre résidence fiscale britannique dépend du Statutory Residence Test (SRT) : jours de présence UK, ties (logement, famille, travail, 90-day rule). Un avocat fiscaliste peut clarifier votre cas complexe (49 € / 20 min)."},
+        {"q": "Combien coûte un appel avec un avocat anglophone SOS-Expat ?", "a": "Prix fixe transparent : 49 € ($55) pour 20 minutes avec un avocat, ou 19 € ($25) pour 30 minutes avec un British expat helper déjà installé en Thaïlande pour les questions pratiques non juridiques. Paiement prépayé avant l'appel. L'avocat vous rappelle en moins de 5 minutes après le paiement."},
+        {"q": "Où se trouve le British Embassy en Thaïlande ?", "a": "Le British Embassy Bangkok est situé à 14 Wireless Road, Lumpini, Pathumwan, Bangkok. Il gère les démarches administratives des ressortissants britanniques résidant en Thaïlande (passeports, Notarial Services limités, registered overseas births, alertes consulaires). Le consulat couvre également les British Overseas Territories et les ressortissants d'Irlande du Nord. Vérifier les horaires et services actuels sur gov.uk/world/thailand."}
+      ]}},
+      {"type": "cta", "content": {"headline": "Besoin d'un conseil juridique anglophone personnalisé ?", "button": "Parler à un avocat anglophone", "subtext": "49 € / 20 min · Rappel en moins de 5 min · Paiement prépayé · Avocat anglophone"}}
+    ],
+    "meta_title": "Britanniques en Thaïlande — guide, démarches, avocat UK · SOS-Expat",
+    "meta_description": "Guide 2026 pour les Britanniques en Thaïlande : British Embassy Bangkok, State Pension, NHS, fiscalité, visa, école. Avocat anglophone en 5 min (49€/20 min, prépayé).",
+    "cta_links": [
+      {"label": "Parler à un avocat anglophone", "url": "#rappel-avocat?utm_source=landing&utm_medium=nationality&utm_campaign=gb-in-th", "style": "primary", "position": "hero"},
+      {"label": "Voir tous les sujets", "url": "#topics?utm_source=landing&utm_medium=nationality&utm_campaign=gb-in-th", "style": "secondary", "position": "middle"}
+    ],
+    "lsi_keywords": ["British Embassy Bangkok", "State Pension frozen Thailand", "NHS ordinarily resident", "HMRC Statutory Residence Test", "British expat Thailand", "UK passport renewal Bangkok", "registered overseas birth", "Harrow Bangkok International School"],
+    "internal_links": [
+      {"anchor": "Immigration en Thaïlande — guide complet des visas", "topic": "pillar immigration TH"},
+      {"anchor": "Français en Thaïlande — démarches consulaires", "topic": "nationality FR TH"},
+      {"anchor": "Devenir avocat partenaire anglophone en Thaïlande", "topic": "landing lawyers TH"}
+    ]
+  }
+}
