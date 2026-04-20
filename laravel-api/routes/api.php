@@ -800,6 +800,7 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 
         // Landing Pages (CRUD manuel existant)
+        Route::get('/landings/stats',    [LandingPageController::class, 'stats']);
         Route::get('/landings', [LandingPageController::class, 'index']);
         Route::post('/landings', [LandingPageController::class, 'store']);
         Route::get('/landings/{landing}', [LandingPageController::class, 'show']);

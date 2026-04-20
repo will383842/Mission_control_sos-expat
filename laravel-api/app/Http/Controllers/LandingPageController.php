@@ -12,6 +12,40 @@ use Illuminate\Http\Request;
 
 class LandingPageController extends Controller
 {
+    /**
+     * GET /api/landings/stats
+     *
+     * Breakdown of published landings by generation_source and language.
+     * Used by the Landing Generator dashboard to surface backfill totals
+     * that are not counted by the AI-campaign pipeline.
+     */
+    public function stats(): JsonResponse
+    {
+        $bySource = LandingPage::query()
+            ->whereNull('deleted_at')
+            ->where('status', 'published')
+            ->selectRaw('generation_source, COUNT(*) AS n')
+            ->groupBy('generation_source')
+            ->pluck('n', 'generation_source')
+            ->toArray();
+
+        $byLanguage = LandingPage::query()
+            ->whereNull('deleted_at')
+            ->where('status', 'published')
+            ->selectRaw('language, COUNT(*) AS n')
+            ->groupBy('language')
+            ->pluck('n', 'language')
+            ->toArray();
+
+        return response()->json([
+            'total_published'         => array_sum($bySource),
+            'ai_generated'            => (int) ($bySource['ai_generated'] ?? 0),
+            'deterministic_backfill'  => (int) ($bySource['deterministic_backfill'] ?? 0),
+            'manual'                  => (int) ($bySource['manual'] ?? 0),
+            'by_language'             => $byLanguage,
+        ]);
+    }
+
     public function index(Request $request): JsonResponse
     {
         $request->validate([

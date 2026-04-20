@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchLandingCampaign, fetchLandings } from '../../api/contentApi';
+import { fetchLandingCampaign, fetchLandings, fetchLandingStats, type LandingStats } from '../../api/contentApi';
 import type { AudienceType } from '../../api/contentApi';
 import type { LandingCampaignData } from './LandingCountryQueue';
 import type { LandingPage, PaginatedResponse } from '../../types/content';
@@ -198,12 +198,13 @@ export default function LandingGeneratorHub() {
   const navigate = useNavigate();
   const [stats, setStats]     = useState<AudienceStat[]>([]);
   const [recent, setRecent]   = useState<AugmentedLP[]>([]);
+  const [extraStats, setExtraStats] = useState<LandingStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [campaignResults, landingsRes] = await Promise.all([
+      const [campaignResults, landingsRes, statsRes] = await Promise.all([
         Promise.allSettled(
           AUDIENCES.map((a) => fetchLandingCampaign(a.type)),
         ),
@@ -212,7 +213,9 @@ export default function LandingGeneratorHub() {
           page: 1,
           generation_source: 'ai_generated',
         }),
+        fetchLandingStats().catch(() => null),
       ]);
+      setExtraStats(statsRes?.data ?? null);
 
       // Build stats per audience
       const built: AudienceStat[] = AUDIENCES.map((a, i) => {
@@ -281,8 +284,20 @@ export default function LandingGeneratorHub() {
         <div className="flex items-center gap-3 flex-wrap">
           <div className="bg-bg border border-border/30 rounded-xl px-4 py-2 text-center">
             <p className="text-lg font-bold text-white font-mono">{totalGenerated}</p>
-            <p className="text-[10px] text-muted">LPs générées</p>
+            <p className="text-[10px] text-muted">LPs IA générées</p>
           </div>
+          {extraStats && extraStats.deterministic_backfill > 0 && (
+            <div className="bg-sky-500/10 border border-sky-500/30 rounded-xl px-4 py-2 text-center" title="Landings créées via la commande `landings:backfill-translations` (déterministe, sans LLM) — complètent la couverture multilingue des LPs IA">
+              <p className="text-lg font-bold text-sky-300 font-mono">{extraStats.deterministic_backfill}</p>
+              <p className="text-[10px] text-muted">Backfill traductions</p>
+            </div>
+          )}
+          {extraStats && (
+            <div className="bg-bg border border-border/30 rounded-xl px-4 py-2 text-center" title="Total publié (IA + backfill + manuel)">
+              <p className="text-lg font-bold text-white font-mono">{extraStats.total_published}</p>
+              <p className="text-[10px] text-muted">Total publié</p>
+            </div>
+          )}
           {running > 0 && (
             <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-4 py-2 text-center">
               <p className="text-lg font-bold text-emerald-400 font-mono">{running}</p>

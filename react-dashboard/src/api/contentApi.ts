@@ -117,6 +117,17 @@ export const publishComparative = (id: number, data: { endpoint_id: number; sche
 export const fetchLandings = (params?: Record<string, unknown>) =>
   api.get<PaginatedResponse<LandingPage>>('/content-gen/landings', { params });
 
+export interface LandingStats {
+  total_published: number;
+  ai_generated: number;
+  deterministic_backfill: number;
+  manual: number;
+  by_language: Record<string, number>;
+}
+
+export const fetchLandingStats = () =>
+  api.get<LandingStats>('/content-gen/landings/stats');
+
 export const fetchLanding = (id: number) =>
   api.get<LandingPage>(`/content-gen/landings/${id}`);
 
