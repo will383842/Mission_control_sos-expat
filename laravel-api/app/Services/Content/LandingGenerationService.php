@@ -2,6 +2,7 @@
 
 namespace App\Services\Content;
 
+use App\Models\ApiCost;
 use App\Models\CountryGeo;
 use App\Models\LandingCampaign;
 use App\Models\LandingPage;
@@ -326,35 +327,111 @@ class LandingGenerationService
         $countryCode  = $params['country_code'];
         $language     = $params['language'] ?? 'fr';
 
-        return match ($audienceType) {
-            'clients'  => $this->generateClientLanding(
-                LandingProblem::where('slug', $params['problem_slug'] ?? '')->firstOrFail(),
-                $templateId,
-                $countryCode,
-                $language,
-                $params['created_by'] ?? null,
-                $params,
-            ),
-            'lawyers'  => $this->generateLawyerLanding($templateId, $countryCode, $language, $params['created_by'] ?? null, $params),
-            'helpers'  => $this->generateHelperLanding($templateId, $countryCode, $language, $params['created_by'] ?? null, $params),
-            'matching' => $this->generateMatchingLanding($templateId, $countryCode, $language, $params['created_by'] ?? null, $params),
-            'category_pillar' => $this->generateCategoryPillarLanding(
-                $params['category_slug'] ?? ($params['problem_slug'] ?? 'general'),
-                $templateId, $countryCode, $language, $params['created_by'] ?? null, $params
-            ),
-            'profile' => $this->generateProfileLanding(
-                $params['user_profile'] ?? ($params['problem_slug'] ?? 'expatrie'),
-                $templateId, $countryCode, $language, $params['created_by'] ?? null, $params
-            ),
-            'emergency' => $this->generateEmergencyLanding(
-                $templateId, $countryCode, $language, $params['created_by'] ?? null, $params
-            ),
-            'nationality' => $this->generateNationalityLanding(
-                $params['origin_nationality'] ?? strtoupper($params['problem_slug'] ?? 'FR'),
-                $templateId, $countryCode, $language, $params['created_by'] ?? null, $params
-            ),
-            default    => throw new \InvalidArgumentException("audience_type invalide: {$audienceType}"),
-        };
+        // Shell créé AVANT les appels IA pour rattacher les api_costs à la LP.
+        $shell = $this->createLandingShell($params);
+
+        try {
+            return match ($audienceType) {
+                'clients'  => $this->generateClientLanding(
+                    LandingProblem::where('slug', $params['problem_slug'] ?? '')->firstOrFail(),
+                    $templateId,
+                    $countryCode,
+                    $language,
+                    $params['created_by'] ?? null,
+                    $params,
+                    $shell,
+                ),
+                'lawyers'  => $this->generateLawyerLanding($templateId, $countryCode, $language, $params['created_by'] ?? null, $params, $shell),
+                'helpers'  => $this->generateHelperLanding($templateId, $countryCode, $language, $params['created_by'] ?? null, $params, $shell),
+                'matching' => $this->generateMatchingLanding($templateId, $countryCode, $language, $params['created_by'] ?? null, $params, $shell),
+                'category_pillar' => $this->generateCategoryPillarLanding(
+                    $params['category_slug'] ?? ($params['problem_slug'] ?? 'general'),
+                    $templateId, $countryCode, $language, $params['created_by'] ?? null, $params, $shell,
+                ),
+                'profile' => $this->generateProfileLanding(
+                    $params['user_profile'] ?? ($params['problem_slug'] ?? 'expatrie'),
+                    $templateId, $countryCode, $language, $params['created_by'] ?? null, $params, $shell,
+                ),
+                'emergency' => $this->generateEmergencyLanding(
+                    $templateId, $countryCode, $language, $params['created_by'] ?? null, $params, $shell,
+                ),
+                'nationality' => $this->generateNationalityLanding(
+                    $params['origin_nationality'] ?? strtoupper($params['problem_slug'] ?? 'FR'),
+                    $templateId, $countryCode, $language, $params['created_by'] ?? null, $params, $shell,
+                ),
+                default    => throw new \InvalidArgumentException("audience_type invalide: {$audienceType}"),
+            };
+        } catch (\Throwable $e) {
+            // Nettoie le shell orphelin si la génération échoue, sinon la dédup par
+            // (audience_type, template_id, country_code, language) bloquerait les retries.
+            $shell->forceDelete();
+            throw $e;
+        }
+    }
+
+    // ============================================================
+    // Shell + AI wrappers avec cost tracking
+    // ============================================================
+
+    /**
+     * Crée une LP "coquille" avec un slug temporaire, avant les appels IA.
+     * Permet aux ApiCost créés pendant la génération d'être rattachés via costable_id.
+     * Le slug + contenu final seront injectés par saveLandingPage() (UPDATE).
+     */
+    private function createLandingShell(array $params): LandingPage
+    {
+        return LandingPage::create([
+            'audience_type'      => $params['audience_type'],
+            'template_id'        => $params['template_id'],
+            'country_code'       => $params['country_code'],
+            'language'           => $params['language'] ?? 'fr',
+            'problem_id'         => $params['problem_slug']       ?? null,
+            'category_slug'      => $params['category_slug']      ?? null,
+            'user_profile'       => $params['user_profile']       ?? null,
+            'origin_nationality' => $params['origin_nationality'] ?? null,
+            'generation_source'  => 'ai_generated',
+            'parent_id'          => $params['parent_id'] ?? null,
+            'created_by'         => $params['created_by'] ?? null,
+            'slug'               => 'tmp-' . (string) Str::uuid(),
+            'title'              => '[generating]',
+            'sections'           => [],
+            'seo_score'          => 0,
+            'status'             => 'generating',
+        ]);
+    }
+
+    /**
+     * Wrapper OpenAI qui injecte costable_type/costable_id pour rattacher
+     * l'ApiCost créé à la LandingPage en cours de génération.
+     */
+    private function openAiWithCost(
+        string $systemPrompt,
+        string $userPrompt,
+        array $options,
+        ?LandingPage $shell,
+    ): array {
+        if ($shell !== null) {
+            $options['costable_type'] = LandingPage::class;
+            $options['costable_id']   = $shell->id;
+        }
+        return $this->openAi->complete($systemPrompt, $userPrompt, $options);
+    }
+
+    /**
+     * Wrapper Claude (fallback) qui injecte costable_type/costable_id et
+     * retourne le tableau complet (corrige le bug qui aplatissait le retour).
+     */
+    private function claudeWithCost(
+        string $systemPrompt,
+        string $userPrompt,
+        array $options,
+        ?LandingPage $shell,
+    ): array {
+        if ($shell !== null) {
+            $options['costable_type'] = LandingPage::class;
+            $options['costable_id']   = $shell->id;
+        }
+        return $this->claude->complete($systemPrompt, $userPrompt, $options);
     }
 
     // ============================================================
@@ -368,6 +445,7 @@ class LandingGenerationService
         string $language,
         ?int $createdBy,
         array $params = [],
+        ?LandingPage $shell = null,
     ): LandingPage {
         $template    = self::TEMPLATES['clients'][$templateId] ?? self::TEMPLATES['clients']['seo'];
         $countryName = $this->getCountryName($countryCode, $language);
@@ -491,17 +569,17 @@ class LandingGenerationService
 
         $model       = ($params['use_cheap_model'] ?? false) ? 'gpt-4o-mini' : 'gpt-4o';
         $temperature = ($params['use_cheap_model'] ?? false) ? 0.4 : 0.7;
-        $result      = $this->openAi->complete($systemPrompt, $userPrompt, [
+        $result      = $this->openAiWithCost($systemPrompt, $userPrompt, [
             'model'       => $model,
             'max_tokens'  => 4500,
             'json_mode'   => true,
             'temperature' => $temperature,
-        ]);
+        ], $shell);
 
         // Fallback Claude si OpenAI échoue
         if (empty($result['content'])) {
             Log::warning('LandingGenerationService: OpenAI failed, fallback to Claude', ['audience' => 'clients']);
-            $result = ['content' => $this->claude->complete($systemPrompt, $userPrompt, ['model' => 'claude-sonnet-4-6', 'max_tokens' => 4000])];
+            $result = $this->claudeWithCost($systemPrompt, $userPrompt, ['model' => 'claude-sonnet-4-6', 'max_tokens' => 4000], $shell);
         }
 
         $response = $result['content'] ?? '';
@@ -529,7 +607,7 @@ class LandingGenerationService
             ],
             'parent_id'          => $params['parent_id'] ?? null,
             'created_by'         => $createdBy,
-        ], $parsed, $slug, $countryName, $countryCode, 'clients', $params);
+        ], $parsed, $slug, $countryName, $countryCode, 'clients', $params, $shell);
     }
 
     private function generateLawyerLanding(
@@ -538,6 +616,7 @@ class LandingGenerationService
         string $language,
         ?int $createdBy,
         array $params = [],
+        ?LandingPage $shell = null,
     ): LandingPage {
         $template    = self::TEMPLATES['lawyers'][$templateId] ?? self::TEMPLATES['lawyers']['general'];
         $countryName = $this->getCountryName($countryCode, $language);
@@ -625,17 +704,17 @@ class LandingGenerationService
 
         $model       = ($params['use_cheap_model'] ?? false) ? 'gpt-4o-mini' : 'gpt-4o';
         $temperature = ($params['use_cheap_model'] ?? false) ? 0.4 : 0.7;
-        $result      = $this->openAi->complete($systemPrompt, $userPrompt, [
+        $result      = $this->openAiWithCost($systemPrompt, $userPrompt, [
             'model'       => $model,
             'max_tokens'  => 3500,
             'json_mode'   => true,
             'temperature' => $temperature,
-        ]);
+        ], $shell);
 
         // Fallback Claude si OpenAI échoue
         if (empty($result['content'])) {
             Log::warning('LandingGenerationService: OpenAI failed, fallback to Claude', ['audience' => 'lawyers']);
-            $result = ['content' => $this->claude->complete($systemPrompt, $userPrompt, ['model' => 'claude-sonnet-4-6', 'max_tokens' => 3000])];
+            $result = $this->claudeWithCost($systemPrompt, $userPrompt, ['model' => 'claude-sonnet-4-6', 'max_tokens' => 3000], $shell);
         }
 
         $response = $result['content'] ?? '';
@@ -659,7 +738,7 @@ class LandingGenerationService
             ],
             'parent_id'         => $params['parent_id'] ?? null,
             'created_by'        => $createdBy,
-        ], $parsed, $slug, $countryName, $countryCode, 'lawyers', $params);
+        ], $parsed, $slug, $countryName, $countryCode, 'lawyers', $params, $shell);
     }
 
     private function generateHelperLanding(
@@ -668,6 +747,7 @@ class LandingGenerationService
         string $language,
         ?int $createdBy,
         array $params = [],
+        ?LandingPage $shell = null,
     ): LandingPage {
         $template    = self::TEMPLATES['helpers'][$templateId] ?? self::TEMPLATES['helpers']['recruitment'];
         $countryName = $this->getCountryName($countryCode, $language);
@@ -756,17 +836,17 @@ class LandingGenerationService
 
         $model       = ($params['use_cheap_model'] ?? false) ? 'gpt-4o-mini' : 'gpt-4o';
         $temperature = ($params['use_cheap_model'] ?? false) ? 0.4 : 0.7;
-        $result      = $this->openAi->complete($systemPrompt, $userPrompt, [
+        $result      = $this->openAiWithCost($systemPrompt, $userPrompt, [
             'model'       => $model,
             'max_tokens'  => 3500,
             'json_mode'   => true,
             'temperature' => $temperature,
-        ]);
+        ], $shell);
 
         // Fallback Claude si OpenAI échoue
         if (empty($result['content'])) {
             Log::warning('LandingGenerationService: OpenAI failed, fallback to Claude', ['audience' => 'helpers']);
-            $result = ['content' => $this->claude->complete($systemPrompt, $userPrompt, ['model' => 'claude-sonnet-4-6', 'max_tokens' => 3000])];
+            $result = $this->claudeWithCost($systemPrompt, $userPrompt, ['model' => 'claude-sonnet-4-6', 'max_tokens' => 3000], $shell);
         }
 
         $response = $result['content'] ?? '';
@@ -789,7 +869,7 @@ class LandingGenerationService
             ],
             'parent_id'         => $params['parent_id'] ?? null,
             'created_by'        => $createdBy,
-        ], $parsed, $slug, $countryName, $countryCode, 'helpers', $params);
+        ], $parsed, $slug, $countryName, $countryCode, 'helpers', $params, $shell);
     }
 
     private function generateMatchingLanding(
@@ -798,6 +878,7 @@ class LandingGenerationService
         string $language,
         ?int $createdBy,
         array $params = [],
+        ?LandingPage $shell = null,
     ): LandingPage {
         $template    = self::TEMPLATES['matching'][$templateId] ?? self::TEMPLATES['matching']['expert'];
         $countryName = $this->getCountryName($countryCode, $language);
@@ -891,17 +972,17 @@ class LandingGenerationService
 
         $model       = ($params['use_cheap_model'] ?? false) ? 'gpt-4o-mini' : 'gpt-4o';
         $temperature = ($params['use_cheap_model'] ?? false) ? 0.4 : 0.65;
-        $result      = $this->openAi->complete($systemPrompt, $userPrompt, [
+        $result      = $this->openAiWithCost($systemPrompt, $userPrompt, [
             'model'       => $model,
             'max_tokens'  => 2500,
             'json_mode'   => true,
             'temperature' => $temperature,
-        ]);
+        ], $shell);
 
         // Fallback Claude si OpenAI échoue
         if (empty($result['content'])) {
             Log::warning('LandingGenerationService: OpenAI failed, fallback to Claude', ['audience' => 'matching']);
-            $result = ['content' => $this->claude->complete($systemPrompt, $userPrompt, ['model' => 'claude-sonnet-4-6', 'max_tokens' => 2000])];
+            $result = $this->claudeWithCost($systemPrompt, $userPrompt, ['model' => 'claude-sonnet-4-6', 'max_tokens' => 2000], $shell);
         }
 
         $response = $result['content'] ?? '';
@@ -924,7 +1005,7 @@ class LandingGenerationService
             ],
             'parent_id'         => $params['parent_id'] ?? null,
             'created_by'        => $createdBy,
-        ], $parsed, $slug, $countryName, $countryCode, 'matching', $params);
+        ], $parsed, $slug, $countryName, $countryCode, 'matching', $params, $shell);
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -938,6 +1019,7 @@ class LandingGenerationService
         string $language,
         ?int $createdBy,
         array $params = [],
+        ?LandingPage $shell = null,
     ): LandingPage {
         $template    = self::TEMPLATES['category_pillar'][$templateId] ?? self::TEMPLATES['category_pillar']['overview'];
         $countryName = $this->getCountryName($countryCode, $language);
@@ -1024,16 +1106,16 @@ class LandingGenerationService
 
         $model       = ($params['use_cheap_model'] ?? false) ? 'gpt-4o-mini' : 'gpt-4o';
         $temperature = ($params['use_cheap_model'] ?? false) ? 0.4 : 0.7;
-        $result      = $this->openAi->complete($systemPrompt, $userPrompt, [
+        $result      = $this->openAiWithCost($systemPrompt, $userPrompt, [
             'model'       => $model,
             'max_tokens'  => 4000,
             'json_mode'   => true,
             'temperature' => $temperature,
-        ]);
+        ], $shell);
 
         if (empty($result['content'])) {
             Log::warning('LandingGenerationService: OpenAI failed, fallback to Claude', ['audience' => 'category_pillar']);
-            $result = ['content' => $this->claude->complete($systemPrompt, $userPrompt, ['model' => 'claude-sonnet-4-6', 'max_tokens' => 3500])];
+            $result = $this->claudeWithCost($systemPrompt, $userPrompt, ['model' => 'claude-sonnet-4-6', 'max_tokens' => 3500], $shell);
         }
 
         $parsed = $this->parseResponse($result['content'] ?? '');
@@ -1057,7 +1139,7 @@ class LandingGenerationService
             ],
             'parent_id'         => $params['parent_id'] ?? null,
             'created_by'        => $createdBy,
-        ], $parsed, $slug, $countryName, $countryCode, 'category_pillar', $params);
+        ], $parsed, $slug, $countryName, $countryCode, 'category_pillar', $params, $shell);
     }
 
     private function generateProfileLanding(
@@ -1067,6 +1149,7 @@ class LandingGenerationService
         string $language,
         ?int $createdBy,
         array $params = [],
+        ?LandingPage $shell = null,
     ): LandingPage {
         $template    = self::TEMPLATES['profile'][$templateId] ?? self::TEMPLATES['profile']['profile_general'];
         $countryName = $this->getCountryName($countryCode, $language);
@@ -1157,16 +1240,16 @@ class LandingGenerationService
 
         $model       = ($params['use_cheap_model'] ?? false) ? 'gpt-4o-mini' : 'gpt-4o';
         $temperature = ($params['use_cheap_model'] ?? false) ? 0.4 : 0.7;
-        $result      = $this->openAi->complete($systemPrompt, $userPrompt, [
+        $result      = $this->openAiWithCost($systemPrompt, $userPrompt, [
             'model'       => $model,
             'max_tokens'  => 3500,
             'json_mode'   => true,
             'temperature' => $temperature,
-        ]);
+        ], $shell);
 
         if (empty($result['content'])) {
             Log::warning('LandingGenerationService: OpenAI failed, fallback to Claude', ['audience' => 'profile']);
-            $result = ['content' => $this->claude->complete($systemPrompt, $userPrompt, ['model' => 'claude-sonnet-4-6', 'max_tokens' => 3000])];
+            $result = $this->claudeWithCost($systemPrompt, $userPrompt, ['model' => 'claude-sonnet-4-6', 'max_tokens' => 3000], $shell);
         }
 
         $parsed = $this->parseResponse($result['content'] ?? '');
@@ -1190,7 +1273,7 @@ class LandingGenerationService
             ],
             'parent_id'         => $params['parent_id'] ?? null,
             'created_by'        => $createdBy,
-        ], $parsed, $slug, $countryName, $countryCode, 'profile', $params);
+        ], $parsed, $slug, $countryName, $countryCode, 'profile', $params, $shell);
     }
 
     private function generateEmergencyLanding(
@@ -1199,6 +1282,7 @@ class LandingGenerationService
         string $language,
         ?int $createdBy,
         array $params = [],
+        ?LandingPage $shell = null,
     ): LandingPage {
         $template    = self::TEMPLATES['emergency'][$templateId] ?? self::TEMPLATES['emergency']['emergency'];
         $countryName = $this->getCountryName($countryCode, $language);
@@ -1272,16 +1356,16 @@ class LandingGenerationService
         // Emergency: modèle standard (pas de cheap_model car ultra-court = rapide de toute façon)
         $model       = ($params['use_cheap_model'] ?? false) ? 'gpt-4o-mini' : 'gpt-4o';
         $temperature = 0.5; // Moins de créativité = plus de clarté pour l'urgence
-        $result      = $this->openAi->complete($systemPrompt, $userPrompt, [
+        $result      = $this->openAiWithCost($systemPrompt, $userPrompt, [
             'model'       => $model,
             'max_tokens'  => 2000,
             'json_mode'   => true,
             'temperature' => $temperature,
-        ]);
+        ], $shell);
 
         if (empty($result['content'])) {
             Log::warning('LandingGenerationService: OpenAI failed, fallback to Claude', ['audience' => 'emergency']);
-            $result = ['content' => $this->claude->complete($systemPrompt, $userPrompt, ['model' => 'claude-sonnet-4-6', 'max_tokens' => 1800])];
+            $result = $this->claudeWithCost($systemPrompt, $userPrompt, ['model' => 'claude-sonnet-4-6', 'max_tokens' => 1800], $shell);
         }
 
         $parsed = $this->parseResponse($result['content'] ?? '');
@@ -1303,7 +1387,7 @@ class LandingGenerationService
             ],
             'parent_id'         => $params['parent_id'] ?? null,
             'created_by'        => $createdBy,
-        ], $parsed, $slug, $countryName, $countryCode, 'emergency', $params);
+        ], $parsed, $slug, $countryName, $countryCode, 'emergency', $params, $shell);
     }
 
     private function generateNationalityLanding(
@@ -1313,6 +1397,7 @@ class LandingGenerationService
         string $language,
         ?int $createdBy,
         array $params = [],
+        ?LandingPage $shell = null,
     ): LandingPage {
         $template    = self::TEMPLATES['nationality'][$templateId] ?? self::TEMPLATES['nationality']['nationality_general'];
         $countryName = $this->getCountryName($countryCode, $language);
@@ -1398,16 +1483,16 @@ class LandingGenerationService
 
         $model       = ($params['use_cheap_model'] ?? false) ? 'gpt-4o-mini' : 'gpt-4o';
         $temperature = ($params['use_cheap_model'] ?? false) ? 0.4 : 0.7;
-        $result      = $this->openAi->complete($systemPrompt, $userPrompt, [
+        $result      = $this->openAiWithCost($systemPrompt, $userPrompt, [
             'model'       => $model,
             'max_tokens'  => 4000,
             'json_mode'   => true,
             'temperature' => $temperature,
-        ]);
+        ], $shell);
 
         if (empty($result['content'])) {
             Log::warning('LandingGenerationService: OpenAI failed, fallback to Claude', ['audience' => 'nationality']);
-            $result = ['content' => $this->claude->complete($systemPrompt, $userPrompt, ['model' => 'claude-sonnet-4-6', 'max_tokens' => 3500])];
+            $result = $this->claudeWithCost($systemPrompt, $userPrompt, ['model' => 'claude-sonnet-4-6', 'max_tokens' => 3500], $shell);
         }
 
         $parsed = $this->parseResponse($result['content'] ?? '');
@@ -1431,7 +1516,7 @@ class LandingGenerationService
             ],
             'parent_id'          => $params['parent_id'] ?? null,
             'created_by'         => $createdBy,
-        ], $parsed, $slug, $countryName, $countryCode, 'nationality', $params);
+        ], $parsed, $slug, $countryName, $countryCode, 'nationality', $params, $shell);
     }
 
     // ============================================================
@@ -1754,10 +1839,15 @@ RULES;
         string $countryCode = '',
         string $audienceType = '',
         array $params = [],
+        ?LandingPage $shell = null,
     ): LandingPage {
-        // Déduplication : si la LP existe déjà, on ne la réécrit pas
-        $existing = LandingPage::where('slug', $slug)->first();
+        // Déduplication : si une autre LP a déjà ce slug (hors shell courant), on ne la réécrit pas.
+        // Le shell sera supprimé pour éviter de polluer la table avec une coquille.
+        $existing = LandingPage::where('slug', $slug)
+            ->when($shell, fn ($q) => $q->where('id', '!=', $shell->id))
+            ->first();
         if ($existing) {
+            $shell?->forceDelete();
             return $existing;
         }
 
@@ -1831,7 +1921,7 @@ RULES;
             ]);
         }
 
-        $landing = LandingPage::create(array_merge($baseData, $imageData, $geoFields, [
+        $fullData = array_merge($baseData, $imageData, $geoFields, [
             'title'              => $parsed['title'] ?? $slug,
             'slug'               => $slug,
             'meta_title'         => $metaTitle ?: null,
@@ -1862,7 +1952,26 @@ RULES;
             'date_published_at'  => $nowTs,
             'date_modified_at'   => $nowTs,
             'content_language'   => $lang,
-        ]));
+        ]);
+
+        if ($shell !== null) {
+            // Hydrate le shell (créé en amont pour rattacher les api_costs via costable_id)
+            $shell->update($fullData);
+            $landing = $shell->refresh();
+        } else {
+            $landing = LandingPage::create($fullData);
+        }
+
+        // Somme des ApiCost rattachés au shell pendant la génération (OpenAI + Claude).
+        // Sans shell, impossible de lier rétroactivement → reste à 0 (legacy path).
+        if ($shell !== null) {
+            $costCents = (int) ApiCost::where('costable_type', LandingPage::class)
+                ->where('costable_id', $landing->id)
+                ->sum('cost_cents');
+            if ($costCents > 0) {
+                $landing->update(['generation_cost_cents' => $costCents]);
+            }
+        }
 
         // CTAs — avec injection UTM automatique
         if (! empty($parsed['cta_links'])) {
