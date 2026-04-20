@@ -71,24 +71,25 @@ Schedule::job(new FetchRssFeedsJob)->everyFourHours()->withoutOverlapping(3600);
 // ══════════════════════════════════════════════════════════════════════
 // Bloggers RSS : scrape flux RSS publics toutes les 6h (zero ban, XML public)
 // Décalé à :20 pour éviter collision minute 0/15/30/45 des autres crons.
-// IMPORTANT : name() AVANT withoutOverlapping() sinon Laravel throw LogicException
-// (CallbackEvent.php:142 require description set avant overlap check pour Schedule::job).
+// IMPORTANT : Schedule::job() utilise CallbackEvent qui NE SUPPORTE PAS
+// runInBackground() (throw RuntimeException ligne 104). Le job passe
+// par la queue (onQueue('scraper')) donc il ne bloque pas le scheduler
+// de toute façon.
 Schedule::job(new \App\Jobs\ScrapeBloggerRssFeedsJob)
     ->name('bloggers-rss')
     ->cron('20 */6 * * *')
     ->withoutOverlapping(30)
-    ->runInBackground()
     ->appendOutputTo(storage_path('logs/bloggers-rss.log'));
 
 // IA par type : 1×/jour chacun, décalés pour étaler la charge Perplexity.
 // Rotation pays auto via ScraperRotationService (cooldown 24h par pays).
 // Graceful skip si PERPLEXITY_API_KEY invalide (status=skipped_no_ia).
 Schedule::job(new \App\Jobs\DispatchAiResearchByTypeJob('blog'))
-    ->name('ai-bloggers')->dailyAt('04:15')->withoutOverlapping(10)->runInBackground();
+    ->name('ai-bloggers')->dailyAt('04:15')->withoutOverlapping(10);
 Schedule::job(new \App\Jobs\DispatchAiResearchByTypeJob('podcast_radio'))
-    ->name('ai-podcasters')->dailyAt('04:45')->withoutOverlapping(10)->runInBackground();
+    ->name('ai-podcasters')->dailyAt('04:45')->withoutOverlapping(10);
 Schedule::job(new \App\Jobs\DispatchAiResearchByTypeJob('influenceur'))
-    ->name('ai-influencers')->dailyAt('05:15')->withoutOverlapping(10)->runInBackground();
+    ->name('ai-influencers')->dailyAt('05:15')->withoutOverlapping(10);
 
 // News: auto-generate from RSS at 06:00 and 14:00 UTC (two batches per day)
 Schedule::job(new RunNewsGenerationJob)->dailyAt('06:00')->withoutOverlapping(7200);
