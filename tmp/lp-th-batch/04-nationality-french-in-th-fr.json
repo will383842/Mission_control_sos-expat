@@ -1,0 +1,151 @@
+{
+  "params": {
+    "audience_type": "nationality",
+    "template_id": "informational",
+    "country_code": "TH",
+    "language": "fr",
+    "origin_nationality": "FR"
+  },
+  "parsed": {
+    "title": "Français en Thaïlande — guide et démarches 2026 · SOS-Expat",
+    "url_slug": "francais-en-thailande-guide-demarches",
+    "keywords_primary": "français en Thaïlande",
+    "keywords_secondary": [
+      "expatrié français Thaïlande",
+      "communauté française Bangkok",
+      "ambassade de France à Bangkok",
+      "consulat France Phuket",
+      "visa long séjour français Thaïlande",
+      "retraite française Thaïlande",
+      "convention fiscale France Thaïlande",
+      "sécurité sociale CFE Thaïlande"
+    ],
+    "sections": [
+      {
+        "type": "hero",
+        "content": {
+          "badge": "★ Guide nationalité · 9 langues · Mise à jour 2026",
+          "h1": "Français en Thaïlande — démarches, contacts, ressources",
+          "subtitle": "Vous êtes citoyen français vivant, travaillant, retraité, étudiant, nomade numérique ou voyageur en Thaïlande ? Guide récapitulatif des démarches administratives côté français (ambassade, consulat, sécurité sociale, fiscalité) et côté thaïlandais (visa, immigration), avec possibilité de parler à un avocat francophone en moins de 5 minutes si besoin (49 € / 20 min).",
+          "cta_text": "Parler à un avocat francophone",
+          "cta_subtext": "49 € / 20 min · Rappel en moins de 5 min · Avocat partenaire SOS-Expat"
+        }
+      },
+      {
+        "type": "intro",
+        "content": {
+          "headline": "Les Français en Thaïlande : vue d'ensemble",
+          "text": "Une communauté française importante réside en Thaïlande : retraités, digital nomads, entrepreneurs, cadres expatriés, familles binationales, étudiants. Les démarches administratives croisent deux systèmes : l'administration française (consulats, CNAV, CFE, impôts, AFE) et l'administration thaïlandaise (Immigration Bureau, Ministère du Travail, Board of Investment). Ce guide récapitule les points de contact officiels, les sujets courants côté français, et la différence entre information publique et conseil juridique personnalisé — pour ce dernier, SOS-Expat vous met en relation avec un avocat francophone en moins de 5 minutes."
+        }
+      },
+      {
+        "type": "topics",
+        "content": {
+          "headline": "Principaux sujets pour les Français en Thaïlande",
+          "items": [
+            {"name": "Inscription au registre consulaire", "overview": "Inscription volontaire au registre des Français établis hors de France via le site service-public.fr. Recommandée pour votre sécurité (contact en cas de crise), vos démarches administratives (certificat de résidence, visas annexes), et votre droit de vote aux élections consulaires et législatives."},
+            {"name": "Visa et immigration", "overview": "Choix de la catégorie de visa adaptée (touriste, retraite O-A ou O-X, DTV digital nomad, B avec work permit, LTR, Elite Visa). Renouvellement annuel ou 5 ans selon la catégorie. Rapport des 90 jours obligatoire pour les visas long séjour (sauf LTR)."},
+            {"name": "Retraite française versée en Thaïlande", "overview": "Possibilité de recevoir votre retraite CNAV / CARSAT / AGIRC-ARRCO / MSA / fonction publique sur votre compte bancaire thaïlandais ou français. Certificat de vie à fournir annuellement. Condition de revenus pour le visa retraite thaïlandais (consulter les seuils à jour)."},
+            {"name": "Sécurité sociale et santé", "overview": "Caisse des Français de l'Étranger (CFE) pour conserver une couverture santé française à l'étranger, ou assurance santé internationale privée. Certaines mutuelles françaises proposent des contrats expatriation. Le système de santé thaïlandais est largement privé pour les étrangers."},
+            {"name": "Fiscalité franco-thaïlandaise", "overview": "Convention fiscale France-Thaïlande pour éviter la double imposition. Critères de résidence fiscale : présence physique, centre des intérêts économiques, foyer principal. Imposition en Thaïlande sur les revenus de source thaïlandaise. Imposition en France sur les revenus de source française selon les règles de la convention."},
+            {"name": "Famille et état civil", "overview": "Déclaration de naissance d'un enfant au consulat de France (transcription d'acte), mariage franco-thaïlandais (transcription consulaire), PACS international, divorce, reconnaissance de jugement. Procédures nécessitant l'ambassade et des documents légalisés."},
+            {"name": "Passeport et carte nationale d'identité", "overview": "Renouvellement possible aux ambassades de France et consulats généraux (Bangkok principalement). Prise de rendez-vous en ligne. Délais de production variables."},
+            {"name": "Scolarisation des enfants", "overview": "Lycées français homologués AEFE à Bangkok. Écoles internationales anglophones à Bangkok, Chiang Mai, Phuket, Pattaya. Accès aux bourses scolaires pour les familles éligibles (demande auprès du consulat)."}
+          ]
+        }
+      },
+      {
+        "type": "faq",
+        "content": {
+          "headline": "Questions fréquentes des Français en Thaïlande",
+          "items": [
+            {
+              "q": "Quand est-il utile de consulter un avocat francophone en Thaïlande ?",
+              "a": "Pour toute situation à enjeu juridique ou fiscal : refus ou changement de visa, demande LTR, acquisition immobilière ou création de société, divorce ou garde d'enfant binationale, succession internationale, litige consulaire, fiscalité franco-thaïlandaise complexe. SOS-Expat met en relation avec un avocat francophone en moins de 5 minutes (49 € / 55 $ pour 20 minutes, paiement prépayé)."
+            },
+            {
+              "q": "Dois-je m'inscrire au registre consulaire à Bangkok ?",
+              "a": "L'inscription au registre des Français établis hors de France est volontaire mais fortement recommandée. Elle permet au consulat de vous contacter en cas de crise (catastrophe naturelle, crise politique, pandémie), facilite les démarches administratives (certificats, actes d'état civil), et conditionne votre droit de vote aux élections consulaires, aux législatives des Français de l'étranger, et à la présidentielle. Inscription en ligne via service-public.fr."
+            },
+            {
+              "q": "Comment recevoir ma retraite française en Thaïlande ?",
+              "a": "Votre retraite (CNAV, CARSAT, AGIRC-ARRCO, MSA, fonction publique, retraite complémentaire) peut être versée sur votre compte bancaire thaïlandais ou conservée sur un compte français. Certificat de vie à fournir annuellement (formulaire CERFA ou démarche en ligne). Pour le visa retraite thaïlandais O-A, la preuve de revenus réguliers est demandée — un avocat peut vérifier que vos montants et justificatifs respectent les seuils officiels à jour."
+            },
+            {
+              "q": "Suis-je imposable en France ou en Thaïlande ?",
+              "a": "La convention fiscale franco-thaïlandaise détermine où chaque type de revenu est imposé. Généralement : revenus de source thaïlandaise (salaire local, loyer en Thaïlande) imposés en Thaïlande ; revenus de source française (loyer en France, pension de retraite parfois) imposés en France. La résidence fiscale dépend de la durée de séjour, du foyer, et du centre des intérêts économiques. Situation complexe — un avocat fiscaliste peut clarifier votre cas (49 € / 20 min)."
+            },
+            {
+              "q": "Puis-je conserver la Caisse des Français de l'Étranger (CFE) ?",
+              "a": "Oui. La CFE est une cotisation volontaire qui vous maintient couvert par le système français de sécurité sociale pendant votre expatriation. Elle couvre maladie-maternité, accident du travail, et vieillesse selon la formule choisie. Complémentaire santé privée recommandée pour les soins en Thaïlande (secteur privé largement utilisé par les expatriés). Un avocat ou un expat aidant peut vous aider à comparer les options."
+            },
+            {
+              "q": "Mon mariage franco-thaïlandais est-il reconnu en France ?",
+              "a": "Oui, à condition d'effectuer la transcription d'acte au consulat de France à Bangkok. La procédure nécessite des documents traduits et légalisés. Les délais peuvent atteindre plusieurs mois. Un avocat peut sécuriser votre dossier, notamment en cas de différence d'âge, de divorce antérieur, ou de situation complexe. Le mariage non transcrit n'est pas reconnu en France."
+            },
+            {
+              "q": "Comment scolariser mes enfants en Thaïlande ?",
+              "a": "Deux options principales : les lycées français homologués AEFE (Bangkok principalement) suivant le programme français, ou les écoles internationales anglophones (Bangkok, Chiang Mai, Phuket). Les familles à revenus modestes peuvent solliciter des bourses scolaires de l'AEFE via le consulat de France (campagne annuelle). Les conditions d'éligibilité dépendent des ressources familiales et de la situation."
+            },
+            {
+              "q": "Combien coûte un appel avec un avocat francophone SOS-Expat ?",
+              "a": "Prix fixe transparent : 49 € (55 $) pour 20 minutes avec un avocat, ou 19 € (25 $) pour 30 minutes avec un expat aidant français déjà installé en Thaïlande pour les questions pratiques non juridiques. Paiement prépayé avant l'appel, aucune surprise. L'avocat vous rappelle en moins de 5 minutes après le paiement."
+            },
+            {
+              "q": "Comment trouver un expat français installé en Thaïlande pour des conseils pratiques ?",
+              "a": "SOS-Expat propose des consultations avec des expats aidants installés en Thaïlande (Bangkok, Chiang Mai, Phuket, Pattaya, Koh Samui, Hua Hin). 19 € (25 $) pour 30 minutes. Utile pour : choix de ville, location, écoles internationales, banques, recommandations pratiques quotidiennes. Les expats aidants partagent leur expérience concrète, pas des conseils juridiques (réservés aux avocats partenaires)."
+            },
+            {
+              "q": "Où se trouve l'ambassade de France en Thaïlande ?",
+              "a": "L'ambassade de France est située à Bangkok. Le consulat général de France à Bangkok gère les démarches administratives des ressortissants français résidant en Thaïlande (passeports, cartes nationales d'identité, actes d'état civil, inscriptions consulaires). Des consuls honoraires existent dans plusieurs villes secondaires (Phuket, Chiang Mai, Pattaya, Koh Samui) pour des démarches limitées et l'assistance d'urgence. Vérifier les horaires et adresses officielles à jour sur le site de l'ambassade."
+            }
+          ]
+        }
+      },
+      {
+        "type": "cta",
+        "content": {
+          "headline": "Besoin d'un conseil juridique francophone personnalisé ?",
+          "button": "Parler à un avocat francophone",
+          "subtext": "49 € / 20 min · Rappel en moins de 5 min · Paiement prépayé · Avocat francophone"
+        }
+      }
+    ],
+    "meta_title": "Français en Thaïlande — guide, démarches, avocat francophone · SOS-Expat",
+    "meta_description": "Guide 2026 pour les Français en Thaïlande : ambassade, consulat, retraite, CFE, fiscalité, visa, école. Parlez à un avocat francophone en 5 min (49 € / 20 min, prépayé).",
+    "cta_links": [
+      {"label": "Parler à un avocat francophone", "url": "#rappel-avocat?utm_source=landing&utm_medium=nationality&utm_campaign=fr-in-th", "style": "primary", "position": "hero"},
+      {"label": "Voir tous les sujets", "url": "#topics?utm_source=landing&utm_medium=nationality&utm_campaign=fr-in-th", "style": "secondary", "position": "middle"},
+      {"label": "Questions fréquentes des Français en Thaïlande", "url": "#faq?utm_source=landing&utm_medium=nationality&utm_campaign=fr-in-th", "style": "secondary", "position": "footer"}
+    ],
+    "lsi_keywords": [
+      "ambassade France Bangkok",
+      "consulat général France Bangkok",
+      "consul honoraire Phuket Chiang Mai",
+      "registre Français établis hors de France",
+      "AEFE Bangkok lycée français",
+      "bourse scolaire AEFE Thaïlande",
+      "retraite CNAV Thaïlande",
+      "certificat vie retraite France étranger",
+      "CFE Caisse Français Étranger Thaïlande",
+      "convention fiscale France Thaïlande",
+      "résidence fiscale France Thaïlande",
+      "transcription mariage franco-thaïlandais",
+      "divorce franco-thaïlandais",
+      "visa retraite français O-A O-X",
+      "LTR visa francais Thaïlande",
+      "DTV digital nomad français",
+      "élections consulaires Français Thaïlande",
+      "passeport renouvellement Bangkok"
+    ],
+    "internal_links": [
+      {"anchor": "Immigration en Thaïlande — guide complet des visas", "topic": "pillar immigration TH"},
+      {"anchor": "Devenir avocat partenaire francophone en Thaïlande", "topic": "landing lawyers TH"},
+      {"anchor": "Devenir expat aidant francophone en Thaïlande", "topic": "landing helpers TH"},
+      {"anchor": "Annuaire des ambassades et consulats français à travers le monde", "topic": "annuaire global ambassades France"},
+      {"anchor": "Convention fiscale France-Thaïlande expliquée", "topic": "page fiscalité binationale"},
+      {"anchor": "Retraite française à l'étranger — démarches CNAV, CARSAT, AGIRC", "topic": "page retraite étranger"},
+      {"anchor": "Comment fonctionne le rappel téléphonique SOS-Expat en 5 minutes", "topic": "page call flow"}
+    ]
+  }
+}

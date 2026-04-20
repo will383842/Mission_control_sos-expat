@@ -1,0 +1,170 @@
+{
+  "params": {
+    "audience_type": "helpers",
+    "template_id": "general",
+    "country_code": "TH",
+    "language": "fr"
+  },
+  "parsed": {
+    "title": "Devenir expat aidant SOS-Expat en Thaïlande en 2026 · SOS-Expat",
+    "url_slug": "devenir-expat-aidant-thailande",
+    "keywords_primary": "devenir expat aidant en Thaïlande",
+    "keywords_secondary": [
+      "expat aidant Thaïlande",
+      "expatrié expert Thaïlande",
+      "gagner de l'argent en tant qu'expatrié Thaïlande",
+      "aide aux expatriés Bangkok",
+      "aide aux expatriés Phuket",
+      "aide aux expatriés Chiang Mai",
+      "helper international 197 pays",
+      "consultation expatrié en ligne Thaïlande"
+    ],
+    "sections": [
+      {
+        "type": "hero",
+        "content": {
+          "badge": "★ 197 pays · Toutes langues · Expatriés aidants indépendants 2026",
+          "h1": "Devenez expat aidant SOS-Expat en Thaïlande",
+          "subtitle": "Vous vivez en Thaïlande et vous connaissez les démarches locales ? Aidez d'autres expatriés (nouveaux arrivants, touristes en difficulté, digital nomads, retraités) par téléphone 30 minutes, dans votre langue, et gagnez 12 € par consultation effectuée.",
+          "cta_text": "Je deviens expat aidant",
+          "cta_subtext": "Inscription libre · Activation en moins de 5 minutes"
+        }
+      },
+      {
+        "type": "earnings",
+        "content": {
+          "headline": "Combien un expat aidant gagne-t-il en Thaïlande ?",
+          "amount": "12 €",
+          "per": "par consultation de 30 minutes (client paie 19 € ou 25 $)",
+          "payment_delay": "Sous 24 heures après chaque appel terminé",
+          "badges": [
+            "Paiement à chaque consultation effectuée",
+            "Zéro impayé garanti par SOS-Expat.com",
+            "Cumul des gains illimité, aucun plafond",
+            "Retrait dès 30 $ accumulés",
+            "Frais fixes 3 $ par retrait, aucun pourcentage",
+            "Quatre moyens de paiement : Stripe, PayPal, Wise, Flutterwave"
+          ]
+        }
+      },
+      {
+        "type": "freedom",
+        "content": {
+          "headline": "Pourquoi devenir expat aidant SOS-Expat en Thaïlande ?",
+          "items": [
+            {"icon": "✓", "text": "Aucun diplôme juridique requis — vous partagez votre expérience concrète d'expatrié sur place"},
+            {"icon": "✓", "text": "Aucun quota, aucune heure minimum — vous choisissez vos disponibilités"},
+            {"icon": "✓", "text": "Activation et désactivation de votre profil en un clic, 24h/24"},
+            {"icon": "✓", "text": "Zéro prospection commerciale : les clients vous trouvent via SOS-Expat.com"},
+            {"icon": "✓", "text": "Statut d'expatrié indépendant selon votre législation locale en Thaïlande ou votre pays de résidence fiscale"},
+            {"icon": "✓", "text": "Consultations dans toute langue que vous parlez avec votre client : français, anglais, espagnol, allemand, portugais, arabe, hindi, mandarin, russe, thaï, ou toute autre langue commune"},
+            {"icon": "✓", "text": "Compatible avec une activité principale (télétravail, freelance, digital nomade, entrepreneur)"},
+            {"icon": "✓", "text": "Sujets couverts : installation, visa touriste, visa retraite, location de logement, santé, transports, banques, démarches administratives courantes, conseils pratiques quotidiens"}
+          ]
+        }
+      },
+      {
+        "type": "process",
+        "content": {
+          "headline": "Comment devenir expat aidant SOS-Expat en Thaïlande en 4 étapes ?",
+          "steps": [
+            {"num": 1, "label": "Inscription en moins de 5 minutes", "detail": "Créez votre profil d'expat aidant sur SOS-Expat.com. Renseignez votre identité, votre ville de résidence en Thaïlande (Bangkok, Chiang Mai, Phuket, Pattaya, Koh Samui, Hua Hin, ou autre), la durée de votre installation, vos langues parlées, et vos domaines d'expertise pratique. Aucune caution ni frais d'inscription."},
+            {"num": 2, "label": "Paramétrage du profil aidant", "detail": "Décrivez votre parcours d'expatrié en Thaïlande, les sujets sur lesquels vous pouvez partager votre expérience (visa touriste 30 jours, visa éducation, visa retraite 50+, visa affaires, installation, location, santé, transports, écoles, banques, fiscalité locale de base), les langues dans lesquelles vous consultez, et vos créneaux horaires disponibles."},
+            {"num": 3, "label": "Réception des appels clients vérifiés", "detail": "Les appels arrivent via IVR sécurisé Twilio avec conférence chiffrée, 30 minutes garanties par consultation. Délai de mise en relation inférieur à 5 minutes après paiement du client. Jusqu'à 3 tentatives de connexion si pas de réponse initiale, 60 secondes par tentative. Dans la langue commune choisie avec votre client."},
+            {"num": 4, "label": "Paiement automatique sous 24 heures", "detail": "Vos 12 € (12 $) sont versés sous 24 heures après chaque appel terminé via Stripe, PayPal, Wise, ou Flutterwave (Mobile Money). Retrait minimum 30 $ cumulés, frais fixes 3 $ par transaction."}
+          ]
+        }
+      },
+      {
+        "type": "faq",
+        "content": {
+          "headline": "Questions fréquentes sur le statut d'expat aidant en Thaïlande",
+          "items": [
+            {
+              "q": "Qui paie la consultation et combien je reçois exactement ?",
+              "a": "Le client paie 19 € (25 $) pour une consultation de 30 minutes avec un expat aidant. Vous recevez 12 € (12 $) nets par consultation. SOS-Expat.com retient 7 € (13 $) de frais de mise en relation et de fonctionnement de la plateforme. Le règlement intervient sous 24 heures après chaque appel effectué."
+            },
+            {
+              "q": "Faut-il un diplôme ou une certification pour devenir expat aidant ?",
+              "a": "Non. Aucun diplôme juridique ou médical n'est requis. Vous devez simplement vivre ou avoir vécu en Thaïlande avec une expérience concrète des démarches quotidiennes d'un expatrié (visa, location, santé, écoles, banques, fiscalité locale basique, transports). Les expats aidants partagent leur expérience pratique, pas des conseils juridiques — pour le juridique, les clients sont orientés vers les avocats partenaires (49 € / 55 $ pour 20 min)."
+            },
+            {
+              "q": "Suis-je employé ou salarié de SOS-Expat.com ?",
+              "a": "Non, vous êtes un expatrié indépendant. SOS-Expat.com est une plateforme de mise en relation, pas un employeur. Votre statut légal dépend de votre pays de résidence fiscale : auto-entrepreneur ou micro-entrepreneur en France, freelance en Belgique et Suisse, contractor aux États-Unis et au Royaume-Uni, statut équivalent en Thaïlande selon votre visa (work permit, long-term resident, digital nomad visa DTV depuis juillet 2024)."
+            },
+            {
+              "q": "Dans quelle langue vais-je faire les consultations ?",
+              "a": "Dans toute langue que vous partagez avec votre client. Il n'y a aucune restriction linguistique pour la consultation téléphonique : français, anglais, espagnol, allemand, portugais, arabe, hindi, mandarin, russe, thaï, ou toute autre langue commune. Les 9 langues de l'interface SOS-Expat.com sont uniquement pour la navigation web, pas pour les appels."
+            },
+            {
+              "q": "Quels sujets puis-je aborder et quels sujets sont réservés aux avocats ?",
+              "a": "Expat aidant : installation pratique, choix de ville ou quartier, visa touriste et visa retraite (procédure générale, sans conseil juridique personnalisé), location courante, démarches bancaires quotidiennes, écoles internationales, transports, coût de la vie, santé de base, recommandations pratiques. Avocat partenaire (49 € / 20 min) : conseils juridiques spécifiques, contrats, litiges, fiscalité internationale complexe, droit du travail, droit commercial, droit immobilier avec enjeu juridique, conflits consulaires, procédures judiciaires."
+            },
+            {
+              "q": "Puis-je gagner davantage via le programme d'affiliation SOS-Expat ?",
+              "a": "Oui. En plus des 12 € par consultation, vous pouvez activer votre lien d'affiliation pour gagner : 1 $ par appel d'expert local généré via votre lien, 2 $ par appel d'avocat, plus un bonus d'inscription de 2 $ pour chaque nouveau compte créé via votre lien. Les commissions s'ajoutent à vos revenus de consultation, sans frais supplémentaires."
+            },
+            {
+              "q": "Comment fonctionne la mise en relation téléphonique avec le client ?",
+              "a": "SOS-Expat.com utilise une infrastructure IVR sécurisée Twilio : (1) le client choisit un expat aidant selon la langue et la ville en Thaïlande, (2) il paie 19 € via Stripe ou PayPal, (3) un appel est programmé avec 4 minutes de préparation, (4) vous recevez un appel automatique que vous confirmez en appuyant sur 1 (DTMF), (5) la conférence téléphonique chiffrée démarre pour 30 minutes garanties."
+            },
+            {
+              "q": "Y a-t-il un cooldown entre deux consultations ?",
+              "a": "Oui, 5 minutes de récupération automatique entre deux appels. Vous pouvez désactiver votre profil à tout moment pour une pause plus longue, ou l'activer uniquement sur certains créneaux horaires. Aucune pénalité n'est appliquée pour les pauses."
+            },
+            {
+              "q": "Comment retirer mes gains en pratique ?",
+              "a": "Retrait à partir de 30 $ accumulés, frais fixes de 3 $ par transaction, délai de mise à disposition de 24 heures après chaque appel effectué. Quatre moyens de paiement : Stripe (carte bancaire), PayPal, Wise (virement international SEPA et SWIFT), et Flutterwave (Mobile Money pour les expatriés basés en Afrique)."
+            },
+            {
+              "q": "Quelle est l'entité juridique derrière SOS-Expat.com ?",
+              "a": "SOS-Expat.com est opérée par WorldExpat OU, une société à responsabilité limitée (OU — Osaühing) de droit estonien. Juridiction : tribunaux de Tallinn, Estonie. Conformité DSA : Regulation (EU) 2022/2065 (Digital Services Act). Vos revenus transitent par cette entité via les prestataires de paiement agréés."
+            }
+          ]
+        }
+      },
+      {
+        "type": "cta",
+        "content": {
+          "headline": "Rejoignez dès aujourd'hui les expats aidants SOS-Expat en Thaïlande",
+          "button": "Je deviens expat aidant",
+          "subtext": "Expatrié indépendant · Sans engagement tarifaire · Activation en moins de 5 minutes"
+        }
+      }
+    ],
+    "meta_title": "Expat aidant SOS-Expat en Thaïlande · toutes langues",
+    "meta_description": "Devenez expat aidant SOS-Expat en Thaïlande : 12 € / 30 min, paiement 24 h, toutes nationalités, toutes langues. Inscription libre depuis 197 pays, pas de diplôme requis.",
+    "cta_links": [
+      {"label": "Je deviens expat aidant", "url": "#inscription?utm_source=landing&utm_medium=helpers&utm_campaign=th", "style": "primary", "position": "hero"},
+      {"label": "Découvrir la rémunération", "url": "#earnings?utm_source=landing&utm_medium=helpers&utm_campaign=th", "style": "secondary", "position": "middle"},
+      {"label": "Voir le fonctionnement détaillé", "url": "#process?utm_source=landing&utm_medium=helpers&utm_campaign=th", "style": "secondary", "position": "footer"}
+    ],
+    "lsi_keywords": [
+      "expat aidant Bangkok",
+      "expat aidant Chiang Mai",
+      "expat aidant Phuket",
+      "expat aidant Pattaya",
+      "expat aidant Koh Samui",
+      "expat aidant Hua Hin",
+      "devenir expat expert Thaïlande",
+      "gagner argent expatrié Thaïlande",
+      "visa retraite Thaïlande conseil pratique",
+      "digital nomad visa DTV Thaïlande",
+      "installation Bangkok conseil",
+      "location condo Thaïlande",
+      "école internationale Thaïlande",
+      "assurance santé expatrié Thaïlande",
+      "permis de conduire international Thaïlande",
+      "compte bancaire étranger Thaïlande",
+      "WorldExpat Estonie plateforme",
+      "programme affiliation helper SOS-Expat"
+    ],
+    "internal_links": [
+      {"anchor": "Annuaire SOS-Expat des ambassades et consulats en Thaïlande", "topic": "page annuaire Thaïlande"},
+      {"anchor": "Différence entre expat aidant et avocat partenaire SOS-Expat", "topic": "page comparatif helpers vs lawyers"},
+      {"anchor": "Devenir expat aidant dans un autre pays (197 pays ouverts)", "topic": "annuaire géographique opportunités helpers"},
+      {"anchor": "Foire aux questions complète des expats aidants SOS-Expat", "topic": "page FAQ helpers"},
+      {"anchor": "Programme d'affiliation SOS-Expat pour les expats aidants", "topic": "page programme affiliate"}
+    ]
+  }
+}

@@ -1,0 +1,164 @@
+{
+  "params": {
+    "audience_type": "category_pillar",
+    "template_id": "pillar",
+    "country_code": "TH",
+    "language": "fr",
+    "category_slug": "immigration"
+  },
+  "parsed": {
+    "title": "Immigration en Thaïlande — guide complet 2026 · SOS-Expat",
+    "url_slug": "immigration-thailande-guide-complet",
+    "keywords_primary": "immigration en Thaïlande",
+    "keywords_secondary": [
+      "visa Thaïlande",
+      "visa retraite Thaïlande",
+      "visa DTV digital nomad Thaïlande",
+      "LTR long-term resident Thaïlande",
+      "work permit Thaïlande",
+      "Elite Visa Thaïlande",
+      "résidence permanente Thaïlande",
+      "Immigration Bureau Thaïlande"
+    ],
+    "sections": [
+      {
+        "type": "hero",
+        "content": {
+          "badge": "★ Guide pilier · 9 langues · Mise à jour 2026",
+          "h1": "Immigration en Thaïlande — tout savoir sur les visas et la résidence",
+          "subtitle": "Visa touriste, visa retraite, visa affaires, work permit, Long-Term Resident (LTR), Destination Thailand Visa (DTV) pour digital nomads, Elite Visa, résidence permanente : toutes les procédures d'immigration expliquées, ressources officielles, et possibilité d'être rappelé par un avocat local en moins de 5 minutes si vous avez besoin d'un conseil juridique personnalisé.",
+          "cta_text": "Parler à un avocat en Thaïlande",
+          "cta_subtext": "49 € / 20 min · Paiement prépayé · Rappel en moins de 5 min"
+        }
+      },
+      {
+        "type": "intro",
+        "content": {
+          "headline": "Vue d'ensemble de l'immigration en Thaïlande",
+          "text": "La Thaïlande offre plusieurs voies d'immigration selon votre profil : tourisme, retraite, travail, entrepreneuriat, investissement, nomadisme numérique, regroupement familial. Les procédures relèvent du Bureau de l'Immigration (Immigration Bureau, département de la Police royale thaïlandaise) et du Ministère du Travail pour les permis de travail. Ce guide récapitule les principales catégories de visa disponibles en 2026, leurs critères d'éligibilité génériques, et la différence entre information publique et conseil juridique personnalisé — pour ce dernier, SOS-Expat vous met en relation avec un avocat en moins de 5 minutes pour 49 € (55 $) les 20 minutes."
+        }
+      },
+      {
+        "type": "visa_categories",
+        "content": {
+          "headline": "Principales catégories de visa en Thaïlande",
+          "items": [
+            {"name": "Visa touriste (TR)", "duration": "60 jours (extensible 30)", "overview": "Visa court séjour pour tourisme uniquement. Plusieurs entrées possibles (TR Multiple Entry)."},
+            {"name": "Exemption de visa (Visa Exempt)", "duration": "30-60 jours selon nationalité", "overview": "Certaines nationalités entrent sans visa préalable. Vérifier la liste officielle du Ministère des Affaires étrangères thaïlandais."},
+            {"name": "Visa de retraite (Non-Immigrant O-A / O-X)", "duration": "1 an renouvelable / 5 ans renouvelables", "overview": "Réservé aux 50 ans et plus avec conditions de revenus ou de dépôt bancaire bloqué. O-A : 1 an renouvelable annuellement. O-X : 5 ans (nationalités éligibles limitées)."},
+            {"name": "Visa DTV (Destination Thailand Visa)", "duration": "5 ans (180 jours par entrée)", "overview": "Lancé en juillet 2024 pour digital nomads, freelances à distance, travailleurs à distance d'employeurs étrangers, et activités de soft power (muay thai, cuisine thaïe). Conditions : revenus minimum documentés, dossier administratif, non-imposable en Thaïlande si <180 jours."},
+            {"name": "Visa non-immigrant B (Business)", "duration": "1 an", "overview": "Pour salariés d'entreprises thaïlandaises, contrats de travail, investisseurs, entrepreneurs. Obligatoirement couplé à un Work Permit pour travailler légalement."},
+            {"name": "Work Permit", "duration": "Couplé au visa B", "overview": "Délivré par le Ministère du Travail. Nécessaire pour exercer toute activité rémunérée en Thaïlande. Procédure distincte du visa."},
+            {"name": "Long-Term Resident visa (LTR)", "duration": "10 ans", "overview": "Visa lancé 2022 pour profils à haute valeur ajoutée : retraités aisés (wealthy pensioners), investisseurs, travailleurs hautement qualifiés, professionnels à distance de grandes entreprises internationales. Avantages fiscaux et administratifs (fast track immigration, digital signature, pas de 90-day report)."},
+            {"name": "Thailand Elite Visa / Privilege Visa", "duration": "5 à 20 ans", "overview": "Programme payant (frais d'adhésion) opéré par Thailand Elite. Accès facilité à l'immigration pour résidents haut de gamme."},
+            {"name": "Résidence permanente (PR)", "duration": "Permanente", "overview": "Quota annuel par nationalité. Conditions strictes : 3 ans consécutifs de visa non-immigrant, revenus documentés, langue thaï basique. Demande ouverte en fin d'année par l'Immigration Bureau."}
+          ]
+        }
+      },
+      {
+        "type": "process",
+        "content": {
+          "headline": "Étapes générales d'une démarche d'immigration en Thaïlande",
+          "steps": [
+            {"num": 1, "label": "Choix de la catégorie adaptée à votre profil", "detail": "Identifier la catégorie de visa correspondant à votre situation : tourisme, retraite, travail, investissement, nomadisme numérique, études, regroupement familial. Chaque catégorie a ses propres critères d'éligibilité et conditions de renouvellement."},
+            {"num": 2, "label": "Préparation des documents justificatifs", "detail": "Passeport valide (6 mois minimum au-delà de la date d'entrée prévue), photos d'identité format thaïlandais, justificatifs de revenus ou de dépôt bancaire selon la catégorie, certificat médical pour certains visas, casier judiciaire, lettre d'employeur pour les visas B, relevés bancaires. Légalisations et traductions assermentées selon le consulat."},
+            {"num": 3, "label": "Dépôt de la demande", "detail": "Selon la catégorie : (a) e-Visa en ligne pour les visas courts, (b) consulat ou ambassade thaïlandaise de votre pays de résidence avant le départ, (c) Immigration Bureau en Thaïlande pour les extensions et changements de catégorie, (d) agences officielles pour Elite Visa."},
+            {"num": 4, "label": "Suivi et renouvellement", "detail": "Rapport obligatoire tous les 90 jours auprès de l'Immigration Bureau (sauf LTR), renouvellement annuel pour les visas 1 an, contrôle de la conformité continue aux conditions de la catégorie. Sortie et re-entry permit pour certains visas multi-entrées."}
+          ]
+        }
+      },
+      {
+        "type": "faq",
+        "content": {
+          "headline": "Questions fréquentes sur l'immigration en Thaïlande",
+          "items": [
+            {
+              "q": "Quelle est la différence entre ce guide et un conseil juridique ?",
+              "a": "Ce guide récapitule de l'information publique sur les catégories de visa thaïlandaises. Il ne remplace pas un conseil juridique personnalisé. Pour une situation spécifique (dossier complexe, refus de visa, changement de catégorie, contentieux avec l'Immigration Bureau, famille binationale, fiscalité associée), SOS-Expat vous met en relation par téléphone en moins de 5 minutes avec un avocat spécialisé en droit de l'immigration — 49 € (55 $) pour 20 minutes, paiement prépayé, prix fixe."
+            },
+            {
+              "q": "Ai-je besoin d'un avocat pour une demande de visa simple ?",
+              "a": "Pour un visa touriste ou une exemption de visa, non. Pour un visa retraite, le plus souvent non si votre dossier est standard. Pour un work permit, un visa B complexe, un visa LTR, une demande de résidence permanente, un refus à contester, un litige avec l'Immigration Bureau, ou une situation familiale transfrontalière, un avocat peut sécuriser votre dossier et éviter des erreurs coûteuses. La consultation téléphonique de 20 minutes à 49 € permet d'évaluer rapidement le besoin."
+            },
+            {
+              "q": "Comment SOS-Expat me met en relation avec un avocat en Thaïlande ?",
+              "a": "Vous choisissez un avocat partenaire sur SOS-Expat.com selon la langue (français, anglais, espagnol, allemand, portugais, arabe, hindi, mandarin, russe, ou toute langue que vous partagez) et la spécialité. Paiement Stripe ou PayPal (49 € / 55 $). Appel automatique via IVR Twilio sécurisé en moins de 5 minutes. Conférence chiffrée 20 minutes garanties, dans la langue commune avec l'avocat."
+            },
+            {
+              "q": "Un avocat non inscrit au barreau thaïlandais peut-il me conseiller ?",
+              "a": "Oui. SOS-Expat met en relation des avocats inscrits à des barreaux du monde entier capables de vous conseiller sur les procédures d'immigration thaïlandaise, la convention fiscale avec votre pays d'origine, la protection de vos droits en tant qu'étranger, et les implications juridiques de votre installation. Pour un acte juridique nécessitant obligatoirement un avocat inscrit au barreau thaïlandais (représentation devant un tribunal thaïlandais par exemple), l'avocat consulté peut vous orienter vers un confrère local."
+            },
+            {
+              "q": "Quel est le tarif d'une consultation avec un avocat SOS-Expat ?",
+              "a": "Prix fixe transparent : 49 € (55 $) pour 20 minutes avec un avocat, ou 19 € (25 $) pour 30 minutes avec un expat aidant pour les questions pratiques non juridiques. Paiement prépayé avant l'appel, aucune surprise. Les tarifs sont identiques quelle que soit la nationalité ou la langue de consultation."
+            },
+            {
+              "q": "Quels documents dois-je préparer avant l'appel avec un avocat ?",
+              "a": "Un résumé de votre situation en 2-3 phrases, votre passeport, votre visa actuel si vous en avez un, tout courrier reçu de l'Immigration Bureau, vos justificatifs de revenus ou contrats pertinents, et vos dates clés (date d'entrée, date d'expiration du visa, date prévue de renouvellement). L'avocat exploite au mieux les 20 minutes de consultation avec un dossier préparé."
+            },
+            {
+              "q": "Puis-je renouveler mon visa depuis la Thaïlande ou dois-je sortir du pays ?",
+              "a": "Cela dépend de la catégorie de visa. Certains visas peuvent être renouvelés directement à l'Immigration Bureau en Thaïlande (visa retraite O-A, visa B couplé à un work permit, visa LTR). D'autres nécessitent une sortie du territoire et un nouveau dépôt au consulat thaïlandais d'un pays voisin ou d'origine (border run). Les règles évoluent régulièrement — vérifier avec un avocat ou directement auprès de l'Immigration Bureau."
+            },
+            {
+              "q": "Que couvre le rapport des 90 jours (90-day report) ?",
+              "a": "Les étrangers résidant en Thaïlande avec un visa long séjour (hors LTR) doivent déclarer leur adresse à l'Immigration Bureau tous les 90 jours. Cette déclaration peut se faire en personne, par courrier, ou en ligne via le portail officiel de l'Immigration Bureau. Le non-respect entraîne des amendes. Un avocat peut vous expliquer la procédure adaptée à votre cas et les éventuelles démarches en cas de retard."
+            },
+            {
+              "q": "Combien d'ambassades sont recensées en Thaïlande par SOS-Expat ?",
+              "a": "L'annuaire SOS-Expat comporte plusieurs dizaines d'ambassades et représentations diplomatiques recensées en Thaïlande, principalement à Bangkok, incluant la France, Belgique, Suisse, Luxembourg, Canada, États-Unis, Royaume-Uni, Allemagne, Espagne, Italie, Pays-Bas, Portugal, Grèce, Irlande, Autriche, Danemark, Suède, Norvège, Finlande, Russie, Chine, Japon, Corée du Sud, Inde, Vietnam, Malaisie, Singapour, Indonésie, Philippines, Arabie saoudite, Émirats arabes unis, Iran, Égypte, Maroc, Algérie, Afrique du Sud, Brésil, Argentine, Mexique, Chili, Australie, Nouvelle-Zélande."
+            },
+            {
+              "q": "Où trouver les informations officielles sur l'immigration en Thaïlande ?",
+              "a": "Sources officielles : le Bureau de l'Immigration (Immigration Bureau, Police royale thaïlandaise), le Ministère des Affaires étrangères thaïlandais (Department of Consular Affairs), le Ministère du Travail pour les work permits, et le Board of Investment (BOI) pour le LTR visa. Les ambassades et consulats thaïlandais à l'étranger délivrent les visas avant le départ. Pour un conseil personnalisé, SOS-Expat met en relation avec un avocat en 5 minutes."
+            }
+          ]
+        }
+      },
+      {
+        "type": "cta",
+        "content": {
+          "headline": "Besoin d'un conseil juridique personnalisé sur votre situation ?",
+          "button": "Parler à un avocat en Thaïlande",
+          "subtext": "49 € / 20 min · Rappel en moins de 5 minutes · Paiement prépayé · Dans votre langue"
+        }
+      }
+    ],
+    "meta_title": "Immigration Thaïlande — guide complet visa et résidence · SOS-Expat",
+    "meta_description": "Tout savoir sur l'immigration en Thaïlande en 2026 : visa touriste, retraite, DTV, LTR, work permit, Elite Visa, résidence permanente. Parlez à un avocat local en 5 min (49 € / 20 min).",
+    "cta_links": [
+      {"label": "Parler à un avocat en Thaïlande", "url": "#rappel-avocat?utm_source=landing&utm_medium=pillar&utm_campaign=th-immigration", "style": "primary", "position": "hero"},
+      {"label": "Voir toutes les catégories de visa", "url": "#visa_categories?utm_source=landing&utm_medium=pillar&utm_campaign=th-immigration", "style": "secondary", "position": "middle"},
+      {"label": "Questions fréquentes immigration Thaïlande", "url": "#faq?utm_source=landing&utm_medium=pillar&utm_campaign=th-immigration", "style": "secondary", "position": "footer"}
+    ],
+    "lsi_keywords": [
+      "visa retraite Thaïlande",
+      "visa O-A retraite Thaïlande",
+      "visa O-X retraite 5 ans",
+      "DTV digital nomad Thaïlande",
+      "LTR Long-Term Resident visa",
+      "Elite Visa Thaïlande tarifs",
+      "work permit Thaïlande procédure",
+      "90-day report Immigration Bureau",
+      "rapport des 90 jours Thaïlande",
+      "résidence permanente Thaïlande PR",
+      "visa Thaïlande conseil avocat",
+      "visa étudiant Thaïlande",
+      "visa affaires Thaïlande Non-Immigrant B",
+      "consultation immigration Thaïlande en ligne",
+      "avocat immigration Thaïlande francophone",
+      "Board of Investment BOI Thailand LTR",
+      "Immigration Bureau Thaïlande",
+      "Ministère Travail Thaïlande work permit"
+    ],
+    "internal_links": [
+      {"anchor": "Devenir avocat partenaire SOS-Expat en Thaïlande", "topic": "landing lawyers TH"},
+      {"anchor": "Devenir expat aidant SOS-Expat en Thaïlande", "topic": "landing helpers TH"},
+      {"anchor": "Annuaire SOS-Expat des ambassades et consulats en Thaïlande", "topic": "annuaire TH"},
+      {"anchor": "Comment fonctionne un rappel téléphonique en 5 minutes", "topic": "page call flow"},
+      {"anchor": "Visas de retraite en Thaïlande et conditions 2026", "topic": "page dédiée visa retraite TH"},
+      {"anchor": "DTV et LTR — comparatif des visas long séjour", "topic": "page comparatif DTV vs LTR"},
+      {"anchor": "Questions fréquentes complètes sur l'immigration en Thaïlande", "topic": "page FAQ immigration TH"}
+    ]
+  }
+}
