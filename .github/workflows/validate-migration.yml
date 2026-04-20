@@ -1,0 +1,62 @@
+name: Validate P1/P2 contacts migration
+
+# Workflow declenche manuellement depuis GitHub UI ou via gh CLI :
+# gh workflow run validate-migration.yml --repo will383842/Mission_control_sos-expat
+#
+# Valide en prod :
+# - Schedule contacts-migrate-to-influenceurs bien pris par scheduler
+# - Commande contacts:migrate-to-influenceurs tourne sans erreur (--dry-run safe)
+# - Counts baseline par source_origin dans influenceurs
+# - Logs recents du cron backlink-resync (non-regression)
+#
+# Reuse les secrets SSH existants (SERVER_HOST, SSH_USER, SSH_PRIVATE_KEY).
+
+on:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Validate migration on VPS
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: SSH to VPS and run validation commands
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd /opt/influenceurs-tracker
+
+            echo "=== 1. Schedule list (doit contenir backlink-resync + contacts-migrate) ==="
+            docker exec inf-app php artisan schedule:list 2>&1 | grep -E "backlink-resync|contacts-migrate|migrate-to-influenceurs" || echo "AUCUN SCHEDULE TROUVE"
+            echo ""
+
+            echo "=== 2. Commande contacts:migrate-to-influenceurs --dry-run --limit=5 ==="
+            docker exec inf-app php artisan contacts:migrate-to-influenceurs --dry-run --limit=5 2>&1 || echo "ERREUR COMMANDE"
+            echo ""
+
+            echo "=== 3. Counts influenceurs par source_origin ==="
+            docker exec inf-app php artisan tinker --execute="\App\Models\Influenceur::selectRaw('COALESCE(source_origin, \"manual\") as origin, COUNT(*) as c')->groupBy('origin')->get()->each(function(\$r){ echo \$r->origin . ' : ' . \$r->c . PHP_EOL; });" 2>&1 | tail -20
+            echo ""
+
+            echo "=== 4. Counts tables legacy (baseline) ==="
+            docker exec inf-app php artisan tinker --execute="echo 'lawyers : ' . \App\Models\Lawyer::whereNotNull('email')->count() . PHP_EOL; echo 'press_contacts : ' . \App\Models\PressContact::whereNotNull('email')->count() . PHP_EOL; echo 'content_businesses : ' . \App\Models\ContentBusiness::whereNotNull('contact_email')->count() . PHP_EOL; echo 'content_contacts : ' . \App\Models\ContentContact::whereNotNull('email')->count() . PHP_EOL; echo 'influenceurs_total : ' . \App\Models\Influenceur::whereNotNull('email')->count() . PHP_EOL;" 2>&1 | tail -20
+            echo ""
+
+            echo "=== 5. Logs recents backlink-resync (non-regression) ==="
+            docker exec inf-app tail -15 /var/www/html/storage/logs/backlink-resync.log 2>/dev/null || echo "Pas encore de log backlink-resync (prochain run hourlyAt 17)"
+            echo ""
+
+            echo "=== 6. Logs recents migrate-contacts ==="
+            docker exec inf-app tail -15 /var/www/html/storage/logs/migrate-contacts.log 2>/dev/null || echo "Pas encore de log migrate-contacts (prochain run 12:00 UTC)"
+            echo ""
+
+            echo "=== 7. Migrations status ==="
+            docker exec inf-app php artisan migrate:status 2>&1 | grep -E "2026_04_20_000002|2026_04_21_000001|2026_04_21_000002" || echo "Migrations non trouvees"
+            echo ""
+
+            echo "=== DONE ==="
