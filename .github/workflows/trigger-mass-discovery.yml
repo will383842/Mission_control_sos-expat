@@ -1,0 +1,54 @@
+name: Trigger mass RSS feed discovery
+
+# Workflow manuel pour lancer en 1 clic les 4 methodes de decouverte
+# de feeds RSS : blogroll crawler + FeedSpot + AllTop + OPML public.
+#
+# Utilise : `gh workflow run trigger-mass-discovery.yml`
+
+on:
+  workflow_dispatch:
+
+jobs:
+  trigger:
+    name: Dispatch all discovery jobs
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: SSH to VPS and dispatch all discovery jobs
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd /opt/influenceurs-tracker
+
+            echo "=== Baseline count ==="
+            docker exec inf-app php artisan tinker --execute="echo 'Feeds avant : ' . \App\Models\RssBlogFeed::count() . PHP_EOL;" 2>&1 | tail -3
+
+            echo ""
+            echo "=== 1. Import public OPML repos (synchrone, ~30s) ==="
+            docker exec inf-app php artisan opml:import-public-repos 2>&1 | tail -40
+
+            echo ""
+            echo "=== 2. Dispatch blogroll crawler (async, ~1h) ==="
+            docker exec inf-app php artisan tinker --execute="\App\Jobs\CrawlFeedsBlogrollJob::dispatch(); echo 'CrawlFeedsBlogrollJob dispatched' . PHP_EOL;" 2>&1 | tail -3
+
+            echo ""
+            echo "=== 3. Dispatch FeedSpot scraper (async, ~25 min) ==="
+            docker exec inf-app php artisan tinker --execute="\App\Jobs\ScrapeFeedSpotJob::dispatch(); echo 'ScrapeFeedSpotJob dispatched' . PHP_EOL;" 2>&1 | tail -3
+
+            echo ""
+            echo "=== 4. Dispatch AllTop scraper (async, ~25 min) ==="
+            docker exec inf-app php artisan tinker --execute="\App\Jobs\ScrapeAllTopJob::dispatch(); echo 'ScrapeAllTopJob dispatched' . PHP_EOL;" 2>&1 | tail -3
+
+            echo ""
+            echo "=== Counts immediats (apres OPML import synchrone) ==="
+            docker exec inf-app php artisan tinker --execute="echo 'Feeds maintenant : ' . \App\Models\RssBlogFeed::count() . PHP_EOL; echo 'Par categorie :' . PHP_EOL; \App\Models\RssBlogFeed::selectRaw('category, COUNT(*) as c')->groupBy('category')->orderByDesc('c')->limit(20)->get()->each(function(\$r){ echo '  ' . (\$r->category ?? 'null') . ' : ' . \$r->c . PHP_EOL; });" 2>&1 | tail -25
+
+            echo ""
+            echo "=== DONE ==="
+            echo "Les 3 jobs async (blogroll, FeedSpot, AllTop) tournent en queue."
+            echo "Verifier dans 30-60 min via : tail /var/www/html/storage/logs/laravel.log"
