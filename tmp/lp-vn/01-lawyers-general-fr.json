@@ -1,0 +1,184 @@
+{
+  "params": {
+    "audience_type": "lawyers",
+    "template_id": "general",
+    "country_code": "VN",
+    "language": "fr"
+  },
+  "parsed": {
+    "title": "Devenir avocat partenaire au Vietnam en 2026 · SOS-Expat",
+    "url_slug": "devenir-avocat-partenaire-vietnam",
+    "keywords_primary": "devenir avocat partenaire au Vietnam",
+    "keywords_secondary": [
+      "avocat France Vietnam",
+      "avocat Canada Québec Vietnam",
+      "avocat Maroc Vietnam",
+      "avocat Belgique Vietnam",
+      "avocat Suisse Vietnam",
+      "avocat Sénégal Côte d'Ivoire Vietnam",
+      "avocat international 197 pays",
+      "consultation juridique en ligne Vietnam"
+    ],
+    "sections": [
+      {
+        "type": "hero",
+        "content": {
+          "badge": "★ 197 pays · Toutes langues · Partenaires indépendants 2026",
+          "h1": "Devenez avocat partenaire SOS-Expat au Vietnam",
+          "subtitle": "Avocats de France, Belgique, Suisse, Canada, Maroc, Tunisie, Sénégal, Côte d'Ivoire, Liban, États-Unis, Royaume-Uni, Inde, Brésil, Chine, Allemagne et 182 autres pays : recevez des clients internationaux au Vietnam dans la langue que vous pratiquez.",
+          "cta_text": "Je deviens partenaire",
+          "cta_subtext": "Inscription libre · Activation en moins de 5 minutes"
+        }
+      },
+      {
+        "type": "earnings",
+        "content": {
+          "headline": "Combien un avocat partenaire gagne-t-il au Vietnam ?",
+          "amount": "30 €",
+          "per": "par consultation de 20 minutes (client paie 49 € ou 55 $)",
+          "payment_delay": "Sous 24 heures après chaque appel terminé",
+          "badges": [
+            "Paiement à chaque consultation effectuée",
+            "Zéro impayé garanti par SOS-Expat.com",
+            "Cumul des gains illimité, aucun plafond",
+            "Retrait dès 30 $ accumulés",
+            "Frais fixes 3 $ par retrait, aucun pourcentage",
+            "Quatre moyens de paiement : Stripe, PayPal, Wise, Flutterwave"
+          ]
+        }
+      },
+      {
+        "type": "freedom",
+        "content": {
+          "headline": "Pourquoi rejoindre SOS-Expat.com depuis n'importe quel pays ?",
+          "items": [
+            {"icon": "✓", "text": "Aucun quota, aucune heure minimum imposée par la plateforme"},
+            {"icon": "✓", "text": "Activation et désactivation de votre profil en un clic, 24h/24"},
+            {"icon": "✓", "text": "Zéro prospection commerciale : les clients viennent à vous via SOS-Expat.com"},
+            {"icon": "✓", "text": "Partenaire indépendant depuis la France, Belgique, Suisse, Luxembourg, Monaco, Canada, Haïti, Maroc, Tunisie, Algérie, Sénégal, Côte d'Ivoire, Cameroun, Liban, Madagascar, États-Unis, Royaume-Uni, Australie, Inde, Chine, Brésil, Mexique, Allemagne, Espagne, Italie et 172 autres pays — statut selon votre législation locale"},
+            {"icon": "✓", "text": "Consultations dans toute langue que vous pratiquez : français, anglais, espagnol, allemand, portugais, arabe, hindi, chinois mandarin, russe, mais aussi vietnamien, italien, japonais, coréen, polonais, turc, swahili, tagalog ou toute langue commune avec votre client"},
+            {"icon": "✓", "text": "Compatible avec votre activité principale (cabinet individuel, cabinet collectif, solo, in-house)"},
+            {"icon": "✓", "text": "Spécialités officielles couvertes : droit de l'immigration, droit du travail, droit commercial, fiscalité internationale, droit immobilier, et autres matières juridiques internationales selon votre expertise"},
+            {"icon": "✓", "text": "Conformité DSA (Regulation UE 2022/2065) garantie par SOS-Expat.com · Entité légale WorldExpat OU, Estonie"}
+          ]
+        }
+      },
+      {
+        "type": "process",
+        "content": {
+          "headline": "Comment devenir avocat partenaire SOS-Expat au Vietnam en 4 étapes ?",
+          "steps": [
+            {"num": 1, "label": "Inscription en moins de 5 minutes", "detail": "Créez votre profil d'avocat partenaire sur SOS-Expat.com depuis n'importe lequel des 197 pays couverts. Renseignez votre identité, votre barreau d'inscription, votre numéro de toque ou équivalent professionnel, et votre justificatif. Aucune caution ni frais d'inscription."},
+            {"num": 2, "label": "Paramétrage du profil partenaire", "detail": "Indiquez vos spécialités juridiques (droit de l'immigration, droit du travail, droit commercial, fiscalité internationale, droit immobilier, et autres matières selon votre expertise), les langues dans lesquelles vous consultez (toutes langues acceptées), vos horaires de disponibilité par fuseau horaire, et vos créneaux."},
+            {"num": 3, "label": "Réception des appels clients vérifiés", "detail": "Les appels arrivent via IVR sécurisé Twilio avec conférence chiffrée, 20 minutes garanties par consultation, dans la langue commune choisie avec votre client. Délai de mise en relation inférieur à 5 minutes après paiement du client. Jusqu'à 3 tentatives de connexion si pas de réponse initiale, 60 secondes par tentative."},
+            {"num": 4, "label": "Paiement automatique sous 24 heures", "detail": "Vos 30 € (30 $) sont versés sous 24 heures après chaque appel terminé via Stripe (carte bancaire), PayPal, Wise (virement international SEPA/SWIFT), ou Flutterwave (Mobile Money pour les partenaires basés en Afrique : Sénégal, Côte d'Ivoire, Cameroun, Mali, Kenya, Nigeria, Ghana). Retrait minimum 30 $ cumulés, frais fixes 3 $ par transaction."}
+          ]
+        }
+      },
+      {
+        "type": "faq",
+        "content": {
+          "headline": "Questions fréquentes sur le partenariat avocat au Vietnam",
+          "items": [
+            {
+              "q": "Qui paie la consultation et combien je reçois exactement ?",
+              "a": "Le client paie 49 € (55 $) pour une consultation de 20 minutes avec un avocat partenaire. Vous, avocat, recevez 30 € (30 $) nets par consultation. SOS-Expat.com retient 19 € (25 $) de frais de mise en relation et de fonctionnement de la plateforme (infrastructure Twilio, processeurs de paiement, support). Le règlement intervient sous 24 heures après chaque appel effectué."
+            },
+            {
+              "q": "Suis-je employé ou salarié de SOS-Expat.com ?",
+              "a": "Non, vous êtes un partenaire indépendant. SOS-Expat.com est une plateforme de mise en relation, pas un cabinet d'avocats ni un employeur. Votre statut légal dépend de la législation de votre pays de résidence : auto-entrepreneur ou micro-entrepreneur en France, freelance ou profession libérale en Belgique et Suisse, contractor aux États-Unis, Royaume-Uni, Canada, Australie, statut équivalent selon vos obligations locales. Vous facturez vos consultations en votre nom propre."
+            },
+            {
+              "q": "Depuis quels pays peut-on devenir avocat partenaire au Vietnam ?",
+              "a": "Depuis les 197 pays couverts par SOS-Expat.com, sans aucune restriction de nationalité ou de lieu de résidence. À titre indicatif et non exhaustif : France, Belgique, Suisse, Luxembourg, Monaco, Canada (Québec, Ontario, Colombie-Britannique), Haïti, Maroc, Tunisie, Algérie, Sénégal, Côte d'Ivoire, Cameroun, Madagascar, Mali, Burkina Faso, Gabon, Togo, Bénin, Niger, Tchad, Guinée, Liban, Vietnam, États-Unis, Royaume-Uni, Australie, Nouvelle-Zélande, Irlande, Inde, Pakistan, Bangladesh, Afrique du Sud, Nigeria, Kenya, Ghana, Éthiopie, Espagne, Mexique, Argentine, Colombie, Chili, Pérou, Brésil, Portugal, Angola, Allemagne, Autriche, Italie, Pays-Bas, Grèce, Pologne, Chine, Taïwan, Singapour, Japon, Corée du Sud, Thaïlande, Malaisie, Philippines, Indonésie, Arabie saoudite, Émirats arabes unis, Qatar, Koweït, Bahreïn, Oman, Jordanie, Égypte, Turquie, Russie, Ukraine, Biélorussie, Kazakhstan."
+            },
+            {
+              "q": "Dans quelle langue vais-je faire les consultations ?",
+              "a": "Dans toute langue que vous pratiquez avec votre client. Il n'y a aucune restriction linguistique pour la consultation téléphonique : français, anglais, espagnol, allemand, portugais, arabe, hindi, chinois mandarin, russe, mais aussi vietnamien, italien, japonais, coréen, polonais, turc, swahili, tagalog, thaï, malais, ou toute autre langue parlée en commun avec votre client. Les 9 langues affichées par SOS-Expat.com (français, anglais, espagnol, allemand, portugais, arabe, hindi, chinois mandarin, russe) correspondent uniquement à la navigation de la plateforme (interface web, emails, hreflang SEO), pas à une restriction des langues d'appel."
+            },
+            {
+              "q": "Dois-je être inscrit au barreau vietnamien pour consulter des clients au Vietnam ?",
+              "a": "Non. Vous pouvez être inscrit dans n'importe quel barreau au monde et intervenir à distance pour des clients situés au Vietnam. Vous restez seul responsable de vos conseils juridiques dans le cadre déontologique et réglementaire de votre barreau d'origine. SOS-Expat.com ne fournit pas de conseil juridique direct — la plateforme vous met simplement en relation avec des clients qui ont besoin d'expertise juridique internationale."
+            },
+            {
+              "q": "Quelles nationalités de clients reçoit-on au Vietnam en 2026 ?",
+              "a": "Des expatriés, voyageurs d'affaires, digital nomads, retraités et touristes de toutes nationalités confondues. Le Vietnam a accueilli 3,8 millions de touristes en 2020 (source World Bank) et compte 101 millions d'habitants (World Bank 2024), dont une communauté internationale croissante dans les grandes villes. Les demandes proviennent typiquement de clients français, belges, suisses, canadiens, américains, britanniques, australiens, allemands, japonais, coréens, chinois, taïwanais, indiens, pakistanais, russes, italiens, espagnols, portugais, néerlandais, brésiliens, mexicains, argentins, marocains, tunisiens, émiriens, saoudiens, turcs, thaïlandais, singapouriens, philippins, malaisiens, indonésiens."
+            },
+            {
+              "q": "Sur quels sujets juridiques serai-je sollicité au Vietnam ?",
+              "a": "Principalement sur les 5 spécialités officielles couvertes par SOS-Expat.com : droit de l'immigration (e-Visa Vietnam, visa affaires, visa investisseur, work permit, temporary residence card), droit du travail international (contrats locaux, détachement, sécurité sociale transfrontalière), droit commercial et des sociétés (création de société au Vietnam, joint-venture, représentation commerciale), fiscalité internationale (convention fiscale avec votre pays d'origine, résidence fiscale, impôt sur le revenu au Vietnam), droit immobilier (achat de condo par un étranger, location, propriété). D'autres matières juridiques internationales peuvent être couvertes selon votre expertise (famille transfrontalière, succession internationale, arbitrage, contentieux consulaire)."
+            },
+            {
+              "q": "Combien d'ambassades et consulats sont recensés au Vietnam par SOS-Expat ?",
+              "a": "L'annuaire SOS-Expat comporte plus de 45 ambassades et représentations diplomatiques recensées au Vietnam, incluant celles de la France, Belgique, Allemagne, Canada, Suisse, Autriche, Espagne, Italie, Pays-Bas, Irlande, Grèce, Hongrie, Finlande, Danemark, Suède, Norvège, Portugal, Royaume-Uni, Australie, Nouvelle-Zélande, États-Unis, Brésil, Argentine, Chili, Colombie, Cuba, Arabie saoudite, Iran, Irak, Israël, Égypte, Maroc, Algérie, Afrique du Sud, Chine, Inde, Japon, Corée du Sud, Indonésie, Malaisie, Philippines, Thaïlande, Russie, Biélorussie, Bulgarie."
+            },
+            {
+              "q": "Comment fonctionne la mise en relation téléphonique avec le client ?",
+              "a": "SOS-Expat.com utilise une infrastructure IVR sécurisée Twilio : (1) le client choisit un avocat partenaire selon la langue et la spécialité, (2) il paie via Stripe ou PayPal, (3) un appel est programmé avec 4 minutes de préparation, (4) vous recevez un appel automatique que vous confirmez en appuyant sur 1 (DTMF), (5) la conférence téléphonique chiffrée démarre pour 20 minutes garanties, (6) au-delà, l'appel peut se prolonger selon votre disponibilité. Jusqu'à 3 tentatives de connexion si pas de réponse initiale."
+            },
+            {
+              "q": "Y a-t-il un délai de cooldown entre deux consultations ?",
+              "a": "Oui, 5 minutes de récupération automatique entre deux appels pour vous permettre de souffler et de préparer le suivant. Vous pouvez désactiver votre profil à tout moment si vous préférez faire une pause plus longue, ou l'activer uniquement sur certains créneaux horaires. Aucune pénalité n'est appliquée pour les pauses, quelle que soit leur durée."
+            },
+            {
+              "q": "Puis-je gagner davantage via le programme d'affiliation SOS-Expat ?",
+              "a": "Oui. En plus des 30 € par consultation, vous pouvez activer votre lien d'affiliation partenaire pour gagner des commissions additionnelles : 2 $ par appel d'avocat généré via votre lien, 1 $ par appel d'expert local, plus un bonus d'inscription de 2 $ pour chaque nouveau compte créé via votre lien. Le programme d'affiliation fait partie des programmes SOS-Expat ouverts à tous les prestataires indépendants, sans frais supplémentaires. Les commissions s'ajoutent à vos revenus de consultations."
+            },
+            {
+              "q": "Comment retirer mes gains en pratique ?",
+              "a": "Retrait à partir de 30 $ accumulés, frais fixes de 3 $ par transaction quelle que soit la somme retirée, délai de mise à disposition de 24 heures après chaque appel effectué. Quatre moyens de paiement : Stripe (carte bancaire pour l'Europe et 44+ pays avec Stripe Express), PayPal (international), Wise (virement international SEPA et SWIFT), et Flutterwave (Mobile Money pour les partenaires basés en Afrique : Sénégal, Côte d'Ivoire, Cameroun, Mali, Burkina Faso, Kenya, Nigeria, Ghana)."
+            },
+            {
+              "q": "Quelle est l'entité juridique derrière SOS-Expat.com ?",
+              "a": "SOS-Expat.com est opérée par WorldExpat OU, une société à responsabilité limitée (OU — Osaühing) de droit estonien. Juridiction : tribunaux de Tallinn, Estonie. Conformité DSA : Regulation (EU) 2022/2065 (Digital Services Act). Les factures françaises peuvent porter la mention « SOS Expat SAS » selon les obligations locales. Vos revenus de partenariat transitent par cette entité via les prestataires de paiement agréés (Stripe, PayPal, Wise, Flutterwave)."
+            }
+          ]
+        }
+      },
+      {
+        "type": "cta",
+        "content": {
+          "headline": "Rejoignez dès aujourd'hui les avocats partenaires SOS-Expat au Vietnam",
+          "button": "Je deviens partenaire",
+          "subtext": "Partenaire indépendant · Sans engagement · Activation en moins de 5 minutes"
+        }
+      }
+    ],
+    "meta_title": "Avocat partenaire SOS-Expat au Vietnam · toutes langues",
+    "meta_description": "Devenez avocat partenaire SOS-Expat au Vietnam en 2026 : 30 € / 20 min, paiement 24 h, toutes nationalités, toutes langues. Inscription libre depuis 197 pays.",
+    "cta_links": [
+      {"label": "Je deviens partenaire", "url": "#inscription?utm_source=landing&utm_medium=lawyers&utm_campaign=vn", "style": "primary", "position": "hero"},
+      {"label": "Découvrir les spécialités", "url": "#earnings?utm_source=landing&utm_medium=lawyers&utm_campaign=vn", "style": "secondary", "position": "middle"},
+      {"label": "Voir le fonctionnement détaillé", "url": "#process?utm_source=landing&utm_medium=lawyers&utm_campaign=vn", "style": "secondary", "position": "footer"}
+    ],
+    "lsi_keywords": [
+      "avocat France Vietnam",
+      "avocat Canada Québec Vietnam",
+      "avocat Belgique Luxembourg Vietnam",
+      "avocat Suisse Monaco Vietnam",
+      "avocat Maroc Tunisie Algérie Vietnam",
+      "avocat Sénégal Côte d'Ivoire Cameroun Vietnam",
+      "avocat Liban Émirats Arabie saoudite Vietnam",
+      "avocat États-Unis Royaume-Uni Australie Vietnam",
+      "avocat Inde Pakistan Bangladesh Vietnam",
+      "avocat Chine Taïwan Japon Corée Vietnam",
+      "avocat Allemagne Espagne Italie Pays-Bas Vietnam",
+      "avocat Brésil Mexique Argentine Portugal Vietnam",
+      "consultation juridique immigration Vietnam",
+      "consultation droit travail international Vietnam",
+      "consultation fiscalité internationale Vietnam",
+      "consultation droit commercial Vietnam",
+      "e-Visa Vietnam avocat partenaire",
+      "mise en relation IVR Twilio sécurisée",
+      "WorldExpat Estonie plateforme internationale",
+      "programme affiliation avocat SOS-Expat"
+    ],
+    "internal_links": [
+      {"anchor": "Annuaire SOS-Expat des 45 ambassades et consulats au Vietnam", "topic": "page annuaire Vietnam"},
+      {"anchor": "Comment fonctionne la mise en relation téléphonique en moins de 5 minutes", "topic": "page explicative call flow Twilio"},
+      {"anchor": "Devenir avocat partenaire dans un autre pays (197 pays ouverts)", "topic": "annuaire géographique des opportunités lawyers"},
+      {"anchor": "Foire aux questions complète des avocats partenaires SOS-Expat", "topic": "page FAQ lawyers partenariat"},
+      {"anchor": "Programme d'affiliation SOS-Expat pour les avocats partenaires", "topic": "page programme affiliate client/provider"}
+    ]
+  }
+}

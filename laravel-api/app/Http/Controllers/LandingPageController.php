@@ -37,12 +37,24 @@ class LandingPageController extends Controller
             ->pluck('n', 'language')
             ->toArray();
 
+        // Per-audience published counts — used by the dashboard to replace
+        // the previous 12-sample extrapolation (which rendered 0 publiées
+        // whenever no row of that audience was in the last 12 created).
+        $byAudience = LandingPage::query()
+            ->whereNull('deleted_at')
+            ->where('status', 'published')
+            ->selectRaw('audience_type, COUNT(*) AS n')
+            ->groupBy('audience_type')
+            ->pluck('n', 'audience_type')
+            ->toArray();
+
         return response()->json([
             'total_published'         => array_sum($bySource),
             'ai_generated'            => (int) ($bySource['ai_generated'] ?? 0),
             'deterministic_backfill'  => (int) ($bySource['deterministic_backfill'] ?? 0),
             'manual'                  => (int) ($bySource['manual'] ?? 0),
             'by_language'             => $byLanguage,
+            'by_audience'             => $byAudience,
         ]);
     }
 

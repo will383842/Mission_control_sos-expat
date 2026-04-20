@@ -123,6 +123,7 @@ export interface LandingStats {
   deterministic_backfill: number;
   manual: number;
   by_language: Record<string, number>;
+  by_audience: Record<string, number>;
 }
 
 export const fetchLandingStats = () =>

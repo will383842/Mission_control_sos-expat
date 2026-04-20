@@ -246,11 +246,16 @@ export default function LandingGeneratorHub() {
         if (lp.status === 'published') byAudience[a].published++;
       }
 
+      // Real per-audience published counts come from /landings/stats (by_audience)
+      // which queries the DB directly. The previous sample-based extrapolation
+      // rendered 0 publiées for audiences with no row in the last 12 created.
+      const realPublished = statsRes?.data?.by_audience ?? {};
+
       setStats(built.map((s) => {
         const b = byAudience[s.type];
         return {
           ...s,
-          published: b ? Math.round((s.data?.total_generated ?? 0) * (b.published / Math.max(1, b.count))) : 0,
+          published: realPublished[s.type] ?? (b ? Math.round((s.data?.total_generated ?? 0) * (b.published / Math.max(1, b.count))) : 0),
           avgSeo:    b ? Math.round(b.seoSum / b.count) : 0,
         };
       }));
