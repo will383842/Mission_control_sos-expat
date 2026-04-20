@@ -2622,7 +2622,7 @@ RULES;
         return Str::slug($name);
     }
 
-    private function getCountrySlug(string $countryCode, string $language = 'fr'): string
+    public function getCountrySlug(string $countryCode, string $language = 'fr'): string
     {
         // Pour FR: utiliser la map hardcodée
         if ($language === 'fr' && isset(self::COUNTRY_SLUGS_FR[$countryCode])) {
@@ -2656,7 +2656,7 @@ RULES;
      * Utilise PHP intl (Locale::getDisplayRegion) si disponible — couvre TOUS les pays
      * dans TOUTES les langues via les données ICU. Fallback hardcodé pour les pays prioritaires.
      */
-    private function getCountryName(string $countryCode, string $language): string
+    public function getCountryName(string $countryCode, string $language): string
     {
         // 1. PHP intl extension (intl doit être activé dans php.ini)
         if (function_exists('locale_get_display_region')) {
