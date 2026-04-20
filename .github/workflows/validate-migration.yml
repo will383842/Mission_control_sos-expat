@@ -56,7 +56,19 @@ jobs:
             echo ""
 
             echo "=== 7. Migrations status ==="
-            docker exec inf-app php artisan migrate:status 2>&1 | grep -E "2026_04_20_000002|2026_04_21_000001|2026_04_21_000002" || echo "Migrations non trouvees"
+            docker exec inf-app php artisan migrate:status 2>&1 | grep -E "2026_04_20_000002|2026_04_21_000001|2026_04_21_000002|2026_04_22_000001" || echo "Migrations non trouvees"
+
+            echo ""
+            echo "=== 9. Option D : Schedules bloggers-rss + ai-* ==="
+            docker exec inf-app php artisan schedule:list 2>&1 | grep -E "bloggers-rss|ai-bloggers|ai-podcasters|ai-influencers" || echo "AUCUN SCHEDULE OPTION D TROUVE"
+
+            echo ""
+            echo "=== 10. Option D : Table rss_blog_feeds count ==="
+            docker exec inf-app php artisan tinker --execute="echo 'rss_blog_feeds total : ' . \App\Models\RssBlogFeed::count() . PHP_EOL; echo 'rss_blog_feeds actifs : ' . \App\Models\RssBlogFeed::where('active', true)->count() . PHP_EOL;" 2>&1 | tail -5
+
+            echo ""
+            echo "=== 11. Option D : Influenceurs par contact_type (echantillon) ==="
+            docker exec inf-app php artisan tinker --execute="\App\Models\Influenceur::whereIn('contact_type', ['blog', 'podcast_radio', 'influenceur'])->selectRaw('contact_type, COUNT(*) as c')->groupBy('contact_type')->get()->each(function(\$r){ echo \$r->contact_type . ' : ' . \$r->c . PHP_EOL; });" 2>&1 | tail -10
             echo ""
 
             echo "=== 8. TOTAL contacts syncés à bl-app (cumulé historique) ==="
