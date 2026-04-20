@@ -88,7 +88,15 @@ class BacklinkEngineWebhookService
                 ->post($url, $payload);
 
             $body = $response->json();
-            $synced = $response->successful() && in_array($body['status'] ?? '', ['created', 'duplicate']);
+            // Backlink Engine a changé de format de réponse mi-avril 2026 :
+            // ancien : {"status":"created"|"duplicate", ...}
+            // nouveau : {"status":"ok", "deduplicated":true|false}
+            // On accepte les deux contrats pour compatibilité.
+            $status = $body['status'] ?? '';
+            $synced = $response->successful() && (
+                in_array($status, ['created', 'duplicate', 'ok'], true)
+                || ($body['deduplicated'] ?? false)
+            );
 
             Log::info('BacklinkEngine webhook sent', [
                 'status' => $response->status(),
