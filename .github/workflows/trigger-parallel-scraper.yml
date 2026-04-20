@@ -1,0 +1,94 @@
+name: Trigger parallel scraper (content-scraper queue)
+
+# Lance un scraper secondaire sur la queue content-scraper,
+# en parallele d'un ScrapeBloggerRssFeedsJob qui tourne sur la queue scraper.
+#
+# Safe en parallele : 2 workers separes (scraper + content-scraper).
+
+on:
+  workflow_dispatch:
+    inputs:
+      scraper:
+        description: 'Scraper a lancer (francaisetranger | femmexpat | businesses)'
+        required: true
+        default: 'francaisetranger'
+        type: choice
+        options:
+          - francaisetranger
+          - femmexpat
+          - businesses
+
+jobs:
+  trigger:
+    name: Dispatch parallel scraper
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: SSH to VPS and dispatch
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: SCRAPER_NAME
+          script: |
+            set -e
+            cd /opt/influenceurs-tracker
+
+            echo "=== Health check avant dispatch ==="
+            curl -sS -o /dev/null -w "site HTTP %{http_code}\n" https://influenceurs.life-expat.com/ || echo "site unreachable"
+
+            echo ""
+            echo "=== RSS scrape actuel (doit etre en cours) ==="
+            docker exec inf-app php artisan tinker --execute="echo 'Influenceurs contact_type=blog : ' . \App\Models\Influenceur::where('contact_type', 'blog')->count() . PHP_EOL; echo 'Feeds avec last_scraped_at : ' . \App\Models\RssBlogFeed::whereNotNull('last_scraped_at')->count() . PHP_EOL;" 2>&1 | tail -5
+
+            echo ""
+            echo "=== Dispatch scraper : $SCRAPER_NAME ==="
+
+            case "$SCRAPER_NAME" in
+              francaisetranger)
+                docker exec inf-app php artisan tinker --execute="
+                  \$source = \App\Models\ContentSource::where('slug', 'francais-a-l-etranger')->first();
+                  if (\$source) {
+                    \App\Jobs\ScrapeFrancaisEtrangerJob::dispatch(\$source->id);
+                    echo 'ScrapeFrancaisEtrangerJob dispatched (source #' . \$source->id . ')' . PHP_EOL;
+                  } else {
+                    echo 'ERREUR: ContentSource francais-a-l-etranger introuvable' . PHP_EOL;
+                  }
+                " 2>&1 | tail -3
+                ;;
+              femmexpat)
+                docker exec inf-app php artisan tinker --execute="
+                  \$source = \App\Models\ContentSource::where('slug', 'femmexpat')->first();
+                  if (\$source) {
+                    \App\Jobs\ScrapeFemmexpatJob::dispatch(\$source->id);
+                    echo 'ScrapeFemmexpatJob dispatched (source #' . \$source->id . ')' . PHP_EOL;
+                  } else {
+                    echo 'ERREUR: ContentSource femmexpat introuvable' . PHP_EOL;
+                  }
+                " 2>&1 | tail -3
+                ;;
+              businesses)
+                docker exec inf-app php artisan tinker --execute="
+                  \$source = \App\Models\ContentSource::where('slug', 'like', '%expat%')->first();
+                  if (\$source) {
+                    \App\Jobs\ScrapeBusinessDirectoryJob::dispatch(\$source->id);
+                    echo 'ScrapeBusinessDirectoryJob dispatched (source #' . \$source->id . ')' . PHP_EOL;
+                  } else {
+                    echo 'ERREUR: ContentSource expat introuvable' . PHP_EOL;
+                  }
+                " 2>&1 | tail -3
+                ;;
+              *)
+                echo "Unknown scraper : $SCRAPER_NAME"
+                exit 1
+                ;;
+            esac
+
+            echo ""
+            echo "=== DONE ==="
+            echo "Scraper '$SCRAPER_NAME' dispatched en queue content-scraper."
+            echo "Tourne en parallele du RSS scrape (queue scraper)."
+        env:
+          SCRAPER_NAME: ${{ inputs.scraper }}
