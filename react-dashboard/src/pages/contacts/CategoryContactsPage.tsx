@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useContext, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../../api/client';
 import { useContacts } from '../../hooks/useContacts';
 import { getLanguageFlag, getCountryFlag } from '../../lib/constants';
@@ -8,9 +9,17 @@ import { AuthContext } from '../../hooks/useAuth';
 import { CONTACT_CATEGORIES, CONTACT_TYPES } from '../../lib/constants';
 import type { ContactCategory, ContactType, InfluenceurFilters, PipelineStatus } from '../../types/influenceur';
 
+export interface SubTypeChip {
+  value: ContactType;
+  label: string;
+  icon?: string;
+}
+
 interface Props {
   category: ContactCategory;
   contactType?: ContactType;
+  /** Chips cliquables pour filtrer par sous-type via URL ?type=X (remplace les routes dédiées). */
+  subTypes?: SubTypeChip[];
 }
 
 type CreateForm = {
@@ -44,7 +53,14 @@ const EMPTY_FORM = (defaultType: ContactType): CreateForm => ({
  * Chaque route dédiée (ex: /contacts/institutionnel) monte une instance FRAÎCHE
  * de ce composant, garantissant un filtre toujours correct sans bug de stale state.
  */
-export default function CategoryContactsPage({ category, contactType }: Props) {
+export default function CategoryContactsPage({ category, contactType: contactTypeProp, subTypes }: Props) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Si l'URL contient ?type=X et qu'il fait partie des subTypes autorisés, il prime sur la prop.
+  // Sinon on retombe sur contactTypeProp (comportement historique des routes dédiées).
+  const typeFromUrl = searchParams.get('type') as ContactType | null;
+  const isValidUrlType = typeFromUrl && subTypes?.some(s => s.value === typeFromUrl);
+  const contactType: ContactType | undefined = isValidUrlType ? typeFromUrl : contactTypeProp;
+
   const { contacts, loading, error, hasMore, load, loadMore, createContact } = useContacts();
   const { user } = useContext(AuthContext);
   const loaderRef = useRef<HTMLDivElement>(null);
@@ -278,6 +294,37 @@ export default function CategoryContactsPage({ category, contactType }: Props) {
               </span>
             );
           })}
+        </div>
+      )}
+
+      {/* ── Chips sous-types (remplacent les routes dédiées /contacts/youtubeurs, etc.) ── */}
+      {subTypes && subTypes.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-3">
+          <button
+            type="button"
+            onClick={() => setSearchParams({}, { replace: true })}
+            className={`text-xs px-3 py-1.5 rounded-full border transition ${
+              !contactType
+                ? 'bg-violet text-white border-violet'
+                : 'bg-surface border-border text-muted hover:text-white hover:border-violet'
+            }`}
+          >
+            Tous
+          </button>
+          {subTypes.map(st => (
+            <button
+              key={st.value}
+              type="button"
+              onClick={() => setSearchParams({ type: st.value }, { replace: true })}
+              className={`text-xs px-3 py-1.5 rounded-full border transition ${
+                contactType === st.value
+                  ? 'bg-violet text-white border-violet'
+                  : 'bg-surface border-border text-muted hover:text-white hover:border-violet'
+              }`}
+            >
+              {st.icon ? `${st.icon} ${st.label}` : st.label}
+            </button>
+          ))}
         </div>
       )}
 

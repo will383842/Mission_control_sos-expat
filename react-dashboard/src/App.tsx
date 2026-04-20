@@ -209,26 +209,36 @@ export default function App() {
                 <Route path="contacts" element={<Contacts />} />
 
                 {/* ── Catégories (route dédiée = remount garanti = filtre toujours correct) ── */}
+                {/* Institutionnel : chips pour sous-types (écoles / UFE / Alliance Française) */}
                 <Route path="contacts/institutionnel"
-                  element={<CategoryContactsPage key="institutionnel" category="institutionnel" />} />
+                  element={<CategoryContactsPage key="institutionnel" category="institutionnel" subTypes={[
+                    { value: 'ecole', label: 'Écoles', icon: '🏫' },
+                    { value: 'ufe', label: 'UFE Monde', icon: '🇫🇷' },
+                    { value: 'alliance_francaise', label: 'Alliance Française', icon: '🎭' },
+                  ]} />} />
+                {/* Médias & Influence : chips pour YouTubeurs / Instagrammeurs */}
                 <Route path="contacts/medias-influence"
-                  element={<CategoryContactsPage key="medias_influence" category="medias_influence" />} />
-                <Route path="contacts/youtubeurs"
-                  element={<CategoryContactsPage key="youtubeurs" category="medias_influence" contactType="youtubeur" />} />
-                <Route path="contacts/instagrammeurs"
-                  element={<CategoryContactsPage key="instagrammeurs" category="medias_influence" contactType="instagrammeur" />} />
+                  element={<CategoryContactsPage key="medias_influence" category="medias_influence" subTypes={[
+                    { value: 'youtubeur', label: 'YouTubeurs', icon: '▶️' },
+                    { value: 'instagrammeur', label: 'Instagrammeurs', icon: '📸' },
+                  ]} />} />
                 <Route path="contacts/services-b2b"
                   element={<CategoryContactsPage key="services_b2b" category="services_b2b" />} />
                 <Route path="contacts/communautes"
                   element={<CategoryContactsPage key="communautes" category="communautes" />} />
                 <Route path="contacts/digital"
                   element={<CategoryContactsPage key="digital" category="digital" />} />
+                {/* ── Redirections 2026-04-20 : anciennes routes dédiées → chips via query string */}
+                <Route path="contacts/youtubeurs"
+                  element={<Navigate to="/contacts/medias-influence?type=youtubeur" replace />} />
+                <Route path="contacts/instagrammeurs"
+                  element={<Navigate to="/contacts/medias-influence?type=instagrammeur" replace />} />
                 <Route path="contacts/ecoles"
-                  element={<CategoryContactsPage key="ecoles" category="institutionnel" contactType="ecole" />} />
+                  element={<Navigate to="/contacts/institutionnel?type=ecole" replace />} />
                 <Route path="contacts/ufe"
-                  element={<CategoryContactsPage key="ufe" category="institutionnel" contactType="ufe" />} />
+                  element={<Navigate to="/contacts/institutionnel?type=ufe" replace />} />
                 <Route path="contacts/alliance-francaise"
-                  element={<CategoryContactsPage key="alliance_francaise" category="institutionnel" contactType="alliance_francaise" />} />
+                  element={<Navigate to="/contacts/institutionnel?type=alliance_francaise" replace />} />
 
                 {/* ── Outils de sourcing contacts ── */}
                 <Route path="contacts/journalistes" element={<AdminRoute><JournalistContacts /></AdminRoute>} />

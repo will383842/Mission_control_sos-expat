@@ -2,8 +2,12 @@
 
 namespace App\Console\Commands;
 
+use App\Models\ContentBusiness;
+use App\Models\ContentContact;
 use App\Models\Influenceur;
+use App\Models\Lawyer;
 use App\Models\PressContact;
+use App\Observers\ContentContactObserver;
 use App\Services\BacklinkEngineWebhookService;
 use Illuminate\Console\Command;
 
@@ -18,6 +22,8 @@ class ResyncBacklinkEngine extends Command
     protected $signature = 'backlink:resync
                             {--force : Re-sync ALL contacts, even already synced}
                             {--type= : Only sync a specific contact_type}
+                            {--only= : Limit to one table: influenceurs|press|lawyers|businesses|web-contacts}
+                            {--limit=0 : Cap le nombre de rows traitées par table (0 = illimité)}
                             {--dry-run : Count without sending}';
 
     protected $description = 'Re-synchronize contacts to the Backlink Engine webhook';
@@ -35,9 +41,29 @@ class ResyncBacklinkEngine extends Command
     {
         $force  = $this->option('force');
         $type   = $this->option('type');
+        $only   = $this->option('only');
+        $limit  = (int) $this->option('limit');
         $dryRun = $this->option('dry-run');
 
         $this->info('=== Backlink Engine Re-Sync ===');
+        if ($only) {
+            $this->line("  Table filter: {$only}");
+        }
+        if ($limit > 0) {
+            $this->line("  Per-table limit: {$limit}");
+        }
+
+        $runTable = fn (string $key) => !$only || $only === $key;
+
+        $sent = $skipped = $errors = 0;
+        $pSent = $pSkipped = $pErrors = 0;
+        $lSent = $lSkipped = $lErrors = 0;
+        $bSent = $bSkipped = $bErrors = 0;
+        $cSent = $cSkipped = $cErrors = 0;
+
+        if (!$runTable('influenceurs')) {
+            goto skip_influenceurs;
+        }
 
         // ── Influenceurs ──────────────────────────────────────────────
         $query = Influenceur::query()->whereNotNull('email');
@@ -49,12 +75,11 @@ class ResyncBacklinkEngine extends Command
             $query->where('contact_type', $type);
         }
 
+        if ($limit > 0) {
+            $query->limit($limit);
+        }
         $total = $query->count();
         $this->info("Influenceurs à synchro: {$total}");
-
-        $sent   = 0;
-        $skipped = 0;
-        $errors = 0;
 
         $query->chunk(100, function ($chunk) use (&$sent, &$skipped, &$errors, $dryRun) {
         foreach ($chunk as $contact) {
@@ -107,18 +132,23 @@ class ResyncBacklinkEngine extends Command
 
         $this->line("  Sent: {$sent} | Skipped: {$skipped} | Errors: {$errors}");
 
+        skip_influenceurs:
+
+        if (!$runTable('press')) {
+            goto skip_press;
+        }
+
         // ── Press Contacts ────────────────────────────────────────────
         $pressQuery = PressContact::query()->whereNotNull('email');
         if (! $force) {
             $pressQuery->whereNull('backlink_synced_at');
         }
+        if ($limit > 0) {
+            $pressQuery->limit($limit);
+        }
 
         $pTotal = $pressQuery->count();
         $this->info("Press contacts à synchro: {$pTotal}");
-
-        $pSent = 0;
-        $pSkipped = 0;
-        $pErrors = 0;
 
         $pressQuery->chunk(100, function ($chunk) use (&$pSent, &$pSkipped, &$pErrors, $dryRun) {
         foreach ($chunk as $pc) {
@@ -160,8 +190,185 @@ class ResyncBacklinkEngine extends Command
 
         $this->line("  Sent: {$pSent} | Skipped: {$pSkipped} | Errors: {$pErrors}");
 
+        skip_press:
+
+        if (!$runTable('lawyers')) {
+            goto skip_lawyers;
+        }
+
+        // ── Lawyers ───────────────────────────────────────────────────
+        $lawyerQuery = Lawyer::query()->whereNotNull('email');
+        if (! $force) {
+            $lawyerQuery->whereNull('backlink_synced_at');
+        }
+        if ($limit > 0) {
+            $lawyerQuery->limit($limit);
+        }
+
+        $lTotal = $lawyerQuery->count();
+        $this->info("Lawyers à synchro: {$lTotal}");
+
+        $lawyerQuery->chunk(100, function ($chunk) use (&$lSent, &$lSkipped, &$lErrors, $dryRun) {
+            foreach ($chunk as $lw) {
+                $emailDomain = strtolower(explode('@', $lw->email)[1] ?? '');
+                if (in_array($emailDomain, self::JUNK_EMAIL_DOMAINS)) {
+                    $lSkipped++;
+                    continue;
+                }
+                if ($dryRun) {
+                    $lSent++;
+                    continue;
+                }
+
+                $synced = BacklinkEngineWebhookService::sendContactCreated([
+                    'email'        => $lw->email,
+                    'name'         => $lw->full_name,
+                    'firstName'    => $lw->first_name,
+                    'lastName'     => $lw->last_name,
+                    'type'         => 'avocat',
+                    'publication'  => $lw->firm_name,
+                    'country'      => $lw->country,
+                    'language'     => $lw->language,
+                    'source_url'   => $lw->website ?? $lw->source_url,
+                    'source_table' => 'lawyers',
+                    'source_id'    => $lw->id,
+                ]);
+
+                if ($synced) {
+                    $lw->updateQuietly(['backlink_synced_at' => now()]);
+                    $lSent++;
+                } else {
+                    $lErrors++;
+                }
+                usleep(100_000);
+            }
+        });
+
+        $this->line("  Sent: {$lSent} | Skipped: {$lSkipped} | Errors: {$lErrors}");
+
+        skip_lawyers:
+
+        if (!$runTable('businesses')) {
+            goto skip_businesses;
+        }
+
+        // ── Content Businesses ────────────────────────────────────────
+        $bizQuery = ContentBusiness::query()->whereNotNull('contact_email');
+        if (! $force) {
+            $bizQuery->whereNull('backlink_synced_at');
+        }
+        if ($limit > 0) {
+            $bizQuery->limit($limit);
+        }
+
+        $bTotal = $bizQuery->count();
+        $this->info("Content businesses à synchro: {$bTotal}");
+
+        $bizQuery->chunk(100, function ($chunk) use (&$bSent, &$bSkipped, &$bErrors, $dryRun) {
+            foreach ($chunk as $biz) {
+                $emailDomain = strtolower(explode('@', $biz->contact_email)[1] ?? '');
+                if (in_array($emailDomain, self::JUNK_EMAIL_DOMAINS)) {
+                    $bSkipped++;
+                    continue;
+                }
+                if ($dryRun) {
+                    $bSent++;
+                    continue;
+                }
+
+                $synced = BacklinkEngineWebhookService::sendContactCreated([
+                    'email'        => $biz->contact_email,
+                    'name'         => $biz->contact_name ?: $biz->name,
+                    'type'         => 'partenaire',
+                    'publication'  => $biz->name,
+                    'country'      => $biz->country,
+                    'language'     => $biz->language,
+                    'source_url'   => $biz->website ?? $biz->url,
+                    'source_table' => 'content_businesses',
+                    'source_id'    => $biz->id,
+                ]);
+
+                if ($synced) {
+                    $biz->updateQuietly(['backlink_synced_at' => now()]);
+                    $bSent++;
+                } else {
+                    $bErrors++;
+                }
+                usleep(100_000);
+            }
+        });
+
+        $this->line("  Sent: {$bSent} | Skipped: {$bSkipped} | Errors: {$bErrors}");
+
+        skip_businesses:
+
+        if (!$runTable('web-contacts')) {
+            goto skip_web_contacts;
+        }
+
+        // ── Content Contacts (web/communautés) ────────────────────────
+        $webQuery = ContentContact::query()->whereNotNull('email');
+        if (! $force) {
+            $webQuery->whereNull('backlink_synced_at');
+        }
+        if ($limit > 0) {
+            $webQuery->limit($limit);
+        }
+
+        $cTotal = $webQuery->count();
+        $this->info("Content contacts (web) à synchro: {$cTotal}");
+
+        $resolver = new ContentContactObserver();
+        // Utilise la même méthode resolveType que l'observer via reflection
+        // (pour garder un seul mapping source de vérité).
+        $typeResolver = function (?string $sector) use ($resolver): string {
+            $method = new \ReflectionMethod($resolver, 'resolveType');
+            $method->setAccessible(true);
+            return $method->invoke($resolver, $sector);
+        };
+
+        $webQuery->chunk(100, function ($chunk) use (&$cSent, &$cSkipped, &$cErrors, $dryRun, $typeResolver) {
+            foreach ($chunk as $c) {
+                $emailDomain = strtolower(explode('@', $c->email)[1] ?? '');
+                if (in_array($emailDomain, self::JUNK_EMAIL_DOMAINS)) {
+                    $cSkipped++;
+                    continue;
+                }
+                if ($dryRun) {
+                    $cSent++;
+                    continue;
+                }
+
+                $synced = BacklinkEngineWebhookService::sendContactCreated([
+                    'email'        => $c->email,
+                    'name'         => $c->name,
+                    'type'         => $typeResolver($c->sector),
+                    'publication'  => $c->company,
+                    'country'      => $c->country,
+                    'language'     => $c->language,
+                    'source_url'   => $c->company_url ?? $c->page_url,
+                    'source_table' => 'content_contacts',
+                    'source_id'    => $c->id,
+                ]);
+
+                if ($synced) {
+                    $c->updateQuietly(['backlink_synced_at' => now()]);
+                    $cSent++;
+                } else {
+                    $cErrors++;
+                }
+                usleep(100_000);
+            }
+        });
+
+        $this->line("  Sent: {$cSent} | Skipped: {$cSkipped} | Errors: {$cErrors}");
+
+        skip_web_contacts:
+
         $this->newLine();
-        $this->info("TOTAL: " . ($sent + $pSent) . " envoyés, " . ($skipped + $pSkipped) . " ignorés, " . ($errors + $pErrors) . " erreurs");
+        $this->info("TOTAL: " . ($sent + $pSent + $lSent + $bSent + $cSent) . " envoyés, "
+            . ($skipped + $pSkipped + $lSkipped + $bSkipped + $cSkipped) . " ignorés, "
+            . ($errors + $pErrors + $lErrors + $bErrors + $cErrors) . " erreurs");
 
         return Command::SUCCESS;
     }

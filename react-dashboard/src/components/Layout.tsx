@@ -368,9 +368,6 @@ export default function Layout() {
                   </NavSubGroup>
 
                   <NavSubGroup label="Contacts" isOpen={openSubGroups.sourcing_contacts} onToggle={() => toggleSubGroup('sourcing_contacts')}>
-                    <NavLink to="/contacts/journalistes" className={subNavClass} onClick={handleNavClick}>
-                      🗞️ Journalistes & Presse
-                    </NavLink>
                     <NavLink to="/directories" className={subNavClass} onClick={handleNavClick}>
                       📚 Annuaires web
                     </NavLink>
@@ -435,12 +432,11 @@ export default function Layout() {
                 <NavLink to="/contacts/medias-influence" className={subNavClass} onClick={handleNavClick}>
                   📺 Médias & Influence
                 </NavLink>
-                <NavLink to="/contacts/youtubeurs" className={subNavClass} onClick={handleNavClick}>
-                  ▶️ YouTubeurs
-                </NavLink>
-                <NavLink to="/contacts/instagrammeurs" className={subNavClass} onClick={handleNavClick}>
-                  📸 Instagrammeurs
-                </NavLink>
+                {isAdmin && (
+                  <NavLink to="/contacts/journalistes" className={subNavClass} onClick={handleNavClick}>
+                    🗞️ Journalistes & Presse
+                  </NavLink>
+                )}
                 <NavLink to="/contacts/services-b2b" className={subNavClass} onClick={handleNavClick}>
                   💼 Services B2B
                 </NavLink>
@@ -449,15 +445,6 @@ export default function Layout() {
                 </NavLink>
                 <NavLink to="/contacts/digital" className={subNavClass} onClick={handleNavClick}>
                   🔗 Digital & SEO
-                </NavLink>
-                <NavLink to="/contacts/ecoles" className={subNavClass} onClick={handleNavClick}>
-                  🏫 Écoles
-                </NavLink>
-                <NavLink to="/contacts/ufe" className={subNavClass} onClick={handleNavClick}>
-                  🇫🇷 UFE Monde
-                </NavLink>
-                <NavLink to="/contacts/alliance-francaise" className={subNavClass} onClick={handleNavClick}>
-                  🎭 Alliance Française
                 </NavLink>
                 <NavLink to="/content/lawyers" className={subNavClass} onClick={handleNavClick}>
                   ⚖️ Avocats

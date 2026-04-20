@@ -7,10 +7,16 @@ use App\Console\Commands\AutoPublishLinkedInCommand;
 use App\Console\Commands\CheckLinkedInCommentsCommand;
 use App\Console\Commands\SetLinkedInTelegramWebhookCommand;
 use App\Models\Contact;
+use App\Models\ContentBusiness;
+use App\Models\ContentContact;
 use App\Models\Influenceur;
+use App\Models\Lawyer;
 use App\Models\PressContact;
 use App\Observers\ContactObserver;
+use App\Observers\ContentBusinessObserver;
+use App\Observers\ContentContactObserver;
 use App\Observers\InfluenceurObserver;
+use App\Observers\LawyerObserver;
 use App\Observers\PressContactObserver;
 use App\Services\Social\SocialDriverManager;
 use App\Services\Social\TelegramAlertService;
@@ -47,5 +53,10 @@ class AppServiceProvider extends ServiceProvider
         Contact::observe(ContactObserver::class);
         Influenceur::observe(InfluenceurObserver::class);
         PressContact::observe(PressContactObserver::class);
+        // Observers Backlink Engine pour les 3 tables précédemment orphelines
+        // (déployé 2026-04-20 pour combler le gap du scraping continu 2026-04-19).
+        Lawyer::observe(LawyerObserver::class);
+        ContentBusiness::observe(ContentBusinessObserver::class);
+        ContentContact::observe(ContentContactObserver::class);
     }
 }
