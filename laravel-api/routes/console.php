@@ -480,6 +480,41 @@ Schedule::command('backlink:resync --limit=300')
     ->name('backlink-resync');
 
 // ══════════════════════════════════════════════════════════════════════
+// CONTACTS MIGRATION vers influenceurs (P2 refactor, 2026-04-21)
+// ══════════════════════════════════════════════════════════════════════
+// Copie les rows des 4 tables legacy (lawyers, press_contacts,
+// content_businesses, content_contacts) vers `influenceurs` avec
+// source_origin=<table>, preservation de backlink_synced_at.
+//
+// SAFE :
+// - withoutEvents() dans la commande → aucun webhook bl-app parasite
+//   (les rows legacy deja syncees via leur observer respectif ne sont
+//   pas re-poussees)
+// - COALESCE des champs → pas d'ecrasement des donnees existantes
+// - Idempotent : rerun = 0 nouvelle insertion
+//
+// Les nouveaux contacts atterrissent dans influenceurs avec
+// backlink_synced_at=null → le cron `backlink-resync` (hourlyAt(17))
+// les pousse au webhook bl-app lors du run suivant.
+//
+// Latence E2E nouveau contact → bl-app :
+//   scraper → legacy (immediat, via observer legacy)
+//   cron migration (max 30 min) → copie dans influenceurs
+//   cron backlink-resync (max 1h) → push au webhook si new row
+// Observer legacy pousse en parallele (dedup cote bl-app).
+//
+// --limit=200 : 200 par table × 4 = 800 rows max/run. Tient largement
+//               sous 256m scheduler.
+// --dry-run quotidien : reporting sans impact.
+// ══════════════════════════════════════════════════════════════════════
+Schedule::command('contacts:migrate-to-influenceurs --limit=200')
+    ->everyThirtyMinutes()
+    ->withoutOverlapping(25)
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/migrate-contacts.log'))
+    ->name('contacts-migrate-to-influenceurs');
+
+// ══════════════════════════════════════════════════════════════════════
 // STALE RUNS RECOVERY (toutes les 30 min)
 // ══════════════════════════════════════════════════════════════════════
 // Les runs bloqués en 'running' depuis >2h = worker crashé mid-scrape.
