@@ -59,4 +59,8 @@ jobs:
             docker exec inf-app php artisan migrate:status 2>&1 | grep -E "2026_04_20_000002|2026_04_21_000001|2026_04_21_000002" || echo "Migrations non trouvees"
             echo ""
 
+            echo "=== 8. TOTAL contacts syncés à bl-app (cumulé historique) ==="
+            docker exec inf-app php artisan tinker --execute="echo 'Lawyers synced   : ' . \App\Models\Lawyer::whereNotNull('backlink_synced_at')->count() . ' / ' . \App\Models\Lawyer::whereNotNull('email')->count() . PHP_EOL; echo 'Press synced     : ' . \App\Models\PressContact::whereNotNull('backlink_synced_at')->count() . ' / ' . \App\Models\PressContact::whereNotNull('email')->count() . PHP_EOL; echo 'Businesses synced: ' . \App\Models\ContentBusiness::whereNotNull('backlink_synced_at')->count() . ' / ' . \App\Models\ContentBusiness::whereNotNull('contact_email')->count() . PHP_EOL; echo 'Web synced       : ' . \App\Models\ContentContact::whereNotNull('backlink_synced_at')->count() . ' / ' . \App\Models\ContentContact::whereNotNull('email')->count() . PHP_EOL; echo 'Influenceurs sync: ' . \App\Models\Influenceur::whereNotNull('backlink_synced_at')->count() . ' / ' . \App\Models\Influenceur::whereNotNull('email')->count() . PHP_EOL;" 2>&1 | tail -10
+            echo ""
+
             echo "=== DONE ==="
