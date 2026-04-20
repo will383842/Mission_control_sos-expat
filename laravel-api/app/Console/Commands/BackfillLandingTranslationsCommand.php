@@ -295,9 +295,11 @@ class BackfillLandingTranslationsCommand extends Command
             'meta_title'         => $metaTitle,
             'meta_description'   => $metaDesc,
             'canonical_url'      => $canonical,
-            // sections + json_ld intentionally NULL → Blade template fallback.
-            'sections'           => null,
-            'json_ld'            => null,
+            // sections + json_ld: empty arrays (NOT NULL constraint on the
+            // column). Blade templates treat empty arrays the same as NULL
+            // and fall back to resources/views/landings/translations/*.php.
+            'sections'           => [],
+            'json_ld'            => [],
             // hreflang_map is recomputed below via service->syncHreflangMap().
             'hreflang_map'       => [],
             'status'             => 'published',
