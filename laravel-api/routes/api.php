@@ -450,6 +450,19 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ============================================================
+    // RSS BLOG FEEDS (Option D — scraping blogueurs zero-ban)
+    // ============================================================
+    Route::prefix('rss-blog-feeds')->middleware('role:admin')->group(function () {
+        Route::get('/', [\App\Http\Controllers\RssBlogFeedController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\RssBlogFeedController::class, 'store']);
+        Route::get('/{feed}', [\App\Http\Controllers\RssBlogFeedController::class, 'show']);
+        Route::put('/{feed}', [\App\Http\Controllers\RssBlogFeedController::class, 'update']);
+        Route::delete('/{feed}', [\App\Http\Controllers\RssBlogFeedController::class, 'destroy']);
+        Route::post('/{feed}/scrape', [\App\Http\Controllers\RssBlogFeedController::class, 'scrape'])
+            ->middleware('throttle:10,5');
+    });
+
+    // ============================================================
     // CONTENT SCHEDULER / ORCHESTRATOR
     // ============================================================
     Route::prefix('content/scheduler')->middleware('role:admin')->group(function () {

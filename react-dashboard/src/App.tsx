@@ -16,6 +16,7 @@ const ARelancer = lazy(() => import('./pages/ARelancer'));
 const Equipe = lazy(() => import('./pages/Equipe'));
 const AdminAiPrompts = lazy(() => import('./pages/AdminAiPrompts'));
 const AdminScraper = lazy(() => import('./pages/AdminScraper'));
+const AdminRssBlogFeeds = lazy(() => import('./pages/AdminRssBlogFeeds'));
 const AutoCampaign = lazy(() => import('./pages/AutoCampaign'));
 const AdminContactTypes = lazy(() => import('./pages/AdminContactTypes'));
 const AiResearch = lazy(() => import('./pages/AiResearch'));
@@ -381,6 +382,7 @@ export default function App() {
                 <Route path="admin/types" element={<AdminRoute><AdminContactTypes /></AdminRoute>} />
                 <Route path="admin/prompts" element={<AdminRoute><AdminAiPrompts /></AdminRoute>} />
                 <Route path="admin/scraper" element={<AdminRoute><AdminScraper /></AdminRoute>} />
+                <Route path="admin/rss-blog-feeds" element={<AdminRoute><AdminRssBlogFeeds /></AdminRoute>} />
                 <Route path="admin/campaigns" element={<AdminRoute><AutoCampaign /></AdminRoute>} />
                 <Route path="admin/avancement" element={<AdminRoute><CoverageMatrix /></AdminRoute>} />
                 <Route path="equipe" element={<AdminRoute><Equipe /></AdminRoute>} />

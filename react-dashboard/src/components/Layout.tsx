@@ -403,6 +403,9 @@ export default function Layout() {
                     <NavLink to="/admin/scraper" className={subNavClass} onClick={handleNavClick}>
                       ⚙️ Configuration scraper
                     </NavLink>
+                    <NavLink to="/admin/rss-blog-feeds" className={subNavClass} onClick={handleNavClick}>
+                      📝 RSS Blogs
+                    </NavLink>
                   </NavSubGroup>
                 </NavGroup>
               )}

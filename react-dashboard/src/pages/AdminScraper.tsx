@@ -57,6 +57,11 @@ const SCRAPER_ACTIONS: Array<{ key: string; label: string; description: string; 
   { key: 'femmexpat',           label: '👠 FemmExpat',         description: 'femmexpat.com contacts + partenaires' },
   { key: 'francaisaletranger',  label: '🇫🇷 Français à l\'étranger', description: 'francaisaletranger.fr auteurs + articles' },
   { key: 'discover-press',      label: '🔍 Découverte presse', description: 'Trouve nouveaux médias (Perplexity)', requiresAi: true },
+  // Option D (2026-04-22) — scraping blogueurs zero-ban
+  { key: 'bloggers-rss',        label: '📝 Bloggers RSS',     description: 'Scrape feeds RSS blogs (XML public, zéro ban)' },
+  { key: 'bloggers-ai',         label: '📝 Blogueurs IA',     description: '1 pays via rotation (Perplexity)', requiresAi: true },
+  { key: 'podcasters-ai',       label: '🎙️ Podcasters IA',   description: '1 pays via rotation (Perplexity)', requiresAi: true },
+  { key: 'influencers-ai',      label: '👑 Influenceurs IA',  description: '1 pays via rotation (Perplexity)', requiresAi: true },
   { key: 'daily-report',        label: '📊 Rapport Telegram',  description: 'Envoie un rapport 24h maintenant' },
 ];
 
