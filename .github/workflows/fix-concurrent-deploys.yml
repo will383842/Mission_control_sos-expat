@@ -1,0 +1,54 @@
+name: Fix concurrent deploys (docker compose down --remove-orphans)
+
+# Workflow manuel pour resoudre les "containers fantomes" apres
+# plusieurs deploys rapproches sur master.
+#
+# Fix : docker compose down --remove-orphans && up -d
+#
+# Reuse les secrets SSH existants (SERVER_HOST, SSH_USER, SSH_PRIVATE_KEY).
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fix:
+    name: Fix orphaned containers
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: SSH to VPS and fix
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd /opt/influenceurs-tracker
+
+            echo "=== Containers BEFORE fix ==="
+            docker compose ps 2>&1 | head -40
+
+            echo ""
+            echo "=== Full stop + remove orphans ==="
+            docker compose down --remove-orphans
+
+            echo ""
+            echo "=== Restart clean ==="
+            docker compose up -d
+
+            echo ""
+            echo "=== Wait 10s for app to boot ==="
+            sleep 10
+
+            echo ""
+            echo "=== Containers AFTER fix ==="
+            docker compose ps 2>&1 | head -40
+
+            echo ""
+            echo "=== Health check ==="
+            docker exec inf-app php artisan about 2>&1 | head -20 || echo "app container not ready yet"
+
+            echo ""
+            echo "=== DONE ==="
