@@ -43,19 +43,26 @@ jobs:
             set -e
             cd /opt/influenceurs-tracker
 
-            DIR="${{ inputs.dir }}"
+            DIR_HOST="${{ inputs.dir }}"
             DISPATCH="${{ inputs.dispatch_variants }}"
 
-            echo "=== Files to import ==="
-            ls -la "$DIR" 2>&1 || { echo "Dir not found: $DIR"; exit 1; }
+            echo "=== Files to import (host view) ==="
+            ls -la "$DIR_HOST" 2>&1 || { echo "Dir not found on host: $DIR_HOST"; exit 1; }
+
+            # Container mounts /opt/influenceurs-tracker → /var/www/html ;
+            # artisan --dir doit recevoir le path INSIDE le container.
+            CONTAINER_DIR="/var/www/html/${DIR_HOST}"
+            echo ""
+            echo "=== Files to import (container view: $CONTAINER_DIR) ==="
+            docker exec inf-app ls -la "$CONTAINER_DIR" 2>&1 | tail -10
 
             echo ""
             echo "=== Landings BEFORE ==="
             docker exec inf-app php artisan tinker --execute="echo 'Published : ' . \App\Models\LandingPage::where('status','published')->count() . PHP_EOL;" 2>&1 | tail -3
 
             echo ""
-            echo "=== Running landings:import --dir=$DIR --dispatch-variants=$DISPATCH ==="
-            docker exec inf-app php artisan landings:import --dir="$DIR" --dispatch-variants="$DISPATCH" 2>&1 | tail -50
+            echo "=== Running landings:import --dir=$CONTAINER_DIR --dispatch-variants=$DISPATCH ==="
+            docker exec inf-app php artisan landings:import --dir="$CONTAINER_DIR" --dispatch-variants="$DISPATCH" 2>&1 | tail -60
 
             echo ""
             echo "=== Landings AFTER ==="
