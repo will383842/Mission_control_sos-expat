@@ -1,0 +1,58 @@
+name: Restore landing slugs to regional format
+
+# Remet le slug des 15 landings enrichies au format régional /xx-yy/
+# attendu par le router Blog + SetLocale middleware.
+#
+# Utilisation :
+#   gh workflow run restore-landing-slugs.yml
+
+on:
+  workflow_dispatch:
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: SSH + restore slugs
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd /opt/influenceurs-tracker
+
+            docker exec inf-app php artisan tinker --execute="
+              \$mappings = [
+                222 => 'fr-vn/aide/expatrie/vietnam',
+                232 => 'fr-sg/aide/expatrie/singapore',
+                243 => 'fr-my/aide/expatrie/malaysia',
+                241 => 'fr-vn/urgence',
+                64  => 'fr-th/urgence',
+                66  => 'fr-th/expert/lawyer',
+                67  => 'fr-th/expert/helper',
+                63  => 'fr-th/expert/expert',
+                339 => 'fr-sg/expert/lawyer',
+                245 => 'fr-vn/expert/lawyer',
+                341 => 'fr-sg/expert/helper',
+                247 => 'fr-vn/expert/helper',
+                338 => 'fr-sg/expert/expert',
+                244 => 'fr-vn/expert/expert',
+                806 => 'fr-th/aide/gb/thailand',
+              ];
+              \$site = 'https://sos-expat.com';
+              \$ok = 0;
+              \$ko = 0;
+              foreach (\$mappings as \$id => \$slug) {
+                \$lp = \App\Models\LandingPage::find(\$id);
+                if (!\$lp) { echo \"  #{\$id} not found\" . PHP_EOL; \$ko++; continue; }
+                \$lp->slug = \$slug;
+                \$lp->canonical_url = \$site . '/' . \$slug;
+                \$lp->save();
+                \$ok++;
+                echo \"  ✓ #{\$id} → {\$lp->canonical_url}\" . PHP_EOL;
+              }
+              echo \"\\nDone : {\$ok} OK · {\$ko} KO\" . PHP_EOL;
+            " 2>&1 | tail -30
