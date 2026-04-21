@@ -1,0 +1,74 @@
+name: Unpublish replicated landings (rollback)
+
+# Rollback workflow : passe en status='draft' toutes les landing_pages
+# dont generation_source='replicated' (créées par landings:replicate-cluster).
+# Utilisé 2026-04-21 après que la substitution texte seule a produit du
+# contenu factuellement faux (Philippines parle de Bangkok, baht, etc.).
+# Les pages restent en DB (pas DELETE) pour rollback facile si besoin.
+#
+# Utilisation :
+#   gh workflow run unpublish-replicated-landings.yml \
+#     -f keep_country=TH -f dry_run=true
+#   gh workflow run unpublish-replicated-landings.yml \
+#     -f keep_country=TH -f dry_run=false
+
+on:
+  workflow_dispatch:
+    inputs:
+      keep_country:
+        description: 'ISO2 du pays source à préserver (ne pas unpublish)'
+        required: true
+        default: 'TH'
+      dry_run:
+        description: 'true = compter seulement, false = exécuter'
+        type: boolean
+        required: true
+        default: true
+
+jobs:
+  unpublish:
+    name: Unpublish replicated landings
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: SSH to VPS and run unpublish
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 8m
+          script: |
+            set -e
+            cd /opt/influenceurs-tracker
+
+            KEEP="${{ inputs.keep_country }}"
+            DRY="${{ inputs.dry_run }}"
+
+            echo "=== Scope: keep_country=$KEEP  dry_run=$DRY ==="
+            echo ""
+
+            echo "=== Counts BEFORE ==="
+            docker exec inf-app php artisan tinker --execute="echo 'Replicated published : ' . \App\Models\LandingPage::where('generation_source','replicated')->where('status','published')->count() . PHP_EOL; echo 'Total published       : ' . \App\Models\LandingPage::where('status','published')->count() . PHP_EOL;" 2>&1 | tail -4
+
+            echo ""
+            echo "=== Countries impacted (replicated, published, not $KEEP) ==="
+            docker exec inf-app php artisan tinker --execute="\App\Models\LandingPage::where('generation_source','replicated')->where('status','published')->where('country_code','!=','$KEEP')->selectRaw('country_code, COUNT(*) as c')->groupBy('country_code')->orderByDesc('c')->limit(30)->get()->each(function(\$r){ echo '  ' . (\$r->country_code ?? 'null') . ' : ' . \$r->c . PHP_EOL; });" 2>&1 | tail -35
+
+            if [ "$DRY" = "true" ]; then
+              echo ""
+              echo "=== DRY RUN — no changes. Relancer avec dry_run=false pour appliquer. ==="
+              exit 0
+            fi
+
+            echo ""
+            echo "=== Applying status='draft' on replicated landings (except $KEEP) ==="
+            docker exec inf-app php artisan tinker --execute="\$affected = \App\Models\LandingPage::where('generation_source','replicated')->where('country_code','!=','$KEEP')->update(['status' => 'draft']); echo 'Rows updated to draft : ' . \$affected . PHP_EOL;" 2>&1 | tail -3
+
+            echo ""
+            echo "=== Counts AFTER ==="
+            docker exec inf-app php artisan tinker --execute="echo 'Replicated published : ' . \App\Models\LandingPage::where('generation_source','replicated')->where('status','published')->count() . PHP_EOL; echo 'Total published       : ' . \App\Models\LandingPage::where('status','published')->count() . PHP_EOL;" 2>&1 | tail -4
+
+            echo ""
+            echo "=== DONE — landings unpublished (status=draft). Sitemap/front will skip them. ==="
