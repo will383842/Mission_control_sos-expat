@@ -1,0 +1,31 @@
+name: Republish 15 enriched landings
+
+# saveLandingPage force 'status' => 'draft' dans $fullData, donc mes 15
+# landings enrichies par force_update sont passées en draft. Les republie
+# en batch via artisan tinker.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  republish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: SSH + republish
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd /opt/influenceurs-tracker
+            docker exec inf-app php artisan tinker --execute="
+              \$ids = [63,64,66,67,222,232,241,243,244,245,247,338,339,341,806];
+              \$n = \App\Models\LandingPage::whereIn('id', \$ids)->update(['status' => 'published', 'published_at' => now()]);
+              echo 'Republished : ' . \$n . PHP_EOL;
+              \App\Models\LandingPage::whereIn('id', \$ids)->get()->each(function(\$lp){
+                echo '  #' . \$lp->id . '  ' . \$lp->status . '  ' . \$lp->canonical_url . PHP_EOL;
+              });
+            " 2>&1 | tail -25

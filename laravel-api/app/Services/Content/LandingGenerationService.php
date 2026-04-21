@@ -2100,7 +2100,9 @@ RULES;
                                     : null,
             'sections'           => $parsed['sections'] ?? [],
             'seo_score'          => $seoScore,
-            'status'             => 'draft',
+            // Quand force_update=true on préserve le status existant (publié en
+            // général), sinon fallback 'draft' pour les créations neuves.
+            'status'             => $preserveSlug && $existing ? ($existing->status ?? 'draft') : 'draft',
             'hreflang_map'       => $hreflangMap,
             'json_ld'            => $jsonLd,
             'canonical_url'      => $canonicalUrl,
