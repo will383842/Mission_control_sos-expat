@@ -1,0 +1,76 @@
+name: Backfill landing translations (siblings from parent)
+
+# Dispatch manuel pour la commande landings:backfill-translations qui fait
+# hériter les landings siblings du contenu riche de leur parent (ex : les
+# 8 siblings non-FR d'un master Opus TH-FR héritent de son intro + topics
+# + FAQ, traduits ou copiés selon le mode).
+#
+# Déterministe (pas d'appel LLM) → coût $0.
+#
+# Utilisation :
+#   gh workflow run backfill-landing-translations.yml -f country=TH
+#   gh workflow run backfill-landing-translations.yml -f dry_run=true
+
+on:
+  workflow_dispatch:
+    inputs:
+      country:
+        description: 'Filter ISO2 (optionnel, vide = tous)'
+        required: false
+        default: ''
+      limit:
+        description: 'Limit (vide = pas de limite)'
+        required: false
+        default: ''
+      dry_run:
+        description: 'Mode dry-run'
+        type: boolean
+        required: true
+        default: true
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: SSH + backfill translations
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 12m
+          script: |
+            set -e
+            cd /opt/influenceurs-tracker
+
+            FLAGS=""
+            if [ -n "${{ inputs.country }}" ]; then FLAGS="$FLAGS --country=${{ inputs.country }}"; fi
+            if [ -n "${{ inputs.limit }}" ]; then FLAGS="$FLAGS --limit=${{ inputs.limit }}"; fi
+            if [ "${{ inputs.dry_run }}" = "true" ]; then FLAGS="$FLAGS --dry-run"; fi
+
+            echo "=== Empty landings BEFORE ==="
+            docker exec inf-app php artisan tinker --execute="
+              \$n = \App\Models\LandingPage::where('status','published')->get()->filter(function(\$lp){
+                \$types = array_column(is_array(\$lp->sections) ? \$lp->sections : [], 'type');
+                \$rich = ['intro','content','topics','categories','visa_categories','guide_steps','earnings','freedom','process'];
+                return empty(array_intersect(\$rich, \$types));
+              })->count();
+              echo 'Empty : ' . \$n . PHP_EOL;
+            " 2>&1 | tail -3
+
+            echo ""
+            echo "=== Running backfill with flags: $FLAGS ==="
+            docker exec inf-app php artisan landings:backfill-translations $FLAGS 2>&1 | tail -60
+
+            echo ""
+            echo "=== Empty landings AFTER ==="
+            docker exec inf-app php artisan tinker --execute="
+              \$n = \App\Models\LandingPage::where('status','published')->get()->filter(function(\$lp){
+                \$types = array_column(is_array(\$lp->sections) ? \$lp->sections : [], 'type');
+                \$rich = ['intro','content','topics','categories','visa_categories','guide_steps','earnings','freedom','process'];
+                return empty(array_intersect(\$rich, \$types));
+              })->count();
+              echo 'Empty : ' . \$n . PHP_EOL;
+            " 2>&1 | tail -3
