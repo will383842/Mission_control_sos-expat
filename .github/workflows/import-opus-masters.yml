@@ -26,6 +26,11 @@ on:
         type: boolean
         required: true
         default: false
+      force_update:
+        description: 'true = ÉCRASER les landings existantes (même slug) avec le nouveau contenu — pour enrichir les vides sans doublons.'
+        type: boolean
+        required: true
+        default: true
 
 jobs:
   import:
@@ -45,6 +50,7 @@ jobs:
 
             DIR_HOST="${{ inputs.dir }}"
             DISPATCH="${{ inputs.dispatch_variants }}"
+            FORCE="${{ inputs.force_update }}"
 
             echo "=== Files to import (host view) ==="
             ls -la "$DIR_HOST" 2>&1 || { echo "Dir not found on host: $DIR_HOST"; exit 1; }
@@ -61,8 +67,8 @@ jobs:
             docker exec inf-app php artisan tinker --execute="echo 'Published : ' . \App\Models\LandingPage::where('status','published')->count() . PHP_EOL;" 2>&1 | tail -3
 
             echo ""
-            echo "=== Running landings:import --dir=$CONTAINER_DIR --dispatch-variants=$DISPATCH ==="
-            docker exec inf-app php artisan landings:import --dir="$CONTAINER_DIR" --dispatch-variants="$DISPATCH" 2>&1 | tail -60
+            echo "=== Running landings:import --dir=$CONTAINER_DIR --dispatch-variants=$DISPATCH --force-update=$FORCE ==="
+            docker exec inf-app php artisan landings:import --dir="$CONTAINER_DIR" --dispatch-variants="$DISPATCH" --force-update="$FORCE" 2>&1 | tail -60
 
             echo ""
             echo "=== Landings AFTER ==="

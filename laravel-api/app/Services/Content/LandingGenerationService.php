@@ -451,7 +451,13 @@ class LandingGenerationService
      */
     public function importManual(array $params, array $parsed): LandingPage
     {
-        $shell = $this->createLandingShell($params);
+        // force_update=true → les appels à saveLandingPage hydrateront l'existante
+        // au lieu de la skip. Activé par landings:import --force-update=true.
+        $forceUpdate = ! empty($params['force_update']);
+
+        // Si on force l'update, on skip le shell (évite de créer une coquille
+        // dupliquée). On passe le flag directement dans $params pour saveLandingPage.
+        $shell = $forceUpdate ? null : $this->createLandingShell($params);
 
         try {
             $audienceType = $params['audience_type'];
@@ -534,7 +540,7 @@ class LandingGenerationService
                 $shell,
             );
         } catch (\Throwable $e) {
-            $shell->forceDelete();
+            $shell?->forceDelete();
             throw $e;
         }
     }
@@ -1946,14 +1952,28 @@ RULES;
         array $params = [],
         ?LandingPage $shell = null,
     ): LandingPage {
-        // Déduplication : si une autre LP a déjà ce slug (hors shell courant), on ne la réécrit pas.
-        // Le shell sera supprimé pour éviter de polluer la table avec une coquille.
+        // Déduplication : si une autre LP a déjà ce slug (hors shell courant), on la
+        // retourne telle quelle PAR DÉFAUT pour éviter d'écraser une version
+        // manuelle par une version AI moins bonne. Exception : si params['force_update']
+        // = true, on hydrate l'existante avec le nouveau contenu (utile pour enrichir
+        // les landings "vides" existantes sans créer de doublons).
         $existing = LandingPage::where('slug', $slug)
             ->when($shell, fn ($q) => $q->where('id', '!=', $shell->id))
             ->first();
-        if ($existing) {
+
+        $forceUpdate = ! empty($params['force_update']);
+
+        if ($existing && ! $forceUpdate) {
             $shell?->forceDelete();
             return $existing;
+        }
+
+        // force_update=true → on va UPDATE l'existante plus bas via $shell = $existing
+        // (ça garde l'id + parent_id + ctaLinks + hreflang_map, mais remplace sections,
+        // title, meta, seo_score, json_ld, images si pas déjà définies).
+        if ($existing && $forceUpdate) {
+            $shell?->forceDelete();
+            $shell = $existing;
         }
 
         $seoScore    = $this->calculateSeoScore($parsed);

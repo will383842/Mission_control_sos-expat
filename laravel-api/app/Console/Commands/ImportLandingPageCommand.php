@@ -38,7 +38,8 @@ class ImportLandingPageCommand extends Command
     protected $signature = 'landings:import
         {--file= : Chemin JSON unique}
         {--dir= : Répertoire contenant plusieurs JSONs à importer}
-        {--dispatch-variants=true : Dispatche les 8 variantes langues via Haiku 4.5}';
+        {--dispatch-variants=true : Dispatche les 8 variantes langues via Haiku 4.5}
+        {--force-update=false : Si true, hydrate les landings existantes (même slug) au lieu de les skip — utilisé pour enrichir les landings vides}';
 
     protected $description = 'Importe des landing pages JSON pré-générées (Opus chat) et dispatche les variantes langues.';
 
@@ -52,6 +53,11 @@ class ImportLandingPageCommand extends Command
 
         $this->info('Fichiers à importer : ' . count($files));
         $dispatchVariants = filter_var($this->option('dispatch-variants'), FILTER_VALIDATE_BOOLEAN);
+        $forceUpdate      = filter_var($this->option('force-update'), FILTER_VALIDATE_BOOLEAN);
+
+        if ($forceUpdate) {
+            $this->warn('force-update=true → les landings existantes seront ÉCRASÉES avec le nouveau contenu.');
+        }
 
         $okCount = 0;
         $koCount = 0;
@@ -69,6 +75,9 @@ class ImportLandingPageCommand extends Command
             }
 
             try {
+                if ($forceUpdate) {
+                    $data['params']['force_update'] = true;
+                }
                 $landing = $service->importManual($data['params'], $data['parsed']);
                 $okCount++;
                 $this->info("  ✓ LP #{$landing->id} · slug={$landing->slug} · seo={$landing->seo_score}");
