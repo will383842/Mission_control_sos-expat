@@ -1,0 +1,53 @@
+name: Delete landings by IDs (cleanup dupes)
+
+# Suppression ciblée par IDs — utilisé pour nettoyer les doublons créés par
+# un import landings:import qui n'a pas matché les existantes (avant le fix
+# de matching par signature).
+#
+# Utilisation :
+#   gh workflow run delete-landings-by-ids.yml -f ids=30929,30930,30931
+
+on:
+  workflow_dispatch:
+    inputs:
+      ids:
+        description: 'IDs séparés par virgule (ex: 30929,30930,30931)'
+        required: true
+        default: ''
+      confirm:
+        description: 'Tape DELETE-YES pour confirmer'
+        required: true
+        default: ''
+
+jobs:
+  delete:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Guard
+        if: ${{ inputs.confirm != 'DELETE-YES' }}
+        run: |
+          echo "❌ Abort — confirm must equal DELETE-YES"
+          exit 1
+      - name: SSH + delete
+        if: ${{ inputs.confirm == 'DELETE-YES' }}
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd /opt/influenceurs-tracker
+            IDS="${{ inputs.ids }}"
+            docker exec inf-app php artisan tinker --execute="
+              \$ids = explode(',', '$IDS');
+              \$ids = array_map('intval', \$ids);
+              \$landings = \App\Models\LandingPage::whereIn('id', \$ids)->get();
+              echo 'Found ' . \$landings->count() . ' landings to delete.' . PHP_EOL;
+              \$landings->each(function(\$lp){
+                echo '  #' . \$lp->id . '  ' . \$lp->canonical_url . PHP_EOL;
+              });
+              \$n = \App\Models\LandingPage::whereIn('id', \$ids)->delete();
+              echo 'Rows deleted: ' . \$n . PHP_EOL;
+            " 2>&1 | tail -30

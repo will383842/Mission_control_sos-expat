@@ -1952,16 +1952,49 @@ RULES;
         array $params = [],
         ?LandingPage $shell = null,
     ): LandingPage {
-        // Déduplication : si une autre LP a déjà ce slug (hors shell courant), on la
-        // retourne telle quelle PAR DÉFAUT pour éviter d'écraser une version
-        // manuelle par une version AI moins bonne. Exception : si params['force_update']
-        // = true, on hydrate l'existante avec le nouveau contenu (utile pour enrichir
-        // les landings "vides" existantes sans créer de doublons).
+        // Déduplication. Deux modes :
+        //
+        // 1. DÉFAUT (force_update=false) : on cherche par slug strict. Si une LP
+        //    existe avec exactement ce slug, on la retourne sans modif (évite
+        //    d'écraser une version manuelle par une version AI moins bonne).
+        //
+        // 2. force_update=true : on cherche aussi par SIGNATURE (audience_type +
+        //    template_id + country_code + language + problem/category/profile/
+        //    nationality). Ça permet d'enrichir les landings existantes VIDES
+        //    même si leur slug diffère (ex: slug historique "fr-vn/help/expatrie/
+        //    vietnam" alors que buildSlug produit "fr/aide/expatrie/vietnam").
+        $forceUpdate = ! empty($params['force_update']);
+
         $existing = LandingPage::where('slug', $slug)
             ->when($shell, fn ($q) => $q->where('id', '!=', $shell->id))
             ->first();
 
-        $forceUpdate = ! empty($params['force_update']);
+        if ($forceUpdate && ! $existing) {
+            // Tentative de match par signature au lieu du slug
+            $signatureQuery = LandingPage::query()
+                ->where('audience_type', $baseData['audience_type'] ?? null)
+                ->where('template_id',   $baseData['template_id']   ?? null)
+                ->where('country_code',  $baseData['country_code']  ?? null)
+                ->where('language',      $baseData['language']      ?? null);
+
+            // Discriminateur selon audience
+            $audience = $baseData['audience_type'] ?? '';
+            if ($audience === 'clients' && ! empty($baseData['problem_id'])) {
+                $signatureQuery->where('problem_id', $baseData['problem_id']);
+            } elseif ($audience === 'category_pillar' && ! empty($baseData['category_slug'])) {
+                $signatureQuery->where('category_slug', $baseData['category_slug']);
+            } elseif ($audience === 'profile' && ! empty($baseData['user_profile'])) {
+                $signatureQuery->where('user_profile', $baseData['user_profile']);
+            } elseif ($audience === 'nationality' && ! empty($baseData['origin_nationality'])) {
+                $signatureQuery->where('origin_nationality', $baseData['origin_nationality']);
+            }
+
+            if ($shell) {
+                $signatureQuery->where('id', '!=', $shell->id);
+            }
+
+            $existing = $signatureQuery->first();
+        }
 
         if ($existing && ! $forceUpdate) {
             $shell?->forceDelete();
