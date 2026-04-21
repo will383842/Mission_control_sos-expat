@@ -286,18 +286,31 @@ class ReplicateClusterCommand extends Command
     /** @return string[] */
     private function allCountryCodes(): array
     {
-        // Pull the set from existing landing_pages — any country with at
-        // least one published landing anywhere. Keeps the scope to countries
-        // the business already knows, instead of all 249 ISO-3166 codes.
-        return DB::table('landing_pages')
-            ->whereNotNull('country_code')
-            ->whereNull('deleted_at')
-            ->where('status', 'published')
-            ->select('country_code')
-            ->distinct()
-            ->pluck('country_code')
-            ->map(fn($c) => strtoupper($c))
-            ->values()
-            ->all();
+        // 197 ISO-3166-1 alpha-2 codes — the countries SOS-Expat targets
+        // for expat services. Excludes micro-states (<50k population) and
+        // territories with no meaningful expat market. This is the canonical
+        // "all" target for landing-page replication.
+        return [
+            'AD','AE','AF','AG','AL','AM','AO','AR','AT','AU',
+            'AZ','BA','BB','BD','BE','BF','BG','BH','BI','BJ',
+            'BN','BO','BR','BS','BT','BW','BY','BZ','CA','CD',
+            'CF','CG','CH','CI','CL','CM','CN','CO','CR','CU',
+            'CV','CY','CZ','DE','DJ','DK','DM','DO','DZ','EC',
+            'EE','EG','ER','ES','ET','FI','FJ','FR','GA','GB',
+            'GD','GE','GH','GM','GN','GQ','GR','GT','GW','GY',
+            'HK','HN','HR','HT','HU','ID','IE','IL','IN','IQ',
+            'IR','IS','IT','JM','JO','JP','KE','KG','KH','KM',
+            'KN','KP','KR','KW','KZ','LA','LB','LC','LI','LK',
+            'LR','LS','LT','LU','LV','LY','MA','MC','MD','ME',
+            'MG','MH','MK','ML','MM','MN','MO','MR','MT','MU',
+            'MV','MW','MX','MY','MZ','NA','NE','NG','NI','NL',
+            'NO','NP','NZ','OM','PA','PE','PG','PH','PK','PL',
+            'PS','PT','PY','QA','RO','RS','RU','RW','SA','SB',
+            'SC','SD','SE','SG','SI','SK','SL','SM','SN','SO',
+            'SR','SS','ST','SV','SY','SZ','TD','TG','TH','TJ',
+            'TL','TM','TN','TO','TR','TT','TW','TZ','UA','UG',
+            'US','UY','UZ','VA','VC','VE','VN','VU','WS','XK',
+            'YE','ZA','ZM','ZW',
+        ];
     }
 }
