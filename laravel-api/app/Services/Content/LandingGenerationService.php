@@ -2064,8 +2064,21 @@ RULES;
         $featuredImgUrl = $imageData['featured_image_url'] ?? null;
 
         // ── Enforce strict SEO character limits (meta_title ≤60, meta_description ≤155)
-        $metaTitle = mb_substr(trim($parsed['meta_title'] ?? ($parsed['title'] ?? $slug)), 0, 60);
-        $metaDesc  = mb_substr(trim($parsed['meta_description'] ?? ''), 0, 155);
+        // Helper : couper au dernier espace <= limit pour éviter les troncatures
+        // au milieu d'un mot (ex : "49€/20 m" au lieu de "49€/20 min").
+        $smartTruncate = function (string $s, int $limit): string {
+            $s = trim($s);
+            if (mb_strlen($s) <= $limit) return $s;
+            // Chercher le dernier espace avant la limite pour couper proprement
+            $cut = mb_substr($s, 0, $limit);
+            $lastSpace = mb_strrpos($cut, ' ');
+            if ($lastSpace !== false && $lastSpace > $limit * 0.6) {
+                return rtrim(mb_substr($cut, 0, $lastSpace), ",.;:-· ") . '.';
+            }
+            return rtrim($cut, ",.;:-· ") . '.';
+        };
+        $metaTitle = $smartTruncate($parsed['meta_title'] ?? ($parsed['title'] ?? $slug), 60);
+        $metaDesc  = $smartTruncate($parsed['meta_description'] ?? '', 155);
         $ogTitle   = $metaTitle ?: null;
         $ogDesc    = $metaDesc  ?: null;
 
