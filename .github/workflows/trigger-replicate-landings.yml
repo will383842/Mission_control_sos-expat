@@ -1,0 +1,84 @@
+name: Trigger replicate landing clusters (TH → target countries)
+
+# Workflow manuel pour dupliquer la couverture Thaïlande sur les autres pays.
+# Utilise la commande artisan landings:replicate-cluster (ReplicateClusterCommand.php).
+# Substitution de texte uniquement (pas d'appel LLM), ~1-2 min par pays.
+#
+# Utilisation via CLI :
+#   gh workflow run trigger-replicate-landings.yml \
+#     -f target=VN,SG,MY -f dry_run=false
+#   gh workflow run trigger-replicate-landings.yml \
+#     -f target=all -f limit=50 -f dry_run=true
+#
+# Ou via l'UI GitHub (Actions → "Trigger replicate landing clusters" → Run workflow).
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'ISO2 codes séparés par virgule (ex: VN,SG,MY) ou "all"'
+        required: true
+        default: 'VN,SG,MY,PH,JP,AU'
+      limit:
+        description: 'Max combos (source_root × target_country) à traiter. Vide = pas de limite.'
+        required: false
+        default: ''
+      dry_run:
+        description: 'true = ne pas écrire en DB (preview), false = exécution réelle'
+        type: boolean
+        required: true
+        default: true
+
+jobs:
+  replicate:
+    name: Replicate TH clusters
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: SSH to VPS and run replicate-cluster
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 25m
+          script: |
+            set -e
+            cd /opt/influenceurs-tracker
+
+            echo "=== Baseline landings count ==="
+            docker exec inf-app php artisan tinker --execute="echo 'Landings avant : ' . \App\Models\LandingPage::where('status','published')->count() . PHP_EOL;" 2>&1 | tail -3
+
+            echo ""
+            echo "=== Running replicate-cluster ==="
+            echo "Source country: TH"
+            echo "Target: ${{ inputs.target }}"
+            echo "Limit: ${{ inputs.limit || 'none' }}"
+            echo "Dry run: ${{ inputs.dry_run }}"
+            echo ""
+
+            FLAGS=""
+            if [ -n "${{ inputs.limit }}" ]; then FLAGS="$FLAGS --limit=${{ inputs.limit }}"; fi
+            if [ "${{ inputs.dry_run }}" = "true" ]; then FLAGS="$FLAGS --dry-run"; fi
+
+            docker exec inf-app php artisan landings:replicate-cluster \
+              --source-country=TH \
+              --target="${{ inputs.target }}" \
+              $FLAGS 2>&1 | tee /tmp/replicate-output.log | tail -80
+
+            echo ""
+            echo "=== Landings count after ==="
+            docker exec inf-app php artisan tinker --execute="echo 'Landings après : ' . \App\Models\LandingPage::where('status','published')->count() . PHP_EOL;" 2>&1 | tail -3
+
+            echo ""
+            echo "=== Répartition par country_code (top 20) ==="
+            docker exec inf-app php artisan tinker --execute="\App\Models\LandingPage::where('status','published')->selectRaw('country_code, COUNT(*) as c')->groupBy('country_code')->orderByDesc('c')->limit(20)->get()->each(function(\$r){ echo '  ' . (\$r->country_code ?? 'null') . ' : ' . \$r->c . PHP_EOL; });" 2>&1 | tail -25
+
+            echo ""
+            echo "=== DONE ==="
+            if [ "${{ inputs.dry_run }}" = "true" ]; then
+              echo "DRY RUN — aucune écriture en DB. Relancer avec dry_run=false pour appliquer."
+            else
+              echo "Landings créées. Vérifier visuellement sur le Blog puis purger cache Cloudflare."
+            fi
