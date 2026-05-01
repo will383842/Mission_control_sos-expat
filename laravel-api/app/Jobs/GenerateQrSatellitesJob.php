@@ -98,7 +98,14 @@ class GenerateQrSatellitesJob implements ShouldQueue
             $sent = $this->sendToBlog($content, $article, $question, $blogUrl, $blogKey);
             if ($sent) {
                 $generated++;
-                $publishedQuestions[] = $question;
+                // Store both question + meta_title so addLinksToParent can compute
+                // the SAME slug the Blog uses (Str::slug($title)) — without this,
+                // a substr(0,60) on the raw question produced truncated slugs that
+                // 404'd on the Blog (incident pre-2026-04-09, ~44 articles affected).
+                $publishedQuestions[] = [
+                    'question'   => $question,
+                    'meta_title' => $content['meta_title'] ?? null,
+                ];
                 Log::info("QrSatellites: published Q/R", ['question' => mb_substr($question, 0, 60), 'parent' => $article->id]);
             }
 
@@ -234,9 +241,24 @@ class GenerateQrSatellitesJob implements ShouldQueue
 
         // Build HTML block with links to Q/R pages
         $linksHtml = "\n<div class=\"summary-box\">\n<p><strong>Questions frequemment posees</strong></p>\n<ul>\n";
-        foreach ($questions as $q) {
-            $slug = \Illuminate\Support\Str::slug(mb_substr($q, 0, 60));
-            $linksHtml .= "<li><a href=\"/vie-a-letranger/{$slug}\">{$q}</a></li>\n";
+        foreach ($questions as $entry) {
+            // Backward-compat: $entry can be a string (legacy format) or array (new format)
+            if (is_string($entry)) {
+                $question = $entry;
+                $title = mb_substr($entry, 0, 60);
+            } else {
+                $question = $entry['question'] ?? '';
+                // Use the AI-validated meta_title (same field the Blog uses to build the slug),
+                // falling back to a truncated question only if meta_title is missing.
+                $title = $entry['meta_title'] ?? mb_substr($question, 0, 60);
+            }
+            if ($question === '') continue;
+
+            // Mirror Blog-side slug generation (Str::slug on the title).
+            // Blog stores the satellite under language_code-prefixed slug; we link without it
+            // because the route handles locale resolution from the URL path.
+            $slug = \Illuminate\Support\Str::slug($title);
+            $linksHtml .= "<li><a href=\"/vie-a-letranger/{$slug}\">{$question}</a></li>\n";
         }
         $linksHtml .= "</ul>\n</div>\n";
 
