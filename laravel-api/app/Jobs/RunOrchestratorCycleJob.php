@@ -745,10 +745,42 @@ class RunOrchestratorCycleJob implements ShouldQueue
                 ->toArray();
         });
 
-        foreach ($campaignOrder as $code) {
+        // Round-robin strategy on the priority list (top 12 countries):
+        // pick the country with the FEWEST articles. Ties are broken by
+        // the queue order so 1) early generations spread evenly across all
+        // 12 priority countries instead of finishing one before starting
+        // the next, and 2) once they're all balanced the queue order acts
+        // as a natural tie-breaker (TH stays first when everyone is equal).
+        //
+        // After the 12 priority countries have all reached the threshold,
+        // we fall through to the legacy sequential mode for the remaining
+        // ~185 countries (one country at a time, by queue order).
+        $priorityWindow = (int) ($config->campaign_priority_window_size ?? 12);
+        $priorityCodes  = array_slice($campaignOrder, 0, $priorityWindow);
+
+        $candidates = [];
+        foreach ($priorityCodes as $idx => $code) {
             $existing = $counts[$code] ?? 0;
             if ($existing < $threshold) {
-                Log::info("Orchestrator: Country Campaign focus → {$code} ({$existing}/{$threshold} articles)");
+                $candidates[] = ['code' => $code, 'count' => $existing, 'order' => $idx];
+            }
+        }
+
+        if (!empty($candidates)) {
+            // Sort: fewest articles first, then queue order
+            usort($candidates, fn ($a, $b) =>
+                ($a['count'] <=> $b['count']) ?: ($a['order'] <=> $b['order'])
+            );
+            $picked = $candidates[0];
+            Log::info("Orchestrator: Round-robin priority → {$picked['code']} ({$picked['count']}/{$threshold} articles, " . count($candidates) . " priority countries still in progress)");
+            return $picked['code'];
+        }
+
+        // Priority window done — fall back to sequential on the long tail.
+        foreach (array_slice($campaignOrder, $priorityWindow) as $code) {
+            $existing = $counts[$code] ?? 0;
+            if ($existing < $threshold) {
+                Log::info("Orchestrator: tail-mode focus → {$code} ({$existing}/{$threshold} articles)");
                 return $code;
             }
         }
