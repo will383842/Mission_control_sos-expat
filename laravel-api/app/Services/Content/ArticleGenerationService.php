@@ -2499,28 +2499,28 @@ class ArticleGenerationService
         $searchIntent = $params['search_intent'] ?? $params['intent'] ?? self::defaultIntent($contentType);
         $featuredSnippetRule = match ($searchIntent) {
             'informational' => "FEATURED SNIPPET (CRITIQUE POSITION 0) :\n"
-                . "Le TOUT PREMIER paragraphe de l'intro DOIT etre une reponse directe de 40-60 mots.\n"
+                . "Le TOUT PREMIER paragraphe de l'intro DOIT etre une reponse directe de 50-80 mots.\n"
                 . "Commence par reformuler le sujet avec reponse complete + chiffre cle.\n"
                 . "Ex: 'Le visa digital nomad en France coute 99EUR en {$year}, s'obtient en 2-4 semaines et ouvre droit a une residence de 1 an renouvelable.'\n"
                 . "Encadre-le dans : <div class=\"featured-snippet\"><p>...</p></div>\n"
                 . "PUIS enchaine avec l'accroche narrative (anecdote, fait surprenant).\n",
             'commercial_investigation' => "FEATURED SNIPPET (CRITIQUE POSITION 0) :\n"
-                . "Le TOUT PREMIER paragraphe DOIT etre un verdict direct de 40-60 mots.\n"
+                . "Le TOUT PREMIER paragraphe DOIT etre un verdict direct de 50-80 mots.\n"
                 . "Ex: 'En {$year}, le meilleur X est Y pour Z raison. Voici notre comparatif complet.'\n"
                 . "Encadre-le dans : <div class=\"featured-snippet\"><p>...</p></div>\n"
                 . "PUIS enchaine avec le contexte du comparatif.\n",
             'transactional' => "FEATURED SNIPPET (CRITIQUE POSITION 0) :\n"
-                . "Le TOUT PREMIER paragraphe repond a 'combien ca coute' ou 'comment faire' en 1 phrase (40-60 mots).\n"
+                . "Le TOUT PREMIER paragraphe repond a 'combien ca coute' ou 'comment faire' en 1-2 phrases (50-80 mots).\n"
                 . "Encadre-le dans : <div class=\"featured-snippet\"><p>...</p></div>\n"
                 . "JUSTE APRES, ajoute le pricing box :\n"
                 . "<div class=\"pricing-box\"><p><strong>Tarif</strong></p><p>Avocat : 49EUR/55USD (20 min) | Expert local : 19EUR/25USD (30 min)</p></div>\n",
             'urgency' => "FEATURED SNIPPET (CRITIQUE POSITION 0) :\n"
-                . "Le TOUT PREMIER paragraphe = action immediate (40-60 mots).\n"
+                . "Le TOUT PREMIER paragraphe = action immediate (50-80 mots).\n"
                 . "Ex: 'En cas de passeport perdu au Maroc, appelez immediatement le +212-537-XXX. Voici les 5 etapes a suivre.'\n"
                 . "Encadre-le dans : <div class=\"featured-snippet\"><p>...</p></div>\n"
                 . "JUSTE APRES, ajoute l'encadre urgence :\n"
                 . "<div class=\"emergency-box\"><p><strong>Numeros d'urgence</strong></p><ul><li><strong>Police :</strong> ...</li><li><strong>Ambulance :</strong> ...</li><li><strong>Ambassade :</strong> ...</li></ul></div>\n",
-            default => "Le TOUT PREMIER paragraphe doit etre une reponse directe de 40-60 mots encadree dans <div class=\"featured-snippet\"><p>...</p></div>\n",
+            default => "Le TOUT PREMIER paragraphe doit etre une reponse directe de 50-80 mots encadree dans <div class=\"featured-snippet\"><p>...</p></div>\n",
         };
 
         $systemPrompt = $this->kbPrompt . "\n\n"
