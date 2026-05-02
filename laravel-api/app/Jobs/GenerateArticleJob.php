@@ -39,11 +39,46 @@ class GenerateArticleJob implements ShouldQueue
 
     public function handle(ArticleGenerationService $service): void
     {
+        $topic   = $this->params['topic'] ?? null;
+        $lang    = $this->params['language'] ?? 'fr';
+        $country = $this->params['country'] ?? null;
+        $type    = $this->params['content_type'] ?? 'article';
+
         Log::info('GenerateArticleJob started', [
-            'topic' => $this->params['topic'] ?? null,
-            'language' => $this->params['language'] ?? null,
-            'content_type' => $this->params['content_type'] ?? 'article',
+            'topic'        => $topic,
+            'language'     => $lang,
+            'content_type' => $type,
         ]);
+
+        // ── COST PROTECTION (2026-05-02) ──
+        // Last-line defense BEFORE any OpenAI/Claude call. The orchestrator
+        // already runs a Redis lock + title-set check, but duplicates may
+        // still slip through when the lock TTL expired (long generations),
+        // when two cycles dispatched within the same second, or when the
+        // article was queued via a separate path (CLI command, retry).
+        //
+        // Re-check the DB right here. If a matching article exists in any
+        // non-deleted/non-failed state, abort — saving ~$0.50 of GPT calls.
+        if ($topic && $country) {
+            $normalizedTopic = mb_strtolower(trim($topic));
+            $existing = \App\Models\GeneratedArticle::where('country', $country)
+                ->where('language', $lang)
+                ->where('content_type', $type)
+                ->whereIn('status', ['generating', 'draft', 'review', 'approved', 'published', 'translating', 'translated'])
+                ->whereNull('parent_article_id')
+                ->whereRaw('LOWER(TRIM(title)) = ?', [$normalizedTopic])
+                ->first(['id', 'title', 'status']);
+
+            if ($existing) {
+                Log::warning('GenerateArticleJob: duplicate detected pre-AI, aborting (cost protection)', [
+                    'topic'           => $topic,
+                    'existing_id'     => $existing->id,
+                    'existing_status' => $existing->status,
+                    'country'         => $country,
+                ]);
+                return; // ABORT — no AI call, no retry (job ends successfully)
+            }
+        }
 
         $article = $service->generate($this->params);
 

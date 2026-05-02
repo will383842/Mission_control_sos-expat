@@ -630,8 +630,11 @@ class RunOrchestratorCycleJob implements ShouldQueue
             // 'generating' status. Cache::add() is atomic: returns true if the
             // key didn't exist (and creates it), false if it did. TTL=15 min
             // covers the worst-case time between dispatch and DB insert.
+            // TTL bumped from 15→60 min (incident 2026-05-01: 6 doublons of
+            // "Droit du Travail TH" generated in 1h because TTL=15 expired
+            // before the article-in-flight finished its 20-30 min generation).
             $lockKey = "campaign:dispatched:{$countryCode}:{$type}:" . md5($normalizedTopic);
-            if (!\Illuminate\Support\Facades\Cache::add($lockKey, true, 900)) {
+            if (!\Illuminate\Support\Facades\Cache::add($lockKey, true, 3600)) {
                 Log::info("Orchestrator: topic dispatch lock active, skip", [
                     'country' => $countryCode,
                     'type' => $type,
