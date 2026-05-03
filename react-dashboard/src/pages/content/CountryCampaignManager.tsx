@@ -43,6 +43,7 @@ interface CampaignData {
   queue: QueueItem[];
   current_country: string | null;
   articles_per_country: number;
+  priority_window_size?: number;
   completed_countries: CompletedCountry[];
 }
 
@@ -50,9 +51,11 @@ interface CampaignData {
 
 function SortableCountryRow({
   item,
+  isNextPick,
   onRemove,
 }: {
   item: QueueItem;
+  isNextPick: boolean;
   onRemove: (code: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -68,15 +71,18 @@ function SortableCountryRow({
   const info = getCountryInfo(item.code);
   const pct = item.target > 0 ? Math.round((item.count / item.target) * 100) : 0;
 
+  // Visual hierarchy: next pick > active priority window > pending tail
+  const rowClass = isNextPick
+    ? 'bg-violet/15 border-violet/50 ring-1 ring-violet/30'
+    : item.status === 'active'
+      ? 'bg-emerald-500/10 border-emerald-500/30'
+      : 'bg-bg/50 border-border/20 hover:border-border/40';
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
-        item.status === 'active'
-          ? 'bg-emerald-500/10 border-emerald-500/30'
-          : 'bg-bg/50 border-border/20 hover:border-border/40'
-      }`}
+      className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${rowClass}`}
     >
       {/* Drag handle */}
       <button
@@ -104,7 +110,11 @@ function SortableCountryRow({
         <div className="flex-1 h-2 bg-bg rounded-full overflow-hidden">
           <div
             className={`h-full rounded-full transition-all duration-500 ${
-              item.status === 'active' ? 'bg-emerald-500' : 'bg-violet/60'
+              isNextPick
+                ? 'bg-violet'
+                : item.status === 'active'
+                  ? 'bg-emerald-500'
+                  : 'bg-violet/60'
             }`}
             style={{ width: `${Math.min(100, pct)}%` }}
           />
@@ -117,12 +127,14 @@ function SortableCountryRow({
       {/* Status badge */}
       <span
         className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-          item.status === 'active'
-            ? 'bg-emerald-500/20 text-emerald-400'
-            : 'bg-muted/10 text-muted'
+          isNextPick
+            ? 'bg-violet/20 text-violet'
+            : item.status === 'active'
+              ? 'bg-emerald-500/20 text-emerald-400'
+              : 'bg-muted/10 text-muted'
         }`}
       >
-        {item.status === 'active' ? 'EN COURS' : 'EN ATTENTE'}
+        {isNextPick ? 'PROCHAIN PICK' : item.status === 'active' ? 'EN COURS' : 'EN ATTENTE'}
       </span>
 
       {/* Remove button */}
@@ -257,7 +269,14 @@ export default function CountryCampaignManager() {
     (code) => !queueCodes.has(code) && !completedCodes.has(code),
   );
 
-  const currentItem = data.queue.find((i) => i.status === 'active');
+  // The "next pick" comes from the API (matches the worker's round-robin selection).
+  // Falls back to the first active item if for some reason the field is missing.
+  const nextPickItem =
+    data.queue.find((i) => i.code === data.current_country) ??
+    data.queue.find((i) => i.status === 'active');
+
+  // Count how many countries are concurrently active (round-robin priority window).
+  const activeCount = data.queue.filter((i) => i.status === 'active').length;
 
   return (
     <div className="bg-surface/60 border border-border/20 rounded-xl p-6 space-y-5">
@@ -266,7 +285,10 @@ export default function CountryCampaignManager() {
         <div>
           <h2 className="text-lg font-semibold text-white">Country Campaign</h2>
           <p className="text-muted text-xs mt-0.5">
-            Topical Authority SEO — {data.articles_per_country} articles par pays, un pays a la fois
+            Topical Authority SEO — {data.articles_per_country} articles par pays
+            {data.priority_window_size && data.priority_window_size > 0 && (
+              <> • round-robin sur {data.priority_window_size} pays prioritaires</>
+            )}
           </p>
         </div>
         <div className="flex gap-2">
@@ -278,7 +300,7 @@ export default function CountryCampaignManager() {
           </button>
           <button
             onClick={handleLaunch}
-            disabled={launching || !currentItem}
+            disabled={launching || !nextPickItem}
             className="px-4 py-1.5 rounded-lg bg-violet text-white text-xs font-semibold hover:bg-violet/80 transition-all disabled:opacity-40"
           >
             {launching ? 'Lancement...' : 'Lancer la generation'}
@@ -301,7 +323,7 @@ export default function CountryCampaignManager() {
             min={10}
             max={1000}
             value={editThreshold}
-            onChange={(e) => setEditThreshold(Math.max(10, parseInt(e.target.value) || 240))}
+            onChange={(e) => setEditThreshold(Math.max(10, parseInt(e.target.value) || 262))}
             className="w-20 bg-bg border border-border rounded-lg px-3 py-1.5 text-white text-center text-sm"
           />
           <button
@@ -322,25 +344,30 @@ export default function CountryCampaignManager() {
         </div>
       )}
 
-      {/* Current country highlight */}
-      {currentItem && (
-        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+      {/* Next-pick highlight (the country the worker will dispatch on its next cycle) */}
+      {nextPickItem && (
+        <div className="p-4 rounded-xl bg-violet/10 border border-violet/30">
           <div className="flex items-center gap-3 mb-2">
-            <span className="text-2xl">{getCountryInfo(currentItem.code).flag}</span>
-            <div>
+            <span className="text-2xl">{getCountryInfo(nextPickItem.code).flag}</span>
+            <div className="flex-1">
               <p className="text-white font-semibold">
-                {getCountryInfo(currentItem.code).name}
+                {getCountryInfo(nextPickItem.code).name}
               </p>
-              <p className="text-emerald-400 text-xs">
-                EN COURS — {currentItem.count}/{currentItem.target} articles
+              <p className="text-violet text-xs">
+                PROCHAIN PICK — {nextPickItem.count}/{nextPickItem.target} articles
+                {activeCount > 1 && (
+                  <span className="text-muted ml-2">
+                    ({activeCount} pays en parallèle)
+                  </span>
+                )}
               </p>
             </div>
           </div>
           <div className="w-full h-3 bg-bg rounded-full overflow-hidden">
             <div
-              className="h-full bg-emerald-500 rounded-full transition-all duration-700"
+              className="h-full bg-violet rounded-full transition-all duration-700"
               style={{
-                width: `${Math.min(100, Math.round((currentItem.count / currentItem.target) * 100))}%`,
+                width: `${Math.min(100, Math.round((nextPickItem.count / nextPickItem.target) * 100))}%`,
               }}
             />
           </div>
@@ -353,7 +380,12 @@ export default function CountryCampaignManager() {
           <SortableContext items={data.queue.map((i) => i.code)} strategy={verticalListSortingStrategy}>
             <div className="space-y-2">
               {data.queue.map((item) => (
-                <SortableCountryRow key={item.code} item={item} onRemove={handleRemove} />
+                <SortableCountryRow
+                  key={item.code}
+                  item={item}
+                  isNextPick={item.code === data.current_country}
+                  onRemove={handleRemove}
+                />
               ))}
             </div>
           </SortableContext>

@@ -959,7 +959,17 @@ class CountryCampaignCommand extends Command
     private function getThreshold(): int
     {
         $config = DB::table('content_orchestrator_config')->first();
-        return (int) ($config->campaign_articles_per_country ?? 240);
+        return (int) ($config->campaign_articles_per_country ?? 262);
+    }
+
+    /**
+     * Get the size of the round-robin priority window (top N countries of the queue).
+     * Matches RunOrchestratorCycleJob::getCurrentCampaignCountry().
+     */
+    private function getPriorityWindowSize(): int
+    {
+        $config = DB::table('content_orchestrator_config')->first();
+        return (int) ($config->campaign_priority_window_size ?? 12);
     }
 
     /**
@@ -1019,10 +1029,13 @@ class CountryCampaignCommand extends Command
         // Get content plan
         $plan = $this->getContentPlan($countryCode, $countryName);
 
-        // Check what already exists for this country
+        // Check what already exists for this country.
+        // Status filter aligned with RunOrchestratorCycleJob (7 statuses, incl.
+        // in-flight) so we don't re-dispatch a topic that another path already
+        // queued or that's currently being translated.
         $existingArticles = GeneratedArticle::where('country', $countryCode)
             ->where('language', 'fr')
-            ->whereIn('status', ['generating', 'review', 'published', 'approved'])
+            ->whereIn('status', ['generating', 'draft', 'review', 'approved', 'published', 'translating', 'translated'])
             ->select(['title', 'content_type'])
             ->get()
             ->map(fn ($a) => [
@@ -1150,26 +1163,63 @@ class CountryCampaignCommand extends Command
     }
 
     /**
-     * Auto-pick the next country below threshold (reads order from DB).
+     * Auto-pick the next country below threshold.
+     *
+     * Mirrors RunOrchestratorCycleJob::getCurrentCampaignCountry() so the manual
+     * "Lancer la generation" button picks the same country that the cron worker
+     * would pick next:
+     *  - Round-robin within the priority window (top N of the queue, default 12):
+     *    fewest articles first, queue order as tie-breaker.
+     *  - Sequential on the long tail (rest of the queue) once the priority window
+     *    is fully done.
+     *
+     * The status filter matches the worker's slot-counting query (7 statuses,
+     * incl. in-flight) so the CLI sees the same numbers as the dashboard.
      */
     private function autoPickCountry(): ?string
     {
         $threshold = $this->getThreshold();
-        $countryOrder = $this->getCountryOrder();
+        $countryOrder = $this->getCountryOrder(); // preserves queue order
+        $priorityWindow = $this->getPriorityWindowSize();
 
         $counts = GeneratedArticle::where('language', 'fr')
-            ->whereIn('status', ['review', 'published', 'approved'])
+            ->whereIn('status', ['generating', 'draft', 'review', 'approved', 'published', 'translating', 'translated'])
             ->whereNotNull('country')
-            ->where('word_count', '>', 0)
             ->groupBy('country')
             ->selectRaw('country, COUNT(*) as total')
             ->pluck('total', 'country')
             ->toArray();
 
-        foreach ($countryOrder as $code => $name) {
-            $existing = $counts[$code] ?? 0;
+        $codes = array_keys($countryOrder);
+        $priorityCodes = array_slice($codes, 0, $priorityWindow);
+        $tailCodes     = array_slice($codes, $priorityWindow);
+
+        // Round-robin on the priority window: pick the country with fewest articles,
+        // queue order as tie-breaker.
+        $candidates = [];
+        foreach ($priorityCodes as $idx => $code) {
+            $existing = (int) ($counts[$code] ?? 0);
             if ($existing < $threshold) {
-                $this->info("Auto-selected: {$name} ({$code}) — {$existing}/{$threshold} articles");
+                $candidates[] = ['code' => $code, 'count' => $existing, 'order' => $idx];
+            }
+        }
+
+        if (!empty($candidates)) {
+            usort($candidates, fn ($a, $b) =>
+                ($a['count'] <=> $b['count']) ?: ($a['order'] <=> $b['order'])
+            );
+            $picked = $candidates[0];
+            $name = $countryOrder[$picked['code']] ?? $picked['code'];
+            $this->info("Auto-selected (round-robin): {$name} ({$picked['code']}) — {$picked['count']}/{$threshold} articles");
+            return $picked['code'];
+        }
+
+        // Tail mode: sequential on the long tail.
+        foreach ($tailCodes as $code) {
+            $existing = (int) ($counts[$code] ?? 0);
+            if ($existing < $threshold) {
+                $name = $countryOrder[$code] ?? $code;
+                $this->info("Auto-selected (tail): {$name} ({$code}) — {$existing}/{$threshold} articles");
                 return $code;
             }
         }
@@ -1185,10 +1235,11 @@ class CountryCampaignCommand extends Command
         $threshold = $this->getThreshold();
         $countryOrder = $this->getCountryOrder();
 
+        // Same 7-status filter as the worker — includes in-flight articles so the
+        // CLI report matches what drives the auto-advance decision.
         $counts = GeneratedArticle::where('language', 'fr')
-            ->whereIn('status', ['review', 'published', 'approved'])
+            ->whereIn('status', ['generating', 'draft', 'review', 'approved', 'published', 'translating', 'translated'])
             ->whereNotNull('country')
-            ->where('word_count', '>', 0)
             ->groupBy('country')
             ->selectRaw('country, COUNT(*) as total')
             ->pluck('total', 'country')

@@ -577,6 +577,20 @@ class RunOrchestratorCycleJob implements ShouldQueue
             $remainingByType[$type] = max(0, $expected - $existing);
         }
 
+        // ── HARD CAP: statistics → max 1 per (country, language) ──
+        // Mirrors the GenerateArticleJob pre-AI dedup rule (1=1 for statistics).
+        // Without this cap the orchestrator keeps picking statistics topics from the
+        // plan (which has ~12 statistics items per country in fixed_plan mode), each
+        // dispatch then gets aborted at job entry as "duplicate detected pre-AI" —
+        // burning orchestrator cycles without producing anything.
+        // Source: commit 381c2a0 introduced the 1=1 rule because statistics are
+        // country-level numerical data and a single canonical article per country
+        // is what we want.
+        if (isset($remainingByType['statistics'])) {
+            $existingStats = (int) ($existingByType['statistics'] ?? 0);
+            $remainingByType['statistics'] = max(0, 1 - $existingStats);
+        }
+
         // If every type is at or above its quota, nothing to generate for this country
         if (array_sum($remainingByType) === 0) {
             Log::info("Orchestrator Campaign: {$countryCode} plan complete (all types fulfilled)");

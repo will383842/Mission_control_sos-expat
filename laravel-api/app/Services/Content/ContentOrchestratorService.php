@@ -89,7 +89,9 @@ class ContentOrchestratorService
             'today_cost_cents' => $row->today_cost_cents,
             'telegram_alerts' => (bool) ($row->telegram_alerts ?? true),
             'campaign_country_queue' => json_decode($row->campaign_country_queue ?? '[]', true) ?: [],
-            'campaign_articles_per_country' => (int) ($row->campaign_articles_per_country ?? 240),
+            'campaign_articles_per_country' => (int) ($row->campaign_articles_per_country ?? 262),
+            'campaign_priority_window_size' => (int) ($row->campaign_priority_window_size ?? 12),
+            'campaign_distribution_mode' => $row->campaign_distribution_mode ?? 'fixed_plan',
             'type_labels' => self::TYPE_LABELS,
         ];
     }
@@ -355,51 +357,110 @@ class ContentOrchestratorService
 
     /**
      * Get campaign status: queue with per-country progress.
+     *
+     * Mirrors RunOrchestratorCycleJob::getCurrentCampaignCountry() so the dashboard
+     * shows exactly what the worker sees:
+     *
+     * 1. Counts ALL in-flight + completed articles (7 statuses), not just the 3
+     *    "fully processed" ones — otherwise the UI under-reports by everything
+     *    sitting in 'generating' / 'draft' / 'translating' / 'translated'.
+     *
+     * 2. Marks every incomplete country in the priority window (top N from queue,
+     *    default 12) as 'active' — that's the round-robin behaviour added in
+     *    commit 733b25e (2026-05-02). The "next pick" (lowest count, queue-order
+     *    tie-break) is exposed as current_country so the UI can highlight it.
+     *
+     * 3. Tail-mode (countries beyond the priority window) stays sequential: only
+     *    the first incomplete one is 'active'.
      */
     public function getCampaignStatus(): array
     {
         $config = $this->getConfig();
         $queue = $config['campaign_country_queue'];
         $threshold = $config['campaign_articles_per_country'];
+        $priorityWindow = (int) ($config['campaign_priority_window_size'] ?? 12);
 
-        // Count articles per country (same criteria as getCurrentCampaignCountry)
+        // ── Same status filter as RunOrchestratorCycleJob (7 statuses, no word_count gate) ──
+        // Aligning with the worker means: the dashboard sees the same "slot taken"
+        // count that drives auto-advance to the next country.
         $counts = DB::table('generated_articles')
             ->where('language', 'fr')
-            ->whereIn('status', ['review', 'published', 'approved'])
+            ->whereIn('status', ['generating', 'draft', 'review', 'approved', 'published', 'translating', 'translated'])
             ->whereNotNull('country')
-            ->where('word_count', '>', 0)
             ->groupBy('country')
             ->selectRaw('country, COUNT(*) as total')
             ->pluck('total', 'country')
             ->toArray();
 
-        $currentCountry = null;
-        $queueItems = [];
+        $priorityCodes = array_slice($queue, 0, $priorityWindow);
+        $tailCodes     = array_slice($queue, $priorityWindow);
+
         $completedCountries = [];
+        $priorityIncomplete = []; // [['code'=>..., 'count'=>..., 'order'=>...], ...]
+        $tailIncomplete     = []; // [code, code, ...]  (queue order preserved)
 
-        foreach ($queue as $code) {
+        foreach ($priorityCodes as $idx => $code) {
             $count = (int) ($counts[$code] ?? 0);
-            $isComplete = $count >= $threshold;
-
-            if ($isComplete) {
+            if ($count >= $threshold) {
                 $completedCountries[] = ['code' => $code, 'count' => $count];
             } else {
-                if ($currentCountry === null) {
-                    $currentCountry = $code;
-                }
-                $queueItems[] = [
-                    'code' => $code,
-                    'count' => $count,
-                    'target' => $threshold,
-                    'status' => $code === $currentCountry ? 'active' : 'pending',
-                ];
+                $priorityIncomplete[] = ['code' => $code, 'count' => $count, 'order' => $idx];
             }
+        }
+
+        foreach ($tailCodes as $code) {
+            $count = (int) ($counts[$code] ?? 0);
+            if ($count >= $threshold) {
+                $completedCountries[] = ['code' => $code, 'count' => $count];
+            } else {
+                $tailIncomplete[] = $code;
+            }
+        }
+
+        // Determine the "next pick": same selection as the worker.
+        $currentCountry = null;
+        if (!empty($priorityIncomplete)) {
+            $candidates = $priorityIncomplete;
+            usort($candidates, fn ($a, $b) =>
+                ($a['count'] <=> $b['count']) ?: ($a['order'] <=> $b['order'])
+            );
+            $currentCountry = $candidates[0]['code'];
+        } elseif (!empty($tailIncomplete)) {
+            $currentCountry = $tailIncomplete[0]; // sequential on the tail
+        }
+
+        // Build queue items, preserving queue order.
+        // Round-robin: every incomplete country in the priority window is 'active'.
+        // Sequential: only the next tail country is 'active'.
+        $priorityCodeSet = array_flip(array_column($priorityIncomplete, 'code'));
+        $queueItems = [];
+
+        foreach ($priorityCodes as $code) {
+            if (!isset($priorityCodeSet[$code])) {
+                continue; // already complete (in $completedCountries)
+            }
+            $queueItems[] = [
+                'code'   => $code,
+                'count'  => (int) ($counts[$code] ?? 0),
+                'target' => $threshold,
+                'status' => 'active', // all priority-window incomplete countries grow in parallel
+            ];
+        }
+
+        foreach ($tailIncomplete as $code) {
+            $queueItems[] = [
+                'code'   => $code,
+                'count'  => (int) ($counts[$code] ?? 0),
+                'target' => $threshold,
+                'status' => $code === $currentCountry ? 'active' : 'pending',
+            ];
         }
 
         return [
             'queue' => $queueItems,
             'current_country' => $currentCountry,
             'articles_per_country' => $threshold,
+            'priority_window_size' => $priorityWindow,
             'completed_countries' => $completedCountries,
         ];
     }
@@ -429,7 +490,9 @@ class ContentOrchestratorService
             'today_cost_cents' => 0,
             'telegram_alerts' => true,
             'campaign_country_queue' => [],
-            'campaign_articles_per_country' => 240,
+            'campaign_articles_per_country' => 262,
+            'campaign_priority_window_size' => 12,
+            'campaign_distribution_mode' => 'fixed_plan',
             'type_labels' => self::TYPE_LABELS,
         ];
     }
