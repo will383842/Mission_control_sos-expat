@@ -11,30 +11,50 @@ class RelevanceFilterService
     private const MODEL = 'gpt-4o-mini';
 
     private const SYSTEM_PROMPT = <<<'PROMPT'
-Tu évalues si un article de presse est DIRECTEMENT utile à quelqu'un qui vit, travaille ou voyage HORS de son pays d'origine.
+Tu évalues si un article de presse est utile à quelqu'un qui vit, travaille ou voyage HORS de son pays d'origine. Sois GÉNÉREUX dès qu'un sujet a un IMPACT PLAUSIBLE sur expatriés ou voyageurs internationaux, même sans mention explicite.
 
-Score ÉLEVÉ (≥65) uniquement si l'article traite concrètement de :
-- Visa, immigration, permis de résidence ou de travail dans un pays étranger
-- Logement à l'étranger, location internationale, coût de la vie comparé
-- Santé à l'étranger : assurance internationale, remboursements, accès aux soins
-- Fiscalité internationale, double imposition, obligations fiscales des non-résidents
-- Banque internationale, transferts d'argent, compte bancaire à l'étranger
-- Emploi international, contrat local, télétravail depuis l'étranger
+────────────────────────────────────────
+ÉCHELLE DE SCORE (calibre toi sur ces ancres)
+────────────────────────────────────────
+85-100 — IMPACT DIRECT et concret pour expatriés/voyageurs
+  Ex: "Nouvelles règles visa Schengen 2026", "La Thaïlande lance le visa retraité", "Double imposition: nouvelle convention France-USA"
+70-84 — IMPACT FORT mais sectoriel ou indirect
+  Ex: "Pénurie de carburant menace les vols d'été" (transport international), "L'Iran ferme partiellement le détroit d'Hormuz" (alerte voyage), "Cinq morts dans une croisière, l'OMS enquête" (santé voyageurs)
+55-69 — SUJET PERTINENT par projection: voyageurs ou expats du pays sont concernés
+  Ex: "Les compagnies aériennes indiennes au bord de la cessation" (impact vols), "Régularisation 500 000 sans-papiers en Espagne", "Inflation au Cambodge en 2026", "Manifestations bloquent l'aéroport de Bangkok"
+40-54 — INTÉRÊT GÉNÉRAL mais peu actionnable pour un expat
+  Ex: "Élection présidentielle au Brésil" (sauf si visa/règles changent)
+0-39 — HORS SUJET pour cette audience
+  Ex: sport national, people locale, faits divers locaux sans alerte voyage
+
+────────────────────────────────────────
+THÈMES PERTINENTS (typiquement 55-100)
+────────────────────────────────────────
+- Visa, immigration, permis de résidence ou de travail à l'étranger
+- Logement à l'étranger, coût de la vie, location internationale
+- Santé internationale: assurance, accès aux soins, épidémies, alertes sanitaires voyage
+- Fiscalité internationale, double imposition, comptes étrangers, obligations non-résidents
+- Banque internationale, transferts d'argent, change, fluctuation monétaire d'un pays-cible
+- Emploi international, contrat local, télétravail depuis l'étranger, marchés du travail par pays
 - Retraite à l'étranger, pension internationale
-- Transport international : vols, aéroports, liaisons intercontinentales
-- Alerte sécurité voyage (zone de guerre, catastrophe naturelle, épidémie) impactant les voyageurs
-- Nouvelles réglementations douanières, frontalières ou d'entrée sur un territoire
-- Droits spécifiques des étrangers ou non-résidents dans un pays
+- Transport international: vols (annulations, pénuries carburant, grèves aéroports), trains transfrontaliers, croisières
+- ALERTE VOYAGE: guerre, crise géopolitique d'un pays-cible, catastrophe naturelle, épidémie, attentats, manifestations bloquantes
+- Réglementations douanières, frontalières, contrôles d'entrée, pass sanitaire, ETIAS, EES
+- Droits des étrangers ou non-résidents dans un pays (logement, travail, justice)
+- Économie d'un pays-cible (inflation, change, prix immobilier) IMPACTANT le pouvoir d'achat des expats sur place
+- Sécurité d'un pays touristique ou d'expatriation (criminalité, arnaques, zones à éviter)
 
-Score FAIBLE (<65) — NON PERTINENT si l'article traite de :
-- Politique nationale, élections, gouvernement local sans impact sur les étrangers
-- Manifestations, mouvements sociaux, grèves locales
-- Sport, résultats sportifs, compétitions nationales
+────────────────────────────────────────
+THÈMES NON PERTINENTS (typiquement 0-40)
+────────────────────────────────────────
+- Politique purement nationale, élections, débats internes sans impact sur étrangers
+- Sport, résultats sportifs, compétitions
 - People, célébrités, divertissement, culture pop locale
-- Économie nationale (PIB, budget, inflation) sans lien avec les expatriés
-- Justice locale, faits divers, criminalité sans alerte voyageur
-- Racisme, discrimination, débats sociaux internes à un pays
-- Urbanisme, immobilier local pour résidents nationaux
+- Faits divers locaux sans alerte voyageur
+- Urbanisme purement local pour résidents nationaux
+- Économie macro abstraite (PIB national) sans lien expats / pouvoir d'achat sur place
+
+RÈGLE CLÉ: si tu hésites entre "pertinent par projection" et "non pertinent", choisis 60. La transversalité (transport, santé, sécurité, économie d'un pays-cible) compte.
 
 Réponds UNIQUEMENT en JSON valide (sans markdown):
 {"score": 85, "relevant": true, "category": "visa", "reason": "Nouvelles règles visa Schengen pour les non-européens"}
