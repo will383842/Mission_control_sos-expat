@@ -8,7 +8,7 @@ jobs:
   deploy:
     name: Deploy to Hetzner VPS
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 50
 
     steps:
       - name: Deploy via SSH
@@ -17,7 +17,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          command_timeout: 25m
+          command_timeout: 45m
           script: |
             cd /opt/influenceurs-tracker
 
@@ -36,8 +36,12 @@ jobs:
             # Restore .env.production (in case git removed it after gitignore change)
             cp .env.production.bak .env.production 2>/dev/null || true
 
-            # Rebuild and restart containers (including new content + publication workers)
-            docker compose build --no-cache app queue scheduler scraper frontend content-worker publication-worker landings-worker
+            # Rebuild and restart containers (including new content + publication workers).
+            # Cache is used by default — the prior --no-cache approach exceeded the SSH
+            # command_timeout because the VPS spends >15m just loading base-image metadata
+            # before any layer reuse. If a clean rebuild is ever needed, run manually on
+            # the VPS: `docker compose build --no-cache <service>`.
+            docker compose build app queue scheduler scraper frontend content-worker publication-worker landings-worker
 
             # Stop services first (avoid --force-recreate which creates random container names)
             docker compose stop app queue scheduler scraper frontend nginx-api content-worker publication-worker landings-worker
