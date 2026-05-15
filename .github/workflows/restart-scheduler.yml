@@ -1,0 +1,42 @@
+name: Restart scheduler only
+
+# Minimal redeploy: pull latest code, rebuild ONLY the scheduler image,
+# stop + bring back inf-scheduler. Avoids the 45m+ full rebuild path
+# in deploy.yml when we only need the scheduler to pick up changes
+# (e.g. console.php schedule edits).
+
+on:
+  workflow_dispatch:
+
+jobs:
+  restart:
+    name: Rebuild + restart inf-scheduler
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 15m
+          script: |
+            cd /opt/influenceurs-tracker
+
+            cp .env.production .env.production.bak 2>/dev/null || true
+            git stash --include-untracked 2>/dev/null || true
+            BRANCH=$(git remote show origin | grep 'HEAD branch' | awk '{print $NF}')
+            git fetch origin $BRANCH
+            git checkout $BRANCH
+            git reset --hard origin/$BRANCH
+            cp .env.production.bak .env.production 2>/dev/null || true
+
+            docker compose build scheduler
+            docker compose stop scheduler
+            docker compose up -d --no-deps scheduler
+
+            sleep 3
+            docker ps --format 'table {{.Names}}\t{{.Status}}' | grep inf-scheduler || true
+            echo "Restart complete: $(date)"
