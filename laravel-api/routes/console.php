@@ -299,6 +299,19 @@ Schedule::call(function () {
 Schedule::job(new \App\Jobs\RunLandingCampaignJob)->dailyAt('05:00')->withoutOverlapping(7200);
 
 // ══════════════════════════════════════════════════════════════════════
+// LINKEDIN + SOCIAL (multi-plateformes) — DÉSACTIVÉ 2026-05-15
+// Stoppe : fill-calendar, auto-publish, check-token, check-comments,
+// stale-recovery, et toutes les notifications Telegram associées
+// (preview 1-tap, alertes token, nouveaux commentaires).
+// Couvre aussi les schedules `social:*` (LinkedIn + Facebook + Threads +
+// Instagram + Pinterest) qui dupliquent le pipeline LinkedIn.
+// Pour réactiver : remplacer `if (false) {` par `if (true) {` (ou retirer
+// le wrap). Penser à redéployer puis `docker compose restart inf-scheduler
+// inf-linkedin-worker` sur le VPS.
+// ══════════════════════════════════════════════════════════════════════
+if (false) {
+
+// ══════════════════════════════════════════════════════════════════════
 // LINKEDIN FILL CALENDAR — quotidien à 06:00 UTC
 // Maintient 30 jours d'avance de posts LinkedIn.
 // Pour chaque jour ouvré sans post, génère automatiquement 1 post.
@@ -391,6 +404,8 @@ Schedule::call(function () {
         \Illuminate\Support\Facades\Log::info("social:stale-recovery: {$stale->count()} posts reset to failed");
     }
 })->everyThirtyMinutes()->name('social-stale-recovery')->withoutOverlapping();
+
+} // end if (false) — LINKEDIN + SOCIAL schedules disabled 2026-05-15
 
 // ══════════════════════════════════════════════════════════════════════
 // SCRAPING CONTACTS CONTINU (anti-ban + rotation pays)
